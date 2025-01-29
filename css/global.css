@@ -1,3 +1,15 @@
 p {
     text-align: center;
 }
+
+.hero-image {
+    display: flex;
+    justify-content: space-between; /* Push text and image right*/
+    align-items: center;
+    padding: 10vw; /* Perhaps change this to a margin, later? */
+}
+
+.hero-image p {
+    margin: 0;
+    text-align: left;
+}
