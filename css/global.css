@@ -6,10 +6,58 @@ p {
     display: flex;
     justify-content: space-between; /* Push text and image right*/
     align-items: center;
-    padding: 10vw; /* Perhaps change this to a margin, later? */
+    margin-left: 10vw;
+    margin-right: 10vw;
 }
 
 .hero-image p {
     margin: 0;
     text-align: left;
+}
+
+.hero-name {
+    display: flex;
+    font-size: 18vh;
+}
+
+.hero-sub {
+    display: flex;
+    font-size: 5vh;
+}
+
+.home-content-card-top p {
+    display: block;
+    margin-top: 5vh;
+    margin-left: 10vw;
+    margin-right: 10vw;
+
+    text-align: left;
+    font-size: x-large;
+
+}
+
+.home-content-card-top h2 {
+    text-align: center;
+    font-size: xx-large;
+}
+
+.home-content-card-top {
+    margin-top: 5vh;
+    padding-top: 5vh;
+    background-color: red;
+    padding-bottom: 5vh;
+}
+
+.home-content-card-mid p {
+    display: block;
+    margin-top: 5vh;
+    margin-left: 10vw;
+    margin-right: 10vw;
+    text-align: left;
+}
+
+.home-content-card-mid {
+    padding-top: 5vh;
+    background-color: blue;
+    padding-bottom: 5vh;
 }
