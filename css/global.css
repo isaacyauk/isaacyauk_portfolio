@@ -44,6 +44,7 @@ li a {
     align-items: center;
     margin-left: 10vw;
     margin-right: 10vw;
+    padding-top: 2rem;
 
     /* gap: 2vw; */
 }
