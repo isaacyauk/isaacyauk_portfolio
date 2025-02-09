@@ -13,23 +13,29 @@ body, html {
     justify-content: center;
     background-color: chartreuse;
     width: 100vw;
+    height: 6vh;
 }
 
 ul {
+    display: flex;
     list-style-type: none;
     margin: 0;
     padding: 0;
     overflow: 0;
+    height: 100%;
 }
 
 li {
     float: left;
+    height: 100%;
 }
 
 li a {
-    display: block;
-    padding: 8px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
     background-color: blueviolet;
+    height: 100%;
 }
 
 .hero-image {
@@ -106,6 +112,7 @@ li a {
     padding-bottom: 5vh;
 }
 
+/* Settings for devices at a screen width of 1024px and below */
 @media (max-width: 1024px) {
     .hero-image {
         text-align: left;
@@ -126,6 +133,7 @@ li a {
     }
 }
 
+/* Settings for devices at a screen width of 700px and below */
 @media (max-width: 700px) {
     .hero-image {
         text-align: left;
@@ -143,5 +151,13 @@ li a {
     .hero-image img {
         max-width: 40vw;
         padding-left: 25px;
+    }
+
+    .navbar {
+        display: flex;
+        justify-content: left;
+        background-color: chartreuse;
+        width: 100vw;
+        height: 6vh;
     }
 }
