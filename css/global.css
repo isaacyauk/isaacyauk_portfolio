@@ -1,27 +1,28 @@
-p {
-    text-align: center;
-}
-
 body, html {
     padding: 0;
     margin: 0;
     overflow-x: hidden;
-    /* background-color: #fefaf7; */
-    background: linear-gradient(to right, #fefaf7, #f7f0eb);
+    background-color: #fff6ef;
+    font-family: "Newsreader", serif;
+    background: linear-gradient(to right, #fff6ef, #fff7f1);
 }
 
 li a.selected {
-    background-color: #7d7d7d;
-    color: white;
+    color: #1e1e1e;
+    text-decoration: underline;
+}
+
+p {
+    text-align: center;
 }
 
 .navbar {
     display: flex;
     justify-content: center;
-    background-color: #e7e7e7;
+    background-color: #ffffff;
     width: 100vw;
-    height: 6vh;
-    background: linear-gradient(to right, #e7e7e7, #fefaf7)
+    height: 6.4vh;
+    outline: 2px solid #636363;
 }
 
 ul {
@@ -46,18 +47,27 @@ li a {
     font-size: 2rem;
     text-decoration: none;
     transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-    color: rgb(45, 45, 45);
+    color: #5b5b5b;
 }
 
 li a:hover {
     display: flex;
     align-items: center;
     padding: 0 16px;
-    background-color: #7d7d7d;
     height: 100%;
     font-size: 2rem;
     text-decoration: none;
-    color: white;
+    color: #1e1e1e;
+}
+
+li a.selected:hover {
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    height: 100%;
+    font-size: 2rem;
+    text-decoration: underline;
+    color: #1e1e1e;
 }
 
 .hero-image {
@@ -94,16 +104,6 @@ li a:hover {
     font-size: 4rem;
 }
 
-.home-content-card-top p {
-    display: block;
-    margin-top: 5vh;
-    margin-left: 10vw;
-    margin-right: 10vw;
-
-    text-align: left;
-    font-size: x-large;
-}
-
 .home-content-card-top h2 {
     text-align: center;
     font-size: xx-large;
@@ -112,11 +112,21 @@ li a:hover {
 .home-content-card-top {
     margin-top: 5vh;
     padding-top: 5vh;
-    background-color: #e7e7e7;
+    background-color: #ffffff;
     padding-bottom: 5vh;
     width: 100vw;
-    color: rgb(45, 45, 45);
-    background: linear-gradient(to right, #e7e7e7, #fefaf7)
+    color: #2D2D2D;
+    outline: 2px solid #636363;
+}
+
+.home-content-card-top p {
+    display: block;
+    margin-top: 5vh;
+    margin-left: 13.5vw;
+    margin-right: 13.5vw;
+
+    text-align: left;
+    font-size: x-large;
 }
 
 .home-content-card-mid p {
@@ -141,7 +151,6 @@ li a:hover {
 
     .hero-name {
         font-size: 6rem;
-        font-weight: bold;
     }
 
     .hero-sub {
@@ -162,7 +171,6 @@ li a:hover {
 
     .hero-name {
         font-size: 3rem;
-        font-weight: bold;
     }
 
     .hero-sub {
@@ -177,9 +185,10 @@ li a:hover {
     .navbar {
         display: flex;
         justify-content: left;
-        background-color: #e7e7e7;
+        background-color: #ffffff;
         width: 100vw;
-        height: 6vh;
+        height: 6.4vh;
+        outline: 2px solid #636363;
     }
 
     li a {
@@ -190,17 +199,16 @@ li a:hover {
         font-size: 1.1rem;
         text-decoration: none;
         transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-        color: rgb(45, 45, 45);
+        color: #5b5b5b;
     }
 
     li a:hover {
         display: flex;
         align-items: center;
         padding: 0 16px;
-        background-color:#7d7d7d;
         height: 100%;
         font-size: 1.1rem;
         text-decoration: none;
-        color: white;
+        color: #1e1e1e;
     }
 }
