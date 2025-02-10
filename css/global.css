@@ -6,14 +6,22 @@ body, html {
     padding: 0;
     margin: 0;
     overflow-x: hidden;
+    /* background-color: #fefaf7; */
+    background: linear-gradient(to right, #fefaf7, #f7f0eb);
+}
+
+li a.selected {
+    background-color: #7d7d7d;
+    color: white;
 }
 
 .navbar {
     display: flex;
     justify-content: center;
-    background-color: chartreuse;
+    background-color: #e7e7e7;
     width: 100vw;
     height: 6vh;
+    background: linear-gradient(to right, #e7e7e7, #fefaf7)
 }
 
 ul {
@@ -34,8 +42,22 @@ li a {
     display: flex;
     align-items: center;
     padding: 0 16px;
-    background-color: blueviolet;
     height: 100%;
+    font-size: 2rem;
+    text-decoration: none;
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+    color: rgb(45, 45, 45);
+}
+
+li a:hover {
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    background-color: #7d7d7d;
+    height: 100%;
+    font-size: 2rem;
+    text-decoration: none;
+    color: white;
 }
 
 .hero-image {
@@ -45,8 +67,6 @@ li a {
     margin-left: 10vw;
     margin-right: 10vw;
     padding-top: 2rem;
-
-    /* gap: 2vw; */
 }
 
 .hero-image p {
@@ -71,7 +91,6 @@ li a {
 }
 
 .hero-sub {
-    /* display: flex; */
     font-size: 4rem;
 }
 
@@ -83,7 +102,6 @@ li a {
 
     text-align: left;
     font-size: x-large;
-
 }
 
 .home-content-card-top h2 {
@@ -94,9 +112,11 @@ li a {
 .home-content-card-top {
     margin-top: 5vh;
     padding-top: 5vh;
-    background-color: red;
+    background-color: #e7e7e7;
     padding-bottom: 5vh;
     width: 100vw;
+    color: rgb(45, 45, 45);
+    background: linear-gradient(to right, #e7e7e7, #fefaf7)
 }
 
 .home-content-card-mid p {
@@ -157,8 +177,30 @@ li a {
     .navbar {
         display: flex;
         justify-content: left;
-        background-color: chartreuse;
+        background-color: #e7e7e7;
         width: 100vw;
         height: 6vh;
+    }
+
+    li a {
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        height: 100%;
+        font-size: 1.1rem;
+        text-decoration: none;
+        transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+        color: rgb(45, 45, 45);
+    }
+
+    li a:hover {
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        background-color:#7d7d7d;
+        height: 100%;
+        font-size: 1.1rem;
+        text-decoration: none;
+        color: white;
     }
 }
