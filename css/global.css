@@ -319,9 +319,9 @@ li a.selected:hover {
     }
 
     .hero-image img {
-        max-width: 35vw;
-        min-width: 100px;
-        margin-left: 1rem;
+        max-width: 52vw;
+        min-width: 120px;
+        margin-left: 1.5rem;
     }
 
     .navbar {
@@ -354,7 +354,6 @@ li a.selected:hover {
         color: #1e1e1e;
     }
 
-    /* BIO FIX: stack vertically so bio1 is always visible */
     .bio-blocks {
         flex-direction: column;
         align-items: stretch;
@@ -365,6 +364,28 @@ li a.selected:hover {
         max-width: 100%;
         min-width: auto;
         margin-bottom: 1.5rem;
+    }
+
+    .sub-bio-1 {
+        border: 2px solid #2D2D2D;
+        background-color: #efefef;
+    }
+
+    .sub-bio-2 {
+        border: 2px solid #2D2D2D;
+        
+    }
+
+    .sub-bio-3 {
+        border: 2px solid #2D2D2D;
+        background-color: #efefef;
+    }   
+
+    .footer-sig {
+        padding-left: 1rem;
+        width: 87px;    
+        font-size: 13px;
+        font-weight: 550;
     }
 }
 
@@ -390,10 +411,17 @@ li a.selected:hover {
         width: 25px;
     }
 
+    .hero-image img {
+        max-width: 52vw;
+        min-width: 120px;
+        margin-left: 1.5rem;
+    }
+
     .footer-sig {
         padding-left: 1rem;
         width: 90px;    
         font-size: 14px;
+        font-weight: 550;
     }
 
     .footer-statement {
