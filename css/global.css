@@ -174,20 +174,27 @@ li a.selected:hover {
     padding-top: 2rem;
 }
 
+.hero-image img {
+    border: 2px solid #2D2D2D;
+}
+
 .hero-image p {
     margin: 0;
     text-align: left;
 }
 
 .hero-image img {
-    max-width: 30vw;
+    max-width: 25vw; 
+    min-width: 200px;
     height: auto;
-    flex-shrink: 0; /* Prevents image from shrinking too much */
+    flex-shrink: 0;
+    margin-left: 2rem; 
 }
 
 .hero-name {
     white-space: nowrap;
     font-size: 9rem;
+    font-weight: 500;
 }
 
 .hero-title {
@@ -196,6 +203,7 @@ li a.selected:hover {
 
 .hero-sub {
     font-size: 4rem;
+    color: #474747;
 }
 
 .about-sub {
