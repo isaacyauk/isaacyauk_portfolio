@@ -282,6 +282,15 @@ li a.selected:hover {
 
 /* Settings for devices at a screen width of 1024px and below */
 @media (max-width: 1024px) {
+    .navbar {
+    display: flex;
+    justify-content: center;
+    background-color: #ffffff;
+    width: 100%;
+    height: 6.4vh;
+    outline: 2px solid #636363;
+}
+
     .hero-image {
         text-align: left;
     }
@@ -303,6 +312,16 @@ li a.selected:hover {
 
 /* Settings for devices at a screen width of 700px and below */
 @media (max-width: 700px) {
+    .navbar {
+    display: flex;
+    justify-content: center;
+    background-color: #ffffff;
+    width: 100%;
+    height: 6.4vh;
+    outline: 2px solid #636363;
+    font-size: x-large;
+}
+    
     .hero-image {
         text-align: left;
         margin-left: 5vw;
@@ -322,15 +341,6 @@ li a.selected:hover {
         max-width: 52vw;
         min-width: 120px;
         margin-left: 1.5rem;
-    }
-
-    .navbar {
-        display: flex;
-        justify-content: left;
-        background-color: #ffffff;
-        width: 100%;
-        height: 6.4vh;
-        outline: 2px solid #636363;
     }
 
     li a {
@@ -390,6 +400,15 @@ li a.selected:hover {
 }
 
 @media (max-width: 400px) {
+    .navbar {
+    display: flex;
+    justify-content: center;
+    background-color: #ffffff;
+    width: 100%;
+    height: 6.4vh;
+    outline: 2px solid #636363;
+}
+
     .contact-images {
         position: absolute;
         right: 2%;
