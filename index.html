@@ -4,56 +4,97 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles/global.css">
-    <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&display=swap%22 rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400..900;1,400..900&display=swap%22 rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
     <title>Document</title>
 </head>
 <body>
- 
+
     <nav class="navbar">
         <div class="nav_button" id="sidebarButton">
             <img src="images/close-white.png" alt="">
         </div>
-        <div>
-            <h1 class="nav_about" id="aboutHeader">About</h1>
-        </div>
         <div class="nav_button" id="themeButton">
             <img src="images/bright-mode.png" alt="">
         </div>
-       
+        
     </nav>
- 
+
     <main class="layout">
         <div class="sidebar">  
             <div class="content">
                 <h1>Isaac Yauk</h1>
                 <h2>Software Engineer</h2>  
-                <hr>
+                <hr> 
                 <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Similique nobis repellat architecto necessitatibus nemo repudiandae sunt magnam veritatis quos, ratione consequuntur impedit mollitia perferendis, illo ab amet iure eligendi consectetur?</p>
-                <hr>
-                <p class="info">someEmail@example.com</p>
-                <hr>
-                <p class="info">(406) 123-456</p>
-                <hr>
-                <p class="info">Résumé↗</p>
-                <hr>
-                <p class="info">LinkedIn↗</p>
-                <hr>
-                <p class="info">Instagram↗</p>
-                <hr>
-                               
-               
+                <br><br><br><br>
+
+
+                <div class="info">
+                    <hr>
+                    <p>someEmail@example.com</p>
+                </div>
+
+                <div class="info">
+                    <hr>
+                    <p>(406) 123-456</p> 
+                </div>
+                
+
+                <div class="info">
+                    <hr>
+                    <p>Résumé↗</p>
+                </div>
+                
+                <div class="info">
+                    <hr>
+                    <p>LinkedIn↗</p>
+                </div>
+                
+                <div class="info">
+                    <hr>
+                    <p>Instagram↗</p>
+                </div>
+                
+                <button id="mobile_close">Close Info</button>
+                 
+                
             </div>
         </div>
- 
+
         <div class="main-content">
             <hr>
             <h3>Experience</h3>
             <hr>
+
+
             <div class="content">
-                <h1>Test</h1>
+                <h1>TechLink Center @ MSU</h1>
+                <h2>Sept. 2022 - Present</h2>
+                <h2>Intern</h2>
+                <p><br>Currently working as a Software Engineering Intern with TechLink's TSEAL team, which develops and maintains software applications supporting federal intellectual property transfer for the Department of Defense and Department of Veteran Affairs.</p>
+                <p>During my time on the team, I supported the development of two front-end Unit Test suites in Selenium, one in Playwright, and another suite in Python which leveraged GraphQL queries to test the database of a TechLink service. Alongside these major projects, I also developed a Python String builder for the automated creation of GraphQL queries, a tool that validates patent number information from the United States Patent and Trademark office, and a patent ownership extrapolator that tracks patent claims events from the USPTO. 
+                <h3>Skills:</h3>
+                <ul>
+                    <li>C#</li>
+                    <li>Selenium</li>
+                    <li>JavaScript</li>
+                    <li>Playwright</li>
+                    <li>Java</li>
+                    <li>Docker</li>
+                    <li>Python</li>
+                    <li>Regular Expressions</li>
+                </ul>
+            </div>
+            
+
+            <hr>
+            <div class="content">
+                <h1>Grace Bible Church</h1>
+                <h2>May 2021 - Sept. 2022</h2>
+                <h2>Custodian</h2>
                 <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Assumenda pariatur quod optio voluptas non amet rerum voluptatum culpa dolorem blanditiis tenetur necessitatibus libero ab, ipsum corrupti error at? Consequuntur cum at recusandae alias possimus optio exercitationem nesciunt accusantium reprehenderit, perferendis labore quas, natus in! Ab sapiente nulla odit maiores eius, rem dolores adipisci officia, rerum vitae accusamus alias temporibus nostrum, aut in numquam quidem. Magnam, deserunt ducimus. Id, sed. Laborum in error repellat, deserunt ab nemo dicta incidunt qui id odio tempore accusantium quas unde praesentium quibusdam non tenetur cumque laboriosam doloribus similique soluta placeat mollitia. Hic quidem sed saepe.</p>
- 
+
                 <h3>Skills:</h3>
                 <ul>
                     <li>Beans</li>
@@ -61,13 +102,14 @@
                     <li>Beans</li>
                 </ul>
             </div>
-           
- 
+
             <hr>
             <div class="content">
-                <h1>Test 2</h1>
+                <h1>Target & Costco</h1>
+                <h2>June 2017 - Dec. 2021</h2>
+                <h2>Customer Service</h2>
                 <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Assumenda pariatur quod optio voluptas non amet rerum voluptatum culpa dolorem blanditiis tenetur necessitatibus libero ab, ipsum corrupti error at? Consequuntur cum at recusandae alias possimus optio exercitationem nesciunt accusantium reprehenderit, perferendis labore quas, natus in! Ab sapiente nulla odit maiores eius, rem dolores adipisci officia, rerum vitae accusamus alias temporibus nostrum, aut in numquam quidem. Magnam, deserunt ducimus. Id, sed. Laborum in error repellat, deserunt ab nemo dicta incidunt qui id odio tempore accusantium quas unde praesentium quibusdam non tenetur cumque laboriosam doloribus similique soluta placeat mollitia. Hic quidem sed saepe.</p>
- 
+
                 <h3>Skills:</h3>
                 <ul>
                     <li>Beans</li>
@@ -75,16 +117,15 @@
                     <li>Beans</li>
                 </ul>
             </div>
- 
-            <hr>
- 
-           
+
+
+            
         </div>
-       
+        
     </main>
- 
+
     <script src="scripts/global.js"></script>
 </body>
- 
- 
+
+
 </html>
