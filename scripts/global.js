@@ -7,20 +7,24 @@ const main = document.querySelector(".main-content");
 const mediaQuery = window.matchMedia('(max-width: 550px)');
 const mobileClose = document.getElementById("mobile_close");
 const infoBttn = document.querySelectorAll(".info");
-
 const lightColor = "#f8f7f3"
 const darkColor = "#111111"
 const lightColorOpaque = "#f8f7f3e9"
 const darkColorOpaque = "#111111f1"
-
+let isDarkMode = true;
 sidebar.style.backgroundColor = darkColorOpaque;
 
-let isDarkMode = true;
+// Set the inital transition and colors for the info buttons
+infoBttn.forEach(el => {
+    el.style.transition = "0.5s";
+    el.querySelector("p").style.transition = "0.5s";
+    el.style.backgroundColor = darkColor;
+});
 
 // Enable a scroll-lock on mobile for inital load
 if (mediaQuery.matches) {
             document.body.style.overflow = 'hidden';
-        }
+    }
 
 // Logic for if the theme button is clicked and the resulting changes
 bttnTheme.addEventListener("click", () => {
@@ -50,6 +54,13 @@ bttnTheme.addEventListener("click", () => {
     // Set the color of the page elements to contrast with the theme
     document.querySelectorAll("p, h1, h3, li, a").forEach(el => {
         el.style.color = isDarkMode ? lightColor : darkColor;
+    });
+
+    // Set the transition and background color of the info buttons to contrast with the theme
+    document.querySelectorAll(".info").forEach(el => {
+        el.style.transition = "0.5s";
+        el.style.backgroundColor = isDarkMode ? darkColor : lightColor;
+        el.querySelector("p").style.transition = "0.5s";
     });
 
     // Logic for image changes if the close button was clicked
@@ -148,11 +159,13 @@ bttnSide.addEventListener("click", () => {
     }
 });
 
-
-
+// Logic for info button hover effects
 infoBttn.forEach((childBttn) => { 
     childBttn.addEventListener("mouseover", () => {
-        console.log("Beans")
+        
+        // Disable transition for instant color change on hover
+        childBttn.style.transition = "0s";
+        childBttn.querySelector("p").style.transition = "0s";
 
         if (isDarkMode) {
             childBttn.style.backgroundColor = lightColor;
@@ -164,9 +177,8 @@ infoBttn.forEach((childBttn) => {
         }
     });
 
+    // Logic for mouse leaving the info button area
     childBttn.addEventListener("mouseleave", () => {
-        console.log("Beans")
-
         if (isDarkMode) {
             childBttn.style.backgroundColor = darkColor;
             childBttn.querySelector("p").style.color = lightColor;
