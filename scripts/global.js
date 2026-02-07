@@ -1,96 +1,58 @@
-const bttnTheme = document.getElementById("themeButton");
-const bttnSide = document.getElementById("sidebarButton");
-const themeImg = bttnTheme.querySelector("img");
-const sideImg = bttnSide.querySelector("img");
+const themeButton = document.getElementById("themeButton");
+const infoLink = document.querySelectorAll(".info");
+const sidebarButton = document.getElementById("sidebarButton");
 const sidebar = document.querySelector(".sidebar");
-const main = document.querySelector(".main-content");
 const mediaQuery = window.matchMedia('(max-width: 550px)');
-const mobileClose = document.getElementById("mobile_close");
-const infoBttn = document.querySelectorAll(".info");
-const lightColor = "#f8f7f3"
-const darkColor = "#111111"
-const lightColorOpaque = "#f8f7f3e9"
-const darkColorOpaque = "#111111f1"
-let isDarkMode = true;
-sidebar.style.backgroundColor = darkColorOpaque;
+const main = document.querySelector(".main-content");
+const mobileCloseButton = document.getElementById("mobile_close");
 
-// Set the inital transition and colors for the info buttons
-infoBttn.forEach(el => {
-    el.style.transition = "0.5s";
-    el.querySelector("p").style.transition = "0.5s";
-    el.style.backgroundColor = darkColor;
-});
+const darkColor = "#141414";
+const lightColor = "#f8f7f3";
+const lightColorOpaque = "#f8f7f3e9";
+const darkColorOpaque = "#141414f1";
 
-// Enable a scroll-lock on mobile for inital load
-if (mediaQuery.matches) {
-            document.body.style.overflow = 'hidden';
-    }
+const isDarkMode = document.documentElement.classList.contains("dark-mode");
+let sidebarIsOpen = true;
 
-// Logic for if the theme button is clicked and the resulting changes
-bttnTheme.addEventListener("click", () => {
-    if (themeImg.src.includes("bright-mode")) {
-        isDarkMode = false;
+/**
+* Loads/applies the current theme settings to UI elements.
+* (Site default is defined in "siteload.js")
+*/  
+function loadTheme() {
+    const documentRoot = document.documentElement;
+    const isDarkMode = documentRoot.classList.contains("dark-mode");
+    
+    // Set theme button image
+    if (isDarkMode) {
+        themeButton.querySelector("img").src = "/images/bright-mode.png";
+        // Set mobile sidebar opacity and button for dark mode
+        sidebar.style.backgroundColor = darkColorOpaque; 
+        sidebarButton.querySelector("img").src = "/images/close-white.png";
     } else {
-        isDarkMode = true;
+        themeButton.querySelector("img").src = "/images/dark-mode.png";
+        sidebar.style.backgroundColor = lightColorOpaque; 
+        // Set mobile sidebar opacity and button for light mode
+        sidebarButton.querySelector("img").src = "/images/close.png";
     }
 
-    if (isDarkMode) 
-    {
-        // Set page elements to a "darkmode/nightmode" theme
-        document.body.style.backgroundColor = darkColor;
-        document.documentElement.style.backgroundColor = darkColor;
-        themeImg.src = "/images/bright-mode.png";
-        sidebar.style.backgroundColor = darkColorOpaque;
-    }
-    else // Dark mode is false
-    { 
-        document.body.style.backgroundColor = lightColor;
-        document.documentElement.style.backgroundColor = lightColor;
-        themeImg.src = "/images/dark-mode.png";
-        sidebar.style.backgroundColor = lightColorOpaque;
+    // Reset all .info elements to remove any lingering inline styles
+    infoLink.forEach(info => {
+        info.style.backgroundColor = '';
+        const link = info.querySelector("a");
+        if (link) link.style.color = '';
+    });
+}
+
+/**
+* Toggles the sidebars open/closed site with resposive behavior. Matches scrolling behavior
+* for mobile.
+*/
+function toggleSidebar() {
+    const isDarkMode = document.documentElement.classList.contains("dark-mode");
+    if (sidebarIsOpen) {
+        // Close Sidebar
+        sidebarIsOpen = false;
         
-    }
-
-    // Set the color of the page elements to contrast with the theme
-    document.querySelectorAll("p, h1, h3, li, a").forEach(el => {
-        el.style.color = isDarkMode ? lightColor : darkColor;
-    });
-
-    // Set the transition and background color of the info buttons to contrast with the theme
-    document.querySelectorAll(".info").forEach(el => {
-        el.style.transition = "0.5s";
-        el.style.backgroundColor = isDarkMode ? darkColor : lightColor;
-        el.querySelector("p").style.transition = "0.5s";
-    });
-
-    // Logic for image changes if the close button was clicked
-    if (sideImg.src.includes("close")) {
-        // Set the sidebar image according to theme
-        if (isDarkMode) {
-            sideImg.src = "/images/close-white.png";
-        } else {
-            sideImg.src = "/images/close.png";
-        }
-    } 
-    else // Logic for image changes if the hamburger menu button was clicked
-    {
-        if (isDarkMode) {
-            sideImg.src = "/images/menu-white.png";
-        } else {
-            sideImg.src = "/images/menu.png";
-        }
-    }
-});
-
-mobileClose.addEventListener("click", () => {
-    // Check to see if darkmode is enabled and swap icons accordingly
-        if (isDarkMode) {
-            sideImg.src = "/images/menu-white.png";
-        } else {
-            sideImg.src = "/images/menu.png";
-        }
-
-        // Hide the sidebar and push the center main content
         if (!mediaQuery.matches) {
             sidebar.style.opacity = "0";
             sidebar.style.transform = "translateX(-100%)";
@@ -100,49 +62,28 @@ mobileClose.addEventListener("click", () => {
             sidebar.style.transform = "translateX(-100%)";
         }
 
-        // Disable scroll-lock on mobile
         if (mediaQuery.matches) {
             document.body.style.overflow = '';
         }
 
-});
-
-// Logic for changing icons based on what is active and which icon is displayed
-bttnSide.addEventListener("click", () => {
-    // If close button was clicked
-    if (sideImg.src.includes("close")) 
-    {
-        // Check to see if darkmode is enabled and swap icons accordingly
+        // Set to menu icon
         if (isDarkMode) {
-            sideImg.src = "/images/menu-white.png";
+            sidebarButton.querySelector("img").src = "/images/menu-white.png";
         } else {
-            sideImg.src = "/images/menu.png";
+            sidebarButton.querySelector("img").src = "/images/menu.png";
         }
-
-        // Hide the sidebar and push the center main content
-        if (!mediaQuery.matches) {
-            sidebar.style.opacity = "0";
-            sidebar.style.transform = "translateX(-100%)";
-            main.style.marginLeft = "0";
-        } else {
-            sidebar.style.opacity = "0";
-            sidebar.style.transform = "translateX(-100%)";
-        }
-
-        // Disable scroll-lock on mobile
-        if (mediaQuery.matches) {
-            document.body.style.overflow = '';
-        }
-    } 
-    else // Hamburger Icon was clicked
-    {
+    }
+    else {
+        // Open sidebar
+        sidebarIsOpen = true;
+        
+        // Set to close icon
         if (isDarkMode) {
-            sideImg.src = "/images/close-white.png";
+            sidebarButton.querySelector("img").src = "/images/close-white.png";
         } else {
-            sideImg.src = "/images/close.png";
+            sidebarButton.querySelector("img").src = "/images/close.png";
         }
 
-        // Un-hide the sidebar and offset the main content some
         if (!mediaQuery.matches) {
             sidebar.style.opacity = "1";
             sidebar.style.transform = "translateX(0)";
@@ -152,40 +93,133 @@ bttnSide.addEventListener("click", () => {
             sidebar.style.transform = "translateX(0)";
         }
 
-        // Enable scroll-lock on mobile
         if (mediaQuery.matches) {
             document.body.style.overflow = 'hidden';
         }
     }
+
+}
+
+/**
+* Toggles between the locally stored light or dark mode css class
+*/
+function toggleTheme() {
+    const documentRoot = document.documentElement;
+    const isDark = documentRoot.classList.toggle("dark-mode");
+    
+    if (isDark) {
+        localStorage.setItem("theme", "dark");
+        sidebar.style.backgroundColor = darkColorOpaque; // Style mobile sidebar opacity
+        themeButton.querySelector("img").src = "/images/bright-mode.png";
+
+        // Update sidebar button based on current state
+        if (sidebarIsOpen) {
+            sidebarButton.querySelector("img").src = "/images/close-white.png"            
+        } else {
+            sidebarButton.querySelector("img").src = "/images/menu-white.png";            
+        }
+
+    } else {
+        localStorage.setItem("theme", "light");
+        sidebar.style.backgroundColor = lightColorOpaque; // Style mobile sidebar opacity
+        themeButton.querySelector("img").src = "/images/dark-mode.png";
+
+        // Update sidebar button based on current state
+        if (sidebarIsOpen) {
+            sidebarButton.querySelector("img").src = "/images/close.png";
+        } else {
+            sidebarButton.querySelector("img").src = "/images/menu.png";
+        }
+    }
+
+    // Reset all .info elements to remove inline styles
+    infoLink.forEach(info => {
+        info.style.backgroundColor = '';
+        const link = info.querySelector("a");
+        if (link) link.style.color = '';
+    });
+}
+
+/**
+* Logic for closing the sidebar on mobile screen dimenstions
+*/
+function mobileClose() {
+    if (!mediaQuery.matches) {
+        sidebar.style.opacity = "0"; // Define the transparency of the sidebar
+        sidebar.style.transform = "translateX(-100%)"; // Move sidebar
+        main.style.marginLeft = "0"; // Removes the left margin from the main content area and allow main content to expand
+    } else {
+        sidebar.style.opacity = "0";
+        sidebar.style.transform = "translateX(-100%)";
+    }
+
+    // Re-enable scrolling (scrolling is prevented while sidebar is open in mobile) 
+    if (mediaQuery.matches) {
+        document.body.style.overflow = '';
+    }
+
+    toggleSidebar();
+}
+
+/**
+*  If the info elements in the sidebar are clicked
+*/
+function handleClick(event) {
+    const infoElement = event.currentTarget;
+    const link = infoElement.querySelector("a");
+    
+    if (link && link.href) {
+        window.location.href = link.href; // Make the whole area clickable
+    }
+}
+
+/** 
+* Styling logic for if a info element is hovered over (background color should be the opposite of theme)
+*/
+function handleMouseOver(event) {
+    const infoElement = event.currentTarget;
+    const isDarkMode = document.documentElement.classList.contains("dark-mode");
+
+    if (isDarkMode) {
+        infoElement.style.backgroundColor = lightColor;
+        infoElement.querySelector("a").style.color = darkColor;
+    } else {
+        infoElement.style.backgroundColor = darkColor;
+        infoElement.querySelector("a").style.color = lightColor;
+    }
+}
+
+/**
+* Styling logic for if a info element is no longer hovered over (background color should return to that of theme)
+*/
+function handleMouseLeave(event) {
+    const infoElement = event.currentTarget;
+    const isDarkMode = document.documentElement.classList.contains("dark-mode");
+    
+    if (isDarkMode) {
+        infoElement.style.backgroundColor = darkColor;
+        infoElement.querySelector("a").style.color = lightColor;
+    } else {
+        infoElement.style.backgroundColor = lightColor;
+        infoElement.querySelector("a").style.color = darkColor;
+    }
+}
+
+// Event listener for info blocks, setting style and interactability
+infoLink.forEach(infoLink => {
+    infoLink.addEventListener("click", handleClick);
+    infoLink.addEventListener("mouseover", handleMouseOver);
+    infoLink.addEventListener("mouseleave", handleMouseLeave);
 });
 
-// Logic for info button hover effects
-infoBttn.forEach((childBttn) => { 
-    childBttn.addEventListener("mouseover", () => {
-        
-        // Disable transition for instant color change on hover
-        childBttn.style.transition = "0s";
-        childBttn.querySelector("p").style.transition = "0s";
+// Event listened for webpage buttons
+themeButton.addEventListener("click", toggleTheme);
+sidebarButton.addEventListener("click", toggleSidebar);
+mobileCloseButton.addEventListener("click", mobileClose)
 
-        if (isDarkMode) {
-            childBttn.style.backgroundColor = lightColor;
-            childBttn.querySelector("p").style.color = darkColor;
-        }
-        else {
-            childBttn.style.backgroundColor = darkColor;
-            childBttn.querySelector("p").style.color = lightColor;
-        }
-    });
+//  Disable scrolling mobile for inital load, and whenever the sidebar is open
+if (mediaQuery.matches) {
+    document.body.style.overflow = 'hidden';
+}
 
-    // Logic for mouse leaving the info button area
-    childBttn.addEventListener("mouseleave", () => {
-        if (isDarkMode) {
-            childBttn.style.backgroundColor = darkColor;
-            childBttn.querySelector("p").style.color = lightColor;
-        }
-        else {
-            childBttn.style.backgroundColor = lightColor;
-            childBttn.querySelector("p").style.color = darkColor;
-        }
-    });
-});
+loadTheme();
