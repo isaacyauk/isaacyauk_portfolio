@@ -29,6 +29,34 @@ p, a {
     color: inherit;
 }
 
+.about-img {
+    width: 400px;
+    max-width: 100%;
+    border-radius: 10px;
+    border: 0.8px solid #000;
+    align-self: center;
+}
+
+.about-img-wide {
+    width: 600px;
+    display: block;
+    border-radius: 10px;
+    border: 0.8px solid #000;
+}
+
+.citeref-link {
+    color: inherit;
+    text-decoration: none;
+    margin: 7px;
+    font-weight: 700;
+    font-family: "Schibsted Grotesk", sans-serif;
+}
+
+.citeref-link:hover {
+    color: inherit;
+    text-decoration: underline;
+}
+
 li {
     font-family: "Schibsted Grotesk";
     font-size: 19.5px;
@@ -167,7 +195,7 @@ button {
     font-family:Georgia, 'Times New Roman', Times, serif;
 }
 
-.info a {
+.info a{
     color: #1a1a1a;
     text-decoration: none;
     margin: 0.5px;
@@ -270,6 +298,13 @@ button {
         margin: 0 auto;
         margin-bottom: 5vh;
         
+    }
+
+    .about-img,
+    .about-img-wide {
+        width: auto;
+        max-width: 90vw;
+        align-self: center;
     }
 
 }
