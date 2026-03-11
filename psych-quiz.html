@@ -1,13 +1,303 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TEST</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intro Psych — Practice Exam 2</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f1117;--card:#181c27;--card2:#1f2435;--border:#2c3149;--accent:#5b8dee;--accent2:#8b5cf6;--green:#3dd68c;--red:#f4645f;--gold:#f5b942;--text:#dde3f5;--muted:#6b7494;--bio:#5b8dee;--sens:#3dd68c;--life:#f5a623;--pers:#ec4899}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;min-height:100vh}
+header{background:var(--card);border-bottom:1px solid var(--border);padding:1.1rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:900;color:var(--text)}
+.logo span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header-right{display:flex;align-items:center;gap:1.75rem}
+.stats{display:flex;gap:1.5rem;align-items:center}
+.stat{text-align:center;line-height:1.2}
+.stat-n{font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:700}
+.stat-n.g{color:var(--green)}.stat-n.r{color:var(--red)}.stat-n.b{color:var(--accent2)}
+.stat-l{font-size:.65rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}
+.hist-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:.45rem .9rem;border-radius:6px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-size:.78rem;font-weight:500;transition:all .15s}
+.hist-btn:hover{border-color:var(--accent);color:var(--text)}
+main{max-width:820px;margin:0 auto;padding:2rem 1.5rem 5rem}
+.progress-wrap{margin-bottom:2rem}
+.progress-bar{height:2px;background:var(--border);border-radius:1px;overflow:hidden;margin-bottom:.5rem}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:1px;transition:width .4s ease}
+.progress-label{font-size:.72rem;color:var(--muted);display:flex;justify-content:space-between}
+.topic-section{margin-bottom:1.75rem}
+.topic-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.75rem;font-weight:600}
+.tabs{display:flex;gap:.5rem;flex-wrap:wrap}
+.tab{background:var(--card);border:1.5px solid var(--border);color:var(--muted);padding:.55rem 1.1rem;border-radius:8px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-size:.82rem;font-weight:500;transition:all .15s;display:flex;align-items:center;gap:.4rem}
+.tab:hover{border-color:var(--accent);color:var(--text)}
+.tab.active{color:var(--text)}
+.tab[data-t="all"].active{border-color:var(--accent2);background:rgba(139,92,246,.12)}
+.tab[data-t="biopsychology"].active{border-color:var(--bio);background:rgba(91,141,238,.1)}
+.tab[data-t="sensation"].active{border-color:var(--sens);background:rgba(61,214,140,.1)}
+.tab[data-t="lifespan"].active{border-color:var(--life);background:rgba(245,166,35,.1)}
+.tab[data-t="personality"].active{border-color:var(--pers);background:rgba(236,72,153,.1)}
+.tab-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.tab-count{font-size:.7rem;background:var(--card2);padding:.1rem .4rem;border-radius:10px;color:var(--muted)}
+.sub-banner{display:flex;align-items:center;gap:.75rem;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.7rem 1.1rem;margin-bottom:1.5rem;font-size:.8rem}
+.sb-lbl{color:var(--muted)}.sb-name{font-weight:600;flex:1}.sb-prog{color:var(--muted);font-size:.72rem;white-space:nowrap}
+.q-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.75rem 1.75rem 1.5rem;position:relative;overflow:hidden;animation:fadeUp .25s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.q-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.q-card[data-topic="biopsychology"]::before{background:var(--bio)}
+.q-card[data-topic="sensation"]::before{background:var(--sens)}
+.q-card[data-topic="lifespan"]::before{background:var(--life)}
+.q-card[data-topic="personality"]::before{background:var(--pers)}
+.q-meta{display:flex;align-items:center;gap:.5rem;margin-bottom:1.1rem;flex-wrap:wrap}
+.q-num{font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+.q-tag{font-size:.68rem;padding:.18rem .55rem;border-radius:20px;font-weight:600;letter-spacing:.04em}
+.q-tag.biopsychology{background:rgba(91,141,238,.15);color:var(--bio)}
+.q-tag.sensation{background:rgba(61,214,140,.15);color:var(--sens)}
+.q-tag.lifespan{background:rgba(245,166,35,.15);color:var(--life)}
+.q-tag.personality{background:rgba(236,72,153,.15);color:var(--pers)}
+.q-subtag{font-size:.68rem;background:rgba(255,255,255,.05);color:var(--muted);padding:.18rem .55rem;border-radius:20px;font-weight:500}
+.q-text{font-size:1.05rem;font-weight:400;line-height:1.7;margin-bottom:1.5rem;color:var(--text)}
+.options{display:flex;flex-direction:column;gap:.55rem}
+.opt{display:flex;align-items:flex-start;gap:.7rem;background:var(--card2);border:1.5px solid var(--border);color:var(--text);padding:.8rem 1.1rem;border-radius:9px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-size:.93rem;font-weight:400;text-align:left;line-height:1.5;transition:all .14s;width:100%}
+.opt:hover:not(:disabled){border-color:var(--accent);background:rgba(91,141,238,.08);transform:translateX(2px)}
+.opt:disabled{cursor:default}
+.opt.correct{border-color:var(--green);background:rgba(61,214,140,.1);color:var(--green)}
+.opt.wrong{border-color:var(--red);background:rgba(244,100,95,.1);color:var(--red)}
+.opt.reveal{border-color:var(--green);background:rgba(61,214,140,.05);opacity:.75}
+.opt-lbl{font-weight:700;font-size:.8rem;min-width:1.4rem;color:var(--muted);transition:color .14s;margin-top:.1rem}
+.opt.correct .opt-lbl{color:var(--green)}.opt.wrong .opt-lbl{color:var(--red)}
+.feedback{margin-top:1.1rem;padding:.9rem 1.1rem;border-radius:9px;font-size:.87rem;line-height:1.6;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.feedback.ok{background:rgba(61,214,140,.08);border:1px solid rgba(61,214,140,.3);color:#9de8c3}
+.feedback.bad{background:rgba(244,100,95,.08);border:1px solid rgba(244,100,95,.3);color:#fbbdb9}
+.feedback strong{font-weight:600}
+.next-btn{margin-top:1.1rem;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;padding:.8rem 1.6rem;border-radius:9px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-size:.9rem;font-weight:600;transition:all .15s;box-shadow:0 3px 14px rgba(91,141,238,.25)}
+.next-btn:hover{transform:translateY(-1px);box-shadow:0 5px 20px rgba(91,141,238,.35)}
+.next-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.history-panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.25rem;margin-bottom:1.5rem;max-height:320px;overflow-y:auto}
+.history-panel h3{font-family:'Playfair Display',serif;font-size:.9rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.9rem}
+.h-item{display:flex;align-items:flex-start;gap:.6rem;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.82rem}
+.h-item:last-child{border-bottom:none}
+.h-dot{width:7px;height:7px;border-radius:50%;margin-top:.3rem;flex-shrink:0}
+.h-dot.ok{background:var(--green)}.h-dot.bad{background:var(--red)}
+.h-q{color:var(--text);line-height:1.4}.h-sub{color:var(--muted);font-size:.73rem;margin-top:.1rem}
+.done-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:3rem 2rem;text-align:center}
+.done-card h2{font-family:'Playfair Display',serif;font-size:2rem;margin-bottom:.5rem}
+.done-score{font-size:3.5rem;font-family:'Playfair Display',serif;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.5rem}
+.done-sub{color:var(--muted);margin-bottom:2rem;font-size:.95rem}
+.restart-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;padding:.9rem 2rem;border-radius:10px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-size:.95rem;font-weight:600;transition:all .15s;box-shadow:0 4px 16px rgba(91,141,238,.3)}
+.restart-btn:hover{transform:translateY(-2px)}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+@media(max-width:560px){header{padding:.9rem 1rem}.header-right{gap:1rem}.stats{gap:.9rem}.stat-n{font-size:1.1rem}main{padding:1.25rem 1rem 4rem}.tab{font-size:.77rem;padding:.5rem .8rem}}
+</style>
 </head>
 <body>
+<header>
+  <div class="logo">Psych <span>Exam 2</span></div>
+  <div class="header-right">
+    <div class="stats">
+      <div class="stat"><div class="stat-n g" id="sc">0</div><div class="stat-l">Correct</div></div>
+      <div class="stat"><div class="stat-n r" id="sw">0</div><div class="stat-l">Wrong</div></div>
+      <div class="stat"><div class="stat-n b" id="st">0</div><div class="stat-l">Total</div></div>
+    </div>
+    <button class="hist-btn" onclick="toggleHistory()">History</button>
+  </div>
+</header>
+<main>
+  <div id="history-panel" class="history-panel" style="display:none"><h3>Answer History</h3><div id="history-list"></div></div>
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+    <div class="progress-label"><span id="prog-label">0% correct</span><span id="prog-remain"></span></div>
+  </div>
+  <div class="topic-section">
+    <div class="topic-label">Filter by Topic</div>
+    <div class="tabs">
+      <button class="tab active" data-t="all" onclick="setTopic('all')"><div class="tab-dot" style="background:#8b5cf6"></div>All Topics<span class="tab-count" id="cnt-all"></span></button>
+      <button class="tab" data-t="biopsychology" onclick="setTopic('biopsychology')"><div class="tab-dot" style="background:var(--bio)"></div>Biopsychology<span class="tab-count" id="cnt-bio"></span></button>
+      <button class="tab" data-t="sensation" onclick="setTopic('sensation')"><div class="tab-dot" style="background:var(--sens)"></div>Sensation &amp; Perception<span class="tab-count" id="cnt-sens"></span></button>
+      <button class="tab" data-t="lifespan" onclick="setTopic('lifespan')"><div class="tab-dot" style="background:var(--life)"></div>Lifespan Dev.<span class="tab-count" id="cnt-life"></span></button>
+      <button class="tab" data-t="personality" onclick="setTopic('personality')"><div class="tab-dot" style="background:var(--pers)"></div>Personality<span class="tab-count" id="cnt-pers"></span></button>
+    </div>
+  </div>
+  <div class="sub-banner" id="sub-banner"><span class="sb-lbl">Subtopic:</span><span class="sb-name" id="sub-name">—</span><span class="sb-prog" id="sub-prog"></span></div>
+  <div id="q-area"></div>
+</main>
+<script>
+const Q=[
+{topic:"biopsychology",sub:"Neuron Structure",q:"The branching extensions of a neuron that receive incoming signals from other neurons are called:",o:["Axons","Dendrites","Terminal buttons","Myelin sheaths"],a:1,e:"Dendrites are the receiving end of the neuron. Axons carry signals away from the cell body."},
+{topic:"biopsychology",sub:"Neuron Structure",q:"Which part of the neuron contains synaptic vesicles filled with neurotransmitters?",o:["Dendrites","Soma","Terminal buttons","Nodes of Ranvier"],a:2,e:"Terminal buttons release neurotransmitters into the synaptic cleft. Dendrites receive signals; the soma integrates them."},
+{topic:"biopsychology",sub:"Neuron Structure",q:"The myelin sheath is produced by which type of cell?",o:["Neurons","Glial cells","Receptor cells","Dendrites"],a:1,e:"Glial cells wrap around axons to form the myelin sheath, insulating the axon and greatly speeding up signal transmission."},
+{topic:"biopsychology",sub:"Neuron Structure",q:"Multiple sclerosis attacks the _____, leading to slowed or disrupted neural communication.",o:["Dendrites","Synaptic vesicles","Myelin sheath","Terminal buttons"],a:2,e:"MS destroys the myelin sheath. Without this insulation, signals slow or fail — causing fatigue, coordination loss, and vision problems."},
+{topic:"biopsychology",sub:"Action Potential",q:"At resting potential, the charge inside a neuron is approximately:",o:["+70 mV","-70 mV","0 mV","+55 mV"],a:1,e:"Resting potential is about -70 mV. An action potential fires when incoming signals push the charge past the threshold of ~-55 mV."},
+{topic:"biopsychology",sub:"Action Potential",q:"The action potential is 'all-or-nothing.' This means:",o:["The neuron fires only at night","The signal fires fully or not at all — its size never varies with stimulus intensity","Stronger stimuli produce larger action potentials","The neuron fires continuously once started"],a:1,e:"A stronger stimulus produces more frequent action potentials, not larger ones. Each action potential is identical in size."},
+{topic:"biopsychology",sub:"Action Potential",q:"During depolarization of an action potential, which ion rushes INTO the neuron?",o:["Potassium (K+)","Chloride (Cl-)","Sodium (Na+)","Calcium (Ca2+)"],a:2,e:"Na+ floods into the neuron during depolarization, temporarily making the inside positive. K+ rushes out afterward during repolarization."},
+{topic:"biopsychology",sub:"Action Potential",q:"After an action potential fires, the brief period during which the neuron cannot fire again is called the:",o:["Resting potential","Threshold of excitation","Refractory period","Synaptic delay"],a:2,e:"The refractory period prevents immediate re-firing, ensuring signals travel in one direction and limiting the maximum firing rate."},
+{topic:"biopsychology",sub:"Synaptic Transmission",q:"The neurotransmitter-receptor relationship is described as a 'lock and key' because:",o:["Receptors are made of metal","Each neurotransmitter only fits receptors with the matching molecular shape","All receptors accept all neurotransmitters","Neurotransmitters permanently lock neurons shut"],a:1,e:"Just as a key fits only one lock, each neurotransmitter binds only to receptors whose shape matches — keeping signals specific and targeted."},
+{topic:"biopsychology",sub:"Synaptic Transmission",q:"SSRIs treat depression by blocking serotonin reuptake. Reuptake refers to:",o:["The firing of an action potential","Breakdown of receptors","The sending neuron reabsorbing neurotransmitters from the synaptic cleft","The release of neurotransmitters into the cleft"],a:2,e:"Reuptake is when the sending neuron reabsorbs leftover neurotransmitters. SSRIs block this, leaving more serotonin available to stimulate the next neuron."},
+{topic:"biopsychology",sub:"Synaptic Transmission",q:"A drug that mimics a neurotransmitter by binding to and activating its receptor is called a(n):",o:["Antagonist","Inhibitor","Agonist","Reuptake blocker"],a:2,e:"Agonists mimic/amplify neurotransmitter effects (e.g., heroin on endorphin receptors). Antagonists block receptors without activating them."},
+{topic:"biopsychology",sub:"Neurotransmitters",q:"Which neurotransmitter is associated with reward, motivation, and motor control — and is deficient in Parkinson's disease?",o:["Serotonin","Acetylcholine","GABA","Dopamine"],a:3,e:"Dopamine drives reward and motivation and controls smooth motor movement. In Parkinson's, dopamine-producing neurons in the basal ganglia degenerate."},
+{topic:"biopsychology",sub:"Neurotransmitters",q:"Which is the brain's PRIMARY inhibitory neurotransmitter, enhanced by alcohol (causing sedation)?",o:["Glutamate","GABA","Dopamine","Norepinephrine"],a:1,e:"GABA inhibits neural activity throughout the brain. Alcohol enhances GABA's inhibitory effects, which depresses the CNS."},
+{topic:"biopsychology",sub:"Neurotransmitters",q:"Opioid drugs like heroin produce pain relief and euphoria by mimicking which natural neurotransmitters?",o:["Dopamine","GABA","Endorphins","Acetylcholine"],a:2,e:"Endorphins are the brain's natural painkillers. Opioids bind to the same receptors, producing intense pain relief and euphoria — driving addiction."},
+{topic:"biopsychology",sub:"Nervous System",q:"The central nervous system (CNS) consists of:",o:["The brain and spinal cord","All nerves outside the brain","The sympathetic and parasympathetic divisions","The somatic and autonomic systems"],a:0,e:"The CNS = brain + spinal cord. All nerve tissue outside these structures makes up the peripheral nervous system (PNS)."},
+{topic:"biopsychology",sub:"Nervous System",q:"Heart rate spikes, pupils dilate, and digestion slows when you narrowly avoid a car accident. Which division is responsible?",o:["Somatic nervous system","Parasympathetic nervous system","Sympathetic nervous system","Central nervous system"],a:2,e:"The sympathetic nervous system activates fight-or-flight — redirecting energy to muscles and organs needed for immediate survival."},
+{topic:"biopsychology",sub:"Nervous System",q:"After the scare passes, your heart slows and digestion resumes. This is driven by the:",o:["Sympathetic nervous system","Somatic nervous system","Reticular formation","Parasympathetic nervous system"],a:3,e:"The parasympathetic 'rest and digest' system returns the body to a calm baseline after sympathetic activation."},
+{topic:"biopsychology",sub:"Brain Lobes",q:"Which lobe contains the primary motor cortex, Broca's area, and executive functions like planning and impulse control?",o:["Parietal lobe","Temporal lobe","Frontal lobe","Occipital lobe"],a:2,e:"The frontal lobe handles voluntary movement, speech production (Broca's area), working memory, planning, and personality."},
+{topic:"biopsychology",sub:"Brain Lobes",q:"A patient speaks fluently but produces meaningless 'word salad' and can't understand others. Damage is most likely in:",o:["Broca's area (frontal lobe)","The occipital lobe","Wernicke's area (temporal lobe)","The parietal lobe"],a:2,e:"Wernicke's aphasia results from temporal lobe damage. The person produces fluent but meaningless speech and cannot comprehend language."},
+{topic:"biopsychology",sub:"Brain Lobes",q:"All visual processing takes place in the _____ lobe.",o:["Frontal","Parietal","Temporal","Occipital"],a:3,e:"The occipital lobe contains the primary visual cortex. Damage causes visual deficits even when the eyes themselves are intact."},
+{topic:"biopsychology",sub:"Subcortical Structures",q:"Patient H.M. had his hippocampus removed and afterward could not form new long-term memories, though old ones remained. The hippocampus is crucial for:",o:["Emotional regulation","Motor coordination","Memory consolidation","Sensory relay"],a:2,e:"The hippocampus converts short-term memories into long-term declarative memories. H.M.'s case confirmed this role directly."},
+{topic:"biopsychology",sub:"Subcortical Structures",q:"Almost all sensory information passes through this structure before reaching the cortex — the brain's 'relay station':",o:["Hypothalamus","Amygdala","Cerebellum","Thalamus"],a:3,e:"The thalamus routes sensory signals (except smell) to the appropriate cortical areas. It also plays a role in attention and consciousness."},
+{topic:"biopsychology",sub:"Subcortical Structures",q:"Which brain structure is most strongly linked to fear, threat detection, and emotional memory?",o:["Hippocampus","Amygdala","Hypothalamus","Cerebellum"],a:1,e:"The amygdala evaluates the emotional significance of stimuli, especially threats. It is hyperactive in anxiety disorders."},
+{topic:"biopsychology",sub:"Subcortical Structures",q:"Coordination, balance, and fine motor skills are primarily controlled by the:",o:["Frontal lobe","Cerebellum","Brainstem","Thalamus"],a:1,e:"The cerebellum coordinates precise, smooth movement. Damage causes ataxia — clumsy, uncoordinated movement."},
+{topic:"biopsychology",sub:"Endocrine System",q:"Compared to neurotransmitters, hormones tend to have _____ effects that are _____ lasting.",o:["Faster; shorter","More localized; shorter","Slower; longer","More intense; shorter"],a:2,e:"Hormones travel through the bloodstream — a slower process than synaptic transmission — but their effects persist much longer and affect tissues throughout the body."},
+{topic:"biopsychology",sub:"Endocrine System",q:"The 'master gland' of the endocrine system, controlled by the hypothalamus, is the:",o:["Adrenal gland","Thyroid gland","Pituitary gland","Pineal gland"],a:2,e:"The pituitary releases hormones that regulate the thyroid, adrenals, and gonads. It is itself controlled by the hypothalamus via releasing hormones."},
+{topic:"biopsychology",sub:"Endocrine System",q:"Which of the following is NOT a typical effect of chronically elevated cortisol?",o:["Suppressed immune function","Enhanced long-term memory","Weight gain","Increased cardiovascular risk"],a:1,e:"Chronic cortisol actually impairs hippocampal-dependent memory. Immune suppression, weight gain, and cardiovascular damage are well-documented effects of chronic stress."},
+{topic:"biopsychology",sub:"Endocrine System",q:"Testosterone's 'organizational' effects are permanent structural changes during _____, whereas 'activational' effects are temporary behavioral changes in _____.",o:["Adulthood; infancy","Prenatal/early development; adulthood","Puberty; childhood","Stress; recovery"],a:1,e:"Organizational effects shape the developing brain/body permanently during early life. Activational effects are reversible behavioral changes triggered by hormone levels in adulthood."},
+{topic:"biopsychology",sub:"Research Methods",q:"An EEG has excellent _____ resolution but poor _____ resolution.",o:["Spatial; temporal","Temporal; spatial","Chemical; electrical","Structural; functional"],a:1,e:"EEG captures electrical activity at millisecond precision (great temporal resolution) but can't pinpoint exactly where in the brain the activity originates (poor spatial resolution)."},
+{topic:"biopsychology",sub:"Research Methods",q:"A heritability of 0.60 for intelligence means:",o:["60% of your intelligence came from genes","Genes explain 60% of intelligence variation within the studied population","Environment has no effect","Identical twins share exactly 60% of IQ scores"],a:1,e:"Heritability describes variation across a population — not what % of any individual's trait is genetic. It also varies depending on the environment studied."},
+// SENSATION (26)
+{topic:"sensation",sub:"Sensation & Thresholds",q:"The conversion of physical energy (light, sound) into a neural signal the brain can process is called:",o:["Perception","Adaptation","Transduction","Accommodation"],a:2,e:"Transduction is the critical step where sensory receptors convert physical stimuli into neural impulses — bridging the physical world and the brain."},
+{topic:"sensation",sub:"Sensation & Thresholds",q:"The minimum stimulus intensity detectable 50% of the time under ideal conditions is the:",o:["Difference threshold","Sensory adaptation point","Absolute threshold","Signal detection threshold"],a:2,e:"The absolute threshold defines the sensitivity of a sensory system. Below this level, stimuli are too faint to be reliably detected."},
+{topic:"sensation",sub:"Sensation & Thresholds",q:"Weber's Law states the just noticeable difference (JND) is:",o:["Always the same regardless of stimulus level","A constant proportion of the original stimulus intensity","Smaller as stimuli get stronger","Determined only by the type of sense"],a:1,e:"Weber's Law: detecting a change requires the stimulus to change by a constant percentage. The same proportion applies whether the baseline is small or large."},
+{topic:"sensation",sub:"Sensation & Thresholds",q:"You no longer notice your perfume after wearing it all day. This is:",o:["The difference threshold","Sensory adaptation","Signal detection failure","Top-down processing"],a:1,e:"Sensory adaptation reduces neural response to constant, unchanging stimuli — freeing the brain to focus on new information."},
+{topic:"sensation",sub:"Sensation & Thresholds",q:"When prior knowledge and expectations shape what we perceive (e.g., reading a misspelled word as correct), this is called:",o:["Bottom-up processing","Transduction","Sensory adaptation","Top-down processing"],a:3,e:"Top-down processing uses stored knowledge to interpret sensory data. Bottom-up processing builds perception from raw sensory features upward."},
+{topic:"sensation",sub:"Vision — The Eye",q:"Which structure in the eye changes shape to focus light on the retina for near or distant objects?",o:["Cornea","Iris","Lens","Pupil"],a:2,e:"The lens uses ciliary muscles to change curvature — more curved for near objects (accommodation). Loss of flexibility with age is presbyopia."},
+{topic:"sensation",sub:"Vision — The Eye",q:"Rods are photoreceptors best suited for:",o:["Color vision and fine detail in bright light","Peripheral and low-light vision in black and white","Processing only red and green wavelengths","High acuity vision at the fovea"],a:1,e:"Rods are extremely sensitive to light but cannot detect color. Concentrated in the periphery, they enable night vision and motion detection."},
+{topic:"sensation",sub:"Vision — The Eye",q:"The fovea is the region of the retina where:",o:["Rods are most concentrated","The optic nerve exits, creating a blind spot","Cones are most densely packed, giving sharpest vision","The lens focuses incoming light"],a:2,e:"The fovea at the retina's center has the highest cone density. When you look directly at something, its image lands on the fovea for maximum acuity."},
+{topic:"sensation",sub:"Vision — The Eye",q:"The blind spot occurs because the optic disc:",o:["Has too many cones packed together","Has no photoreceptors where the optic nerve exits","Receives too much light","Is covered by the iris"],a:1,e:"The optic disc is where the optic nerve exits — no rods or cones are present. The brain fills in this gap automatically."},
+{topic:"sensation",sub:"Color Vision",q:"The trichromatic theory of color vision holds that all color perception comes from three cone types sensitive to:",o:["Red, yellow, and blue only","Short (blue), medium (green), and long (red) wavelengths","Brightness, saturation, and hue separately","Only primary pigment colors"],a:1,e:"Three cone types (S, M, L) respond to different wavelengths. The combination of their activation produces every color we perceive."},
+{topic:"sensation",sub:"Color Vision",q:"After staring at a bright green square, you look away and see a red afterimage. This is best explained by:",o:["The trichromatic theory","Weber's Law","The opponent-process theory","Sensory adaptation in the cornea"],a:2,e:"Opponent-process theory: color is processed in pairs (red/green, blue/yellow). Staring at green fatigues those cells; looking away activates the opposing red channel."},
+{topic:"sensation",sub:"Hearing",q:"The three tiny bones of the middle ear (ossicles) function to:",o:["Filter unwanted frequencies","Mechanically amplify vibrations and transmit them to the cochlea","Convert sound into neural signals","Equalize inner ear pressure"],a:1,e:"The ossicles (malleus, incus, stapes) amplify mechanical vibration from the eardrum and transmit it to the cochlea's oval window where transduction occurs."},
+{topic:"sensation",sub:"Hearing",q:"Sound transduction (conversion to neural signals) occurs when _____ in the cochlea are bent by basilar membrane movement.",o:["Ossicles","The tympanic membrane","Hair cells","The oval window"],a:2,e:"Hair cells are the mechanoreceptors of hearing. When the basilar membrane vibrates, hair cells bend and generate neural signals sent via the auditory nerve."},
+{topic:"sensation",sub:"Hearing",q:"According to place theory, the brain determines pitch by:",o:["The rate at which hair cells fire","Which location on the basilar membrane vibrates most","The amplitude of the sound wave","The size of the eardrum vibration"],a:1,e:"Place theory: high-frequency sounds vibrate the base of the basilar membrane; low-frequency sounds vibrate the apex. Location = pitch."},
+{topic:"sensation",sub:"Hearing",q:"Sensorineural deafness involves damage to _____ and is typically _____.",o:["The eardrum or ossicles; treatable","Hair cells or the auditory nerve; permanent","The outer ear canal; treatable","The cerebral cortex; always permanent"],a:1,e:"Hair cells don't regenerate, so sensorineural deafness is generally permanent. Conduction deafness (eardrum/ossicles) is often treatable or correctable."},
+{topic:"sensation",sub:"Other Senses",q:"Gate-control theory explains why rubbing a hurt area reduces pain: activating large nerve fibers _____ pain signals reaching the brain.",o:["Amplifies","Eliminates","Closes a spinal gate, reducing","Permanently blocks"],a:2,e:"Gate-control theory: non-painful touch activates large fibers that close a 'gate' in the dorsal horn of the spinal cord, reducing smaller pain fibers' signals."},
+{topic:"sensation",sub:"Other Senses",q:"Which sense projects directly to the amygdala and hippocampus WITHOUT first routing through the thalamus?",o:["Vision","Hearing","Touch","Smell (olfaction)"],a:3,e:"Olfactory signals go straight to the amygdala (emotion) and hippocampus (memory) — explaining why smells powerfully trigger vivid memories and emotions."},
+{topic:"sensation",sub:"Other Senses",q:"The five basic tastes are:",o:["Sweet, salty, sour, spicy, umami","Sweet, salty, sour, bitter, umami","Sweet, sour, bitter, savory, pungent","Sweet, sour, spicy, bitter, metallic"],a:1,e:"The five basic tastes: sweet, salty, sour, bitter, and umami. 'Spicy' is a pain sensation from capsaicin activating heat/pain receptors — not a taste."},
+{topic:"sensation",sub:"Gestalt Principles",q:"Birds flying together in the same direction are automatically perceived as a group. This is the Gestalt principle of:",o:["Proximity","Similarity","Common fate","Closure"],a:2,e:"Common fate: elements moving in the same direction at the same speed are perceptually grouped — useful for detecting predators or prey in motion."},
+{topic:"sensation",sub:"Gestalt Principles",q:"You see a circle with small gaps in it and still perceive a complete circle. This is the Gestalt principle of:",o:["Proximity","Continuity","Common fate","Closure"],a:3,e:"Closure: the brain mentally fills in gaps to perceive a complete figure — allowing recognition of objects even when partially obscured."},
+{topic:"sensation",sub:"Gestalt Principles",q:"In Rubin's vase, you can see either two faces or a vase, but not both simultaneously. This illustrates:",o:["Closure","Figure-ground","Common fate","Proximity"],a:1,e:"Figure-ground: we segregate visual scenes into a figure (foreground) and background. Rubin's vase is a classic ambiguous figure where they can switch."},
+{topic:"sensation",sub:"Gestalt Principles",q:"You automatically group closely positioned dots into rows rather than seeing them as random. This is the Gestalt principle of:",o:["Similarity","Common fate","Proximity","Continuity"],a:2,e:"Proximity: elements close to each other tend to be perceptually grouped together, regardless of their appearance."},
+{topic:"sensation",sub:"Depth Perception",q:"Retinal disparity is a binocular depth cue because:",o:["Each eye has different numbers of rods and cones","Each eye receives a slightly different image; the brain computes depth from the difference","One eye is always more dominant","The two eyes focus at different distances"],a:1,e:"Eyes are a few inches apart, so each receives a slightly different image. Greater disparity = closer object. This is the basis of 3D movies."},
+{topic:"sensation",sub:"Depth Perception",q:"Nearby trees rush past while distant mountains barely move as you drive. This monocular cue is called:",o:["Interposition","Linear perspective","Motion parallax","Texture gradient"],a:2,e:"Motion parallax: nearby objects shift position quickly during movement; distant objects shift slowly. This gives depth information from a single eye."},
+{topic:"sensation",sub:"Depth Perception",q:"One building partially blocks your view of another. You perceive the hidden building as farther away. This is the monocular cue of:",o:["Texture gradient","Linear perspective","Relative size","Interposition (overlap)"],a:3,e:"Interposition: an object partially occluded by another is perceived as farther away. It requires only prior knowledge of the objects' shapes."},
+{topic:"sensation",sub:"Perceptual Constancy",q:"A friend walks away from you. Their retinal image shrinks, but you don't think they're actually getting smaller. This is:",o:["Perceptual set","Signal detection","Size constancy","The difference threshold"],a:2,e:"Size constancy: the brain uses distance cues to scale perceived size, so objects appear the same actual size regardless of retinal image changes."},
+// LIFESPAN (25)
+{topic:"lifespan",sub:"Research Methods",q:"A researcher compares 5-, 10-, and 15-year-olds at the same point in time. This is a _____ design.",o:["Longitudinal","Cross-sectional","Case study","Experimental"],a:1,e:"Cross-sectional studies compare different age groups simultaneously — fast but vulnerable to cohort effects (different generations, not just different ages)."},
+{topic:"lifespan",sub:"Research Methods",q:"The three domains of development are:",o:["Genetic, environmental, and social","Physical, cognitive, and socioemotional","Prenatal, childhood, and adolescent","Motor, sensory, and linguistic"],a:1,e:"The three domains: physical (body, brain, motor skills), cognitive (thinking, memory, language), and socioemotional (relationships, personality, emotions)."},
+{topic:"lifespan",sub:"Prenatal Development",q:"The embryonic period spans approximately:",o:["Conception to 2 weeks","2 to 8 weeks after conception","8 weeks to birth","Only the third trimester"],a:1,e:"The embryonic period (weeks 2-8) is when all major organs form. It is the most sensitive period for teratogen exposure because organogenesis is occurring."},
+{topic:"lifespan",sub:"Prenatal Development",q:"Substances or agents that can harm prenatal development by crossing the placenta are called:",o:["Pathogens","Androgens","Teratogens","Mutagens"],a:2,e:"Teratogens include alcohol (FAS), tobacco, certain drugs, and viruses. Effects depend on timing, dosage, and genetic vulnerability."},
+{topic:"lifespan",sub:"Piaget's Theory",q:"Object permanence — the understanding that objects exist when out of sight — develops during Piaget's _____ stage.",o:["Preoperational","Concrete operational","Formal operational","Sensorimotor"],a:3,e:"Object permanence develops around 8-12 months in the sensorimotor stage. Before this, infants behave as if hidden objects no longer exist."},
+{topic:"lifespan",sub:"Piaget's Theory",q:"A child says there is MORE water after it is poured from a short, wide glass into a tall, narrow glass. This child lacks:",o:["Object permanence","Egocentrism","Abstract reasoning","Conservation"],a:3,e:"Conservation is the understanding that quantity doesn't change when form does. Children in the preoperational stage (2-7) have not yet developed this ability."},
+{topic:"lifespan",sub:"Piaget's Theory",q:"A 4-year-old hides her eyes in hide-and-seek, thinking if she can't see you, you can't see her. Piaget would call this:",o:["Animism","Lack of conservation","Egocentrism","Centration"],a:2,e:"Egocentrism (preoperational stage) is the inability to take another's perspective — assuming others see and think exactly as you do."},
+{topic:"lifespan",sub:"Piaget's Theory",q:"The ability to reason hypothetically ('What if animals could talk?') develops in Piaget's _____ stage.",o:["Sensorimotor","Preoperational","Concrete operational","Formal operational"],a:3,e:"Formal operational thought (12+) allows abstract reasoning, hypothetical thinking, and systematic consideration of possibilities."},
+{topic:"lifespan",sub:"Piaget's Theory",q:"When a toddler sees a horse and calls it 'doggy,' Piaget would say the child is using:",o:["Accommodation","Egocentrism","Assimilation","Conservation"],a:2,e:"Assimilation: fitting new information into an existing schema (the 'dog' schema). Accommodation involves changing the schema to fit new information."},
+{topic:"lifespan",sub:"Vygotsky & Language",q:"Vygotsky's Zone of Proximal Development (ZPD) refers to tasks that a child:",o:["Can do independently","Finds too easy","Cannot do even with help","Cannot do alone, but can accomplish with guidance"],a:3,e:"The ZPD is the gap between independent ability and what is possible with support. Teaching within the ZPD is most effective for learning."},
+{topic:"lifespan",sub:"Vygotsky & Language",q:"A teacher provides hints and gradually withdraws support as a student becomes capable. This is called:",o:["Reinforcement","Scaffolding","Shaping","Habituation"],a:1,e:"Scaffolding: temporary calibrated support faded as the learner becomes competent — like training wheels removed as balance improves."},
+{topic:"lifespan",sub:"Erikson's Stages",q:"According to Erikson, consistent, responsive caregiving in infancy builds a sense of _____, which forms the foundation for future relationships.",o:["Autonomy","Initiative","Industry","Trust"],a:3,e:"Erikson's first stage: Trust vs. Mistrust (infancy, 0-1). Responsive, predictable caregiving builds basic trust and security."},
+{topic:"lifespan",sub:"Erikson's Stages",q:"A 15-year-old experimenting with different social groups and values trying to figure out who she is is working through Erikson's stage of:",o:["Autonomy vs. Shame","Initiative vs. Guilt","Industry vs. Inferiority","Identity vs. Role Confusion"],a:3,e:"Identity vs. Role Confusion (adolescence): successfully navigating this stage results in a stable, self-defined sense of personal identity."},
+{topic:"lifespan",sub:"Erikson's Stages",q:"A 48-year-old who mentors junior colleagues and volunteers in the community is demonstrating Erikson's concept of:",o:["Ego integrity","Intimacy","Generativity","Autonomy"],a:2,e:"Generativity vs. Stagnation (middle adulthood): contributing to the next generation through parenting, mentoring, and community involvement."},
+{topic:"lifespan",sub:"Erikson's Stages",q:"An 80-year-old who reviews her life and feels it was meaningful and well-lived has achieved what Erikson called:",o:["Generativity","Intimacy","Autonomy","Ego integrity"],a:3,e:"Ego Integrity vs. Despair (late adulthood, 65+): those who feel life had meaning achieve integrity; those with regret experience despair."},
+{topic:"lifespan",sub:"Attachment Theory",q:"In Ainsworth's Strange Situation, a securely attached infant will:",o:["Show no distress at any point","Be inconsolable when the caregiver returns","Explore freely, show distress at separation, and be quickly soothed upon return","Show no response to the caregiver at any point"],a:2,e:"Secure attachment: caregiver as 'safe base.' The infant explores freely, shows distress at separation, and is easily comforted when the caregiver returns."},
+{topic:"lifespan",sub:"Attachment Theory",q:"A toddler shows little distress when the caregiver leaves and actively ignores them upon return. This reflects _____ attachment.",o:["Secure","Disorganized","Anxious/resistant","Avoidant"],a:3,e:"Avoidant attachment develops when caregivers are consistently unresponsive. The infant suppresses attachment needs, having learned not to expect comfort."},
+{topic:"lifespan",sub:"Attachment Theory",q:"An infant who clings before separation, is severely distressed when the caregiver leaves, and pushes them away upon return shows _____ attachment.",o:["Secure","Avoidant","Disorganized","Anxious/resistant (ambivalent)"],a:3,e:"Anxious/resistant attachment results from inconsistent caregiving. The infant can't predict when comfort will come, causing clingy and ambivalent behavior."},
+{topic:"lifespan",sub:"Adolescence & Moral Dev.",q:"One explanation for adolescent risk-taking is that the _____ matures earlier than the prefrontal cortex.",o:["Cerebellum","Limbic system","Thalamus","Brainstem"],a:1,e:"The limbic system (reward, emotion) matures early in adolescence while the prefrontal cortex (impulse control) isn't fully mature until the mid-20s."},
+{topic:"lifespan",sub:"Adolescence & Moral Dev.",q:"In Kohlberg's model, following rules primarily to avoid punishment reflects _____ moral reasoning.",o:["Conventional","Postconventional","Preconventional","Universal ethical"],a:2,e:"Preconventional reasoning is based on direct self-interest — avoiding punishment (Stage 1) or gaining rewards (Stage 2). It's typical in young children."},
+{topic:"lifespan",sub:"Aging & Death",q:"_____ intelligence refers to reasoning and solving novel problems flexibly — it tends to _____ with age.",o:["Crystallized; increase","Fluid; decline","Crystallized; decline","Fluid; increase"],a:1,e:"Fluid intelligence (novel problem solving, processing speed) peaks in early adulthood and declines. Crystallized intelligence (accumulated knowledge) stays stable or grows."},
+{topic:"lifespan",sub:"Aging & Death",q:"Kübler-Ross's five stages of grief, in order, are:",o:["Fear, anger, sadness, acceptance, peace","Denial, anger, bargaining, depression, acceptance","Shock, denial, anger, acceptance, joy","Guilt, anger, bargaining, depression, hope"],a:1,e:"Denial → Anger → Bargaining → Depression → Acceptance. These are not strictly linear and not everyone goes through all of them."},
+{topic:"lifespan",sub:"Research Methods",q:"The debate about whether development is gradual and continuous vs. abrupt and stage-like is the _____ debate.",o:["Nature vs. nurture","Stability vs. change","Continuous vs. discontinuous","Universal vs. context-specific"],a:2,e:"Continuous development = smooth slope; discontinuous = staircase with distinct stages. Piaget and Erikson proposed stage theories; others see change as continuous."},
+// PERSONALITY (25)
+{topic:"personality",sub:"Defining Personality",q:"Temperament differs from personality in that temperament is:",o:["Learned through reinforcement","A response to cultural norms","The biologically-based emotional style present from birth","Determined entirely by adult experience"],a:2,e:"Temperament is the innate biological foundation of personality — present from infancy. Personality develops as temperament interacts with environment over time."},
+{topic:"personality",sub:"Defining Personality",q:"The two dimensions of temperament are:",o:["Introversion and extraversion","Openness and conscientiousness","Emotionality and activity level","Neuroticism and agreeableness"],a:2,e:"Temperament is described along emotionality (intensity of emotional reactions) and activity level (energy and behavioral tempo) — both observable in infants."},
+{topic:"personality",sub:"Freud & Psychodynamic",q:"Freud's _____ is entirely unconscious, present from birth, and demands immediate gratification regardless of what is realistic or acceptable.",o:["Ego","Superego","Conscience","Id"],a:3,e:"The id operates on the pleasure principle — immediate satisfaction of instinctual drives. The ego mediates between id and reality; the superego is the moral conscience."},
+{topic:"personality",sub:"Freud & Psychodynamic",q:"The _____ operates on the reality principle, balancing the id's demands against what is realistic and socially possible.",o:["Superego","Id","Ego","Collective unconscious"],a:2,e:"The ego is the rational, mostly conscious mediator that finds realistic ways to satisfy id drives while respecting the superego and reality's constraints."},
+{topic:"personality",sub:"Freud & Psychodynamic",q:"Freud argued the most fundamental defense mechanism is _____ — forcing threatening thoughts into the unconscious.",o:["Projection","Displacement","Rationalization","Repression"],a:3,e:"Repression is the foundation of all other defense mechanisms — threatening material is pushed into the unconscious where it continues to influence behavior."},
+{topic:"personality",sub:"Defense Mechanisms",q:"A manager furious at her boss comes home and yells at her kids instead. This is:",o:["Projection","Displacement","Reaction formation","Rationalization"],a:1,e:"Displacement redirects emotion from the true target (boss) to a safer substitute (kids). The emotional energy is real; only the target shifts."},
+{topic:"personality",sub:"Defense Mechanisms",q:"A person who unconsciously harbors hostility toward a coworker but acts excessively warm and friendly toward them is using:",o:["Sublimation","Projection","Rationalization","Reaction formation"],a:3,e:"Reaction formation: acting in the exact opposite way of one's unconscious impulse. The exaggerated warmth defends against acknowledging the underlying hostility."},
+{topic:"personality",sub:"Defense Mechanisms",q:"An athlete who channels aggressive impulses into intense competitive sport is using:",o:["Regression","Displacement","Sublimation","Projection"],a:2,e:"Sublimation channels unacceptable impulses into socially valued activities. It is considered one of the most adaptive defense mechanisms."},
+{topic:"personality",sub:"Defense Mechanisms",q:"After failing an exam, a student says 'The questions were unfair' rather than acknowledging insufficient studying. This is:",o:["Displacement","Regression","Reaction formation","Rationalization"],a:3,e:"Rationalization: creating plausible-sounding but false justifications for failures actually driven by unconscious wishes or motives."},
+{topic:"personality",sub:"Neo-Freudians",q:"Jung proposed all humans share a _____ — an inherited layer of the unconscious containing universal symbols called archetypes.",o:["Personal unconscious","Preconscious mind","Collective unconscious","Inferiority complex"],a:2,e:"The collective unconscious contains archetypes — universal symbols appearing across cultures in myths, dreams, and art (the Hero, Shadow, Anima/Animus)."},
+{topic:"personality",sub:"Neo-Freudians",q:"Adler believed the primary human motivation is:",o:["Fear of death","Striving to overcome feelings of inferiority and achieve mastery","The need for unconditional positive regard","Conditioning history"],a:1,e:"Adler: inferiority feelings from childhood drive us to strive for mastery/superiority. An inferiority complex can be both a source of motivation and psychological problems."},
+{topic:"personality",sub:"Humanistic Theories",q:"Maslow's hierarchy proposes that _____ needs must be satisfied before people are motivated by esteem or self-actualization.",o:["Esteem","Safety","Belonging","Lower-level (physiological and safety)"],a:3,e:"Hierarchy (bottom to top): physiological → safety → belonging → esteem → self-actualization. Lower deficit needs must be met before growth needs become motivating."},
+{topic:"personality",sub:"Humanistic Theories",q:"Rogers argued healthy development requires _____ — accepting and valuing a person regardless of their behavior.",o:["Conditions of worth","Self-actualization","Unconditional positive regard","Ego integrity"],a:2,e:"Unconditional positive regard means complete acceptance without judgment. Without it, people develop 'conditions of worth' and distort their self-concept to earn acceptance."},
+{topic:"personality",sub:"Big Five",q:"Which Big Five trait is the strongest single predictor of job performance and academic achievement?",o:["Extraversion","Openness to experience","Neuroticism","Conscientiousness"],a:3,e:"Conscientiousness — organized, dependable, disciplined, goal-directed — consistently predicts success in work and school better than any other Big Five trait."},
+{topic:"personality",sub:"Big Five",q:"A person scoring HIGH on neuroticism is most likely to:",o:["Be creative and curious","Be calm and emotionally resilient","Experience frequent anxiety, moodiness, and negative emotions","Be introverted and prefer solitude"],a:2,e:"High neuroticism = emotional instability, anxiety, moodiness, vulnerability to stress. Low neuroticism = calm and resilient. Note: this is distinct from introversion."},
+{topic:"personality",sub:"Big Five",q:"Someone scoring LOW on agreeableness is best characterized as:",o:["Reserved and independent","Anxious and emotionally unstable","Competitive, suspicious, and difficult to cooperate with","Conventional and resistant to change"],a:2,e:"Low agreeableness: critical, uncooperative, distrustful. High agreeableness: warm, cooperative, empathetic."},
+{topic:"personality",sub:"Big Five",q:"A person who loves exotic foods, avant-garde art, and questioning social norms is likely high in:",o:["Conscientiousness","Extraversion","Agreeableness","Openness to experience"],a:3,e:"Openness to experience involves curiosity, creativity, aesthetic sensitivity, and preference for novelty over routine and convention."},
+{topic:"personality",sub:"Social-Cognitive",q:"Bandura's reciprocal determinism means behavior, personal/cognitive factors, and environment:",o:["All flow from internal traits alone","Are entirely controlled by the environment","Mutually influence one another in a continuous loop","Only affect each other in childhood"],a:2,e:"Reciprocal determinism: none of the three factors is the sole cause — each continuously shapes and is shaped by the others."},
+{topic:"personality",sub:"Social-Cognitive",q:"Self-efficacy, as defined by Bandura, refers to:",o:["Overall self-esteem","Belief in one's ability to execute behaviors needed to succeed in specific situations","Inherited level of confidence","A defense mechanism against failure"],a:1,e:"Self-efficacy is situationally specific — confidence in your ability to perform a particular task. High self-efficacy → more effort and persistence when challenges arise."},
+{topic:"personality",sub:"Social-Cognitive",q:"People who believe their own actions control life outcomes have a(n) _____ locus of control.",o:["External","Unstable","Internal","Secondary"],a:2,e:"Internal locus of control: 'I determine what happens to me.' Associated with better health outcomes, higher achievement, and lower depression than external locus."},
+{topic:"personality",sub:"Social-Cognitive",q:"Mischel's situationism challenged trait theory by arguing that:",o:["Personality traits are entirely genetic","Behavior is largely determined by situational factors, not stable traits","The Big Five is the only valid model","Personality is fixed by age 5"],a:1,e:"Mischel found behavior varies considerably across situations — suggesting situations may matter as much as traits. Modern view: interactionism (traits × situation)."},
+{topic:"personality",sub:"Personality Assessment",q:"The Rorschach Inkblot Test and TAT are _____ tests, based on the assumption that ambiguous stimuli reveal unconscious material.",o:["Self-report inventories","Projective tests","Neuropsychological tests","Behavioral assessments"],a:1,e:"Projective tests are rooted in psychodynamic theory. They are criticized for poor reliability and validity compared to objective self-report measures like the MMPI."},
+{topic:"personality",sub:"Personality Assessment",q:"The MMPI includes 'validity scales' that help detect which limitation of self-report testing?",o:["Test-retest reliability","Social desirability bias (faking good)","Cultural differences in traits","Projective interpretation errors"],a:1,e:"Social desirability bias — presenting oneself favorably — is a major limitation of self-report inventories. MMPI validity scales (L scale, F scale) flag suspicious patterns."}
+];
 
-    <p>under construction!!!</p>
-    
+const LABELS={"biopsychology":"Biopsychology","sensation":"Sensation & Perception","lifespan":"Lifespan Development","personality":"Personality"};
+let topic='all',deck=[],idx=0,correct=0,wrong=0,total=0,answered=false;
+
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
+
+function setTopic(t){
+  topic=t;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelector('.tab[data-t="'+t+'"]').classList.add('active');
+  deck=shuffle(t==='all'?Q:Q.filter(q=>q.topic===t));
+  idx=0;correct=0;wrong=0;total=0;
+  updateStats();showQ();
+}
+
+function toggleHistory(){const p=document.getElementById('history-panel');p.style.display=p.style.display==='none'?'block':'none';}
+
+function updateStats(){
+  document.getElementById('sc').textContent=correct;
+  document.getElementById('sw').textContent=wrong;
+  document.getElementById('st').textContent=total;
+  const pct=total>0?Math.round(correct/total*100):0;
+  document.getElementById('prog').style.width=pct+'%';
+  document.getElementById('prog-label').textContent=(total>0?pct+'% correct':'0% correct');
+  document.getElementById('prog-remain').textContent=(deck.length-idx)>0?(deck.length-idx)+' left':'Deck complete';
+}
+
+function addHist(q,ok){
+  const l=document.getElementById('history-list');
+  const d=document.createElement('div');d.className='h-item';
+  d.innerHTML='<div class="h-dot '+(ok?'ok':'bad')+'"></div><div><div class="h-q">'+q.q.substring(0,85)+(q.q.length>85?'…':'')+'</div><div class="h-sub">'+LABELS[q.topic]+' › '+q.sub+'</div></div>';
+  if(l.firstChild)l.insertBefore(d,l.firstChild);else l.appendChild(d);
+}
+
+function showQ(){
+  answered=false;
+  const a=document.getElementById('q-area');
+  if(idx>=deck.length){
+    a.innerHTML='<div class="done-card"><h2>Deck Complete 🎉</h2><div class="done-score">'+(total>0?Math.round(correct/total*100):0)+'%</div><div class="done-sub">'+correct+' correct out of '+total+' questions</div><button class="restart-btn" onclick="setTopic(topic)">Shuffle &amp; Restart</button></div>';
+    return;
+  }
+  const q=deck[idx];
+  document.getElementById('sub-name').textContent=q.sub;
+  document.getElementById('sub-prog').textContent=(idx+1)+' / '+deck.length;
+  a.innerHTML='<div class="q-card" data-topic="'+q.topic+'"><div class="q-meta"><span class="q-num">Q'+(idx+1)+'</span><span class="q-tag '+q.topic+'">'+LABELS[q.topic]+'</span><span class="q-subtag">'+q.sub+'</span></div><div class="q-text">'+q.q+'</div><div class="options" id="opts">'+q.o.map((o,i)=>'<button class="opt" id="o'+i+'" onclick="pick('+i+')"><span class="opt-lbl">'+['A','B','C','D'][i]+'</span><span>'+o+'</span></button>').join('')+'</div><div id="fb"></div><button class="next-btn" id="nb" onclick="nextQ()" disabled>'+(idx+1<deck.length?'Next Question →':'See Results →')+'</button></div>';
+  updateStats();
+}
+
+function pick(sel){
+  if(answered)return;answered=true;total++;
+  const q=deck[idx];const ok=sel===q.a;
+  if(ok)correct++;else wrong++;
+  for(let i=0;i<4;i++){const b=document.getElementById('o'+i);b.disabled=true;if(i===q.a)b.classList.add(sel===q.a&&i===sel?'correct':'reveal');if(i===sel&&!ok)b.classList.add('wrong');}
+  document.getElementById('fb').innerHTML='<div class="feedback '+(ok?'ok':'bad')+'">'+(ok?'<strong>✓ Correct!</strong> ':'<strong>✗ Incorrect.</strong> The right answer was <strong>'+['A','B','C','D'][q.a]+': '+q.o[q.a]+'</strong>. ')+q.e+'</div>';
+  document.getElementById('nb').disabled=false;
+  addHist(q,ok);updateStats();
+}
+
+function nextQ(){idx++;showQ();}
+
+// init counts
+const cnt={biopsychology:0,sensation:0,lifespan:0,personality:0};
+Q.forEach(q=>cnt[q.topic]++);
+document.getElementById('cnt-all').textContent=Q.length;
+document.getElementById('cnt-bio').textContent=cnt.biopsychology;
+document.getElementById('cnt-sens').textContent=cnt.sensation;
+document.getElementById('cnt-life').textContent=cnt.lifespan;
+document.getElementById('cnt-pers').textContent=cnt.personality;
+setTopic('all');
+</script>
 </body>
 </html>
