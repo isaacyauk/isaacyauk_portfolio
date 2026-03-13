@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Belgrade → Knoxville Road Trip Plan</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Josefin+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --parchment: #f5ead6;
+    --parchment-dark: #e8d6b5;
+    --ink: #2c1d0e;
+    --forest: #2d5016;
+    --forest-light: #3d6b1e;
+    --rust: #b84b1a;
+    --amber: #d4831e;
+    --sky: #4a7fa5;
+    --cream: #faf4e8;
+    --line: #c8b090;
+    --alert-bg: #fff3cd;
+    --alert-border: #d4831e;
+    --warning-bg: #fde8e8;
+    --warning-border: #b84b1a;
+    --success-bg: #e8f4e8;
+    --success-border: #2d5016;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--parchment);
+    color: var(--ink);
+    font-family: 'Libre Baskerville', serif;
+    font-size: 14px;
+    line-height: 1.6;
+    background-image: 
+      repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(180,150,100,0.08) 27px, rgba(180,150,100,0.08) 28px);
+  }
+
+  .page-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 16px 60px;
+  }
+
+  /* HEADER */
+  .hero {
+    background: var(--forest);
+    color: var(--parchment);
+    text-align: center;
+    padding: 40px 24px 32px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 32px;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      -45deg, transparent, transparent 8px, rgba(255,255,255,0.03) 8px, rgba(255,255,255,0.03) 9px
+    );
+  }
+  .hero-sub {
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 8px;
+  }
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .hero-route {
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: rgba(245,234,214,0.7);
+    margin-bottom: 16px;
+  }
+  .hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    flex-wrap: wrap;
+    position: relative;
+  }
+  .stat {
+    text-align: center;
+  }
+  .stat-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--amber);
+    display: block;
+  }
+  .stat-lbl {
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    opacity: 0.7;
+  }
+  .divider {
+    width: 1px;
+    background: rgba(255,255,255,0.2);
+    height: 40px;
+    align-self: center;
+  }
+
+  /* TABS */
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    margin-bottom: 24px;
+    border-bottom: 3px solid var(--forest);
+    overflow-x: auto;
+  }
+  .tab-btn {
+    background: var(--parchment-dark);
+    border: none;
+    padding: 10px 20px;
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    color: var(--ink);
+    opacity: 0.6;
+    border-radius: 4px 4px 0 0;
+    transition: all 0.2s;
+    white-space: nowrap;
+    border-top: 3px solid transparent;
+    border-left: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+  }
+  .tab-btn.active {
+    background: var(--cream);
+    opacity: 1;
+    color: var(--forest);
+    border-top: 3px solid var(--forest);
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* SECTION HEADER */
+  .sec-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    margin-top: 28px;
+  }
+  .sec-head h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--forest);
+  }
+  .sec-head .line { flex: 1; height: 1px; background: var(--line); }
+  .sec-num {
+    background: var(--forest);
+    color: var(--parchment);
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  /* ALERT BOXES */
+  .alert {
+    padding: 14px 16px;
+    border-left: 4px solid var(--amber);
+    background: var(--alert-bg);
+    border-radius: 0 6px 6px 0;
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+  .alert.warn {
+    border-color: var(--rust);
+    background: var(--warning-bg);
+  }
+  .alert.good {
+    border-color: var(--forest);
+    background: var(--success-bg);
+  }
+  .alert-title {
+    font-family: 'Josefin Sans', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .alert.warn .alert-title { color: var(--rust); }
+  .alert .alert-title { color: var(--amber); }
+  .alert.good .alert-title { color: var(--forest); }
+
+  /* STOPS TABLE */
+  .trip-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .trip-table thead tr {
+    background: var(--forest);
+    color: var(--parchment);
+  }
+  .trip-table thead th {
+    padding: 8px 10px;
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    text-align: left;
+  }
+  .trip-table tbody tr {
+    border-bottom: 1px solid var(--line);
+  }
+  .trip-table tbody tr:nth-child(even) { background: rgba(200,176,144,0.12); }
+  .trip-table td {
+    padding: 9px 10px;
+    vertical-align: top;
+  }
+  .trip-table td:first-child {
+    font-family: 'Josefin Sans', sans-serif;
+    font-weight: 700;
+    color: var(--forest);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  /* BADGES */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+  .badge-gas { background: #fff3cd; color: #8a5200; border: 1px solid var(--amber); }
+  .badge-sleep { background: #dce8f0; color: #1a4a6e; border: 1px solid #4a7fa5; }
+  .badge-visit { background: #e8f4e8; color: var(--forest); border: 1px solid var(--forest); }
+  .badge-warn { background: var(--warning-bg); color: var(--rust); border: 1px solid var(--rust); }
+  .badge-koa { background: #d4581a22; color: #8a2a00; border: 1px solid #d4581a; }
+
+  /* DAY HEADER */
+  .day-header {
+    background: var(--parchment-dark);
+    border: 1px solid var(--line);
+    border-left: 5px solid var(--forest);
+    padding: 10px 16px;
+    margin: 20px 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .day-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--forest);
+  }
+  .day-date {
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--rust);
+    text-transform: uppercase;
+  }
+  .day-miles {
+    margin-left: auto;
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 11px;
+    color: #666;
+  }
+
+  /* PRICING CARD */
+  .price-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .price-card {
+    background: var(--cream);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 14px;
+    text-align: center;
+  }
+  .price-card .age-group {
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #777;
+    margin-bottom: 4px;
+  }
+  .price-card .price {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--forest);
+  }
+  .price-card .note {
+    font-size: 11px;
+    color: #999;
+    margin-top: 2px;
+  }
+  .price-card.free .price { color: var(--rust); }
+
+  /* KOA CARD */
+  .koa-card {
+    background: var(--cream);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: start;
+  }
+  .koa-name {
+    font-family: 'Josefin Sans', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--forest);
+    margin-bottom: 2px;
+  }
+  .koa-addr {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 4px;
+  }
+  .koa-detail {
+    font-size: 12px;
+    color: #444;
+  }
+  .koa-rating {
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 12px;
+    color: var(--amber);
+    font-weight: 700;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  /* FUEL BOX */
+  .fuel-box {
+    background: var(--cream);
+    border: 2px dashed var(--line);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+  }
+  .fuel-item {}
+  .fuel-item .fuel-lbl {
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #888;
+    margin-bottom: 2px;
+  }
+  .fuel-item .fuel-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  /* GAS STOPS LIST */
+  .gas-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .gas-item {
+    background: var(--cream);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--amber);
+    border-radius: 0 6px 6px 0;
+    padding: 8px 12px;
+    font-size: 12.5px;
+  }
+  .gas-item strong {
+    display: block;
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+    color: var(--rust);
+  }
+
+  /* LODGING SECTION */
+  .lodging-card {
+    background: var(--cream);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .lodging-name {
+    font-family: 'Josefin Sans', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--sky);
+  }
+  .lodging-detail {
+    font-size: 12.5px;
+    margin-top: 4px;
+    color: #444;
+  }
+
+  /* TIPS LIST */
+  ul.tips {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 16px;
+  }
+  ul.tips li {
+    padding: 5px 0 5px 22px;
+    position: relative;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(200,176,144,0.3);
+  }
+  ul.tips li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--amber);
+    font-weight: bold;
+  }
+
+  /* ROAD LINE */
+  .road-spine {
+    position: relative;
+    padding-left: 30px;
+  }
+  .road-spine::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: repeating-linear-gradient(to bottom, var(--amber) 0px, var(--amber) 8px, transparent 8px, transparent 14px);
+  }
+  .road-node {
+    position: absolute;
+    left: 0;
+    width: 19px; height: 19px;
+    background: var(--forest);
+    border-radius: 50%;
+    border: 3px solid var(--amber);
+    top: 14px;
+  }
+  .road-node.sleep {
+    background: var(--sky);
+    border-color: var(--sky);
+  }
+  .road-node.gas {
+    background: var(--rust);
+    border-color: var(--amber);
+  }
+  .road-stop {
+    margin-bottom: 12px;
+    position: relative;
+    padding-top: 6px;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 600px) {
+    .hero h1 { font-size: 26px; }
+    .hero-stats { gap: 16px; }
+    .stat-val { font-size: 18px; }
+    .trip-table th, .trip-table td { padding: 6px 7px; font-size: 12px; }
+  }
+
+  .return-badge {
+    background: var(--sky);
+    color: white;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .divider-line {
+    border: none;
+    border-top: 2px solid var(--line);
+    margin: 24px 0;
+  }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-sub">⛺ Road Trip Planner</div>
+    <h1>Belgrade, MT → Knoxville, TN</h1>
+    <div class="hero-route">March 13–20, 2026 &nbsp;·&nbsp; Via Ark Encounter, Williamstown KY</div>
+    <div class="hero-stats">
+      <div class="stat"><span class="stat-val">~1,785</span><span class="stat-lbl">Total Miles</span></div>
+      <div class="divider"></div>
+      <div class="stat"><span class="stat-val">28 hrs</span><span class="stat-lbl">Drive Time</span></div>
+      <div class="divider"></div>
+      <div class="stat"><span class="stat-val">20 MPG</span><span class="stat-lbl">Vehicle</span></div>
+      <div class="divider"></div>
+      <div class="stat"><span class="stat-val">~89 gal</span><span class="stat-lbl">Fuel Each Way</span></div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showTab('depart')">🚗 Departing Trip (Mar 13)</button>
+    <button class="tab-btn" onclick="showTab('ark')">⛵ Ark Encounter</button>
+    <button class="tab-btn" onclick="showTab('return')">↩ Return Trip (Mar 20)</button>
+    <button class="tab-btn" onclick="showTab('fuel')">⛽ Fuel & Budget</button>
+  </div>
+
+  <!-- ===================== DEPARTING TRIP ===================== -->
+  <div id="tab-depart" class="tab-panel active">
+
+    <div class="alert good">
+      <div class="alert-title">✅ New Strategy — Arrive at the Ark on Wednesday March 18, then Continue to Knoxville!</div>
+      Departing Friday at 1pm gives you <strong>5 full travel days</strong> before Wednesday. That's the perfect amount of time to take a leisurely, sightseeing-packed route through some of the most iconic landmarks in the country — Little Bighorn, Devils Tower, Badlands, Mount Rushmore, Wall Drug, Corn Palace — and pull into the Ark Encounter the morning it opens, then drive straight on to Knoxville that same evening. No backtracking. One continuous adventure.
+    </div>
+
+    <!-- DAY 1 -->
+    <div class="day-header">
+      <span class="day-label">Day 1 – Friday</span>
+      <span class="day-date">March 13 · Depart 1:00 PM</span>
+      <span class="day-miles">~380 mi | Overnight: Devils Tower KOA, WY</span>
+    </div>
+
+    <table class="trip-table">
+      <thead><tr><th>Time (est.)</th><th>Location</th><th>Miles</th><th>Action / Notes</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>1:00 PM</td>
+          <td><strong>Belgrade, MT</strong></td>
+          <td>0</td>
+          <td>🚗 Depart. Fill up in Belgrade before leaving.</td>
+        </tr>
+        <tr>
+          <td>~2:30 PM</td>
+          <td><strong>Little Bighorn Battlefield</strong></td>
+          <td>~115</td>
+          <td><span class="badge badge-visit">🏛 ATTRACTION</span> Crow Agency, MT — off I-90 at Exit 514. <strong>Open Fridays!</strong> Closes 4pm — you have just enough time for the self-drive 4.5-mile battlefield loop. Haunting and moving. $10/vehicle.</td>
+        </tr>
+        <tr>
+          <td>~4:30 PM</td>
+          <td>Hardin / Billings area</td>
+          <td>~145</td>
+          <td><span class="badge badge-gas">⛽ GAS</span> Fill up in Hardin or Billings BEFORE heading south toward Wyoming.</td>
+        </tr>
+        <tr>
+          <td>~7:30 PM</td>
+          <td><strong>🏕 Devils Tower KOA Journey</strong></td>
+          <td>~380</td>
+          <td><span class="badge badge-sleep">💤 OVERNIGHT</span> 60 WY-110, Devils Tower, WY. <strong>You can see Devils Tower right from your campsite.</strong> They screen Close Encounters of the Third Kind outdoors at sunset — incredible experience. 4.5⭐ 📞 307-467-5395</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="alert good">
+      <div class="alert-title">⭐ Devils Tower / Black Hills KOA — Don't Miss!</div>
+      Reviews say waking up with Devils Tower framed in your windshield is unforgettable. Live bison roam nearby. Outdoor movie screening of Close Encounters at sunset. Showers, store, Wi-Fi. One of the best KOA stops in the country.
+    </div>
+
+    <!-- DAY 2 -->
+    <div class="day-header">
+      <span class="day-label">Day 2 – Saturday</span>
+      <span class="day-date">March 14 · Depart ~8:00 AM</span>
+      <span class="day-miles">~200 mi scenic | Overnight: Rapid City / Black Hills KOA, SD</span>
+    </div>
+
+    <table class="trip-table">
+      <thead><tr><th>Time (est.)</th><th>Location</th><th>Miles (total)</th><th>Action / Notes</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>8:00 AM</td>
+          <td>Devils Tower KOA</td>
+          <td>380</td>
+          <td>Depart east toward South Dakota on I-90.</td>
+        </tr>
+        <tr>
+          <td>~9:30 AM</td>
+          <td><strong>Badlands National Park</strong></td>
+          <td>~490</td>
+          <td><span class="badge badge-visit">🏛 ATTRACTION</span> Exit 131 off I-90. Drive the 30-mile scenic loop — otherworldly rock formations, prairie wildlife (bison, bighorn sheep, prairie dogs). Open 24 hours. $30/vehicle. Budget 2–3 hours. Rated 4.9⭐ by 17,000+ visitors.</td>
+        </tr>
+        <tr>
+          <td>~10:30 AM</td>
+          <td><strong>Wall Drug Store</strong></td>
+          <td>~530</td>
+          <td><span class="badge badge-visit">🏛 ATTRACTION</span> Wall, SD — the legendary roadside institution. Free ice water, giant jackalope, homemade donuts, 80,000 sq ft of pure Americana kitsch. You've been reading about it on billboards since Montana. 1–2 hours. Free entry. You MUST stop.</td>
+        </tr>
+        <tr>
+          <td>~1:30 PM</td>
+          <td><strong>Mount Rushmore</strong></td>
+          <td>~570</td>
+          <td><span class="badge badge-visit">🏛 ATTRACTION</span> Keystone, SD — 23 miles south of I-90. Open 5am–9pm. $25/vehicle parking. Walk the Presidential Trail for close-up views. The monument is bigger than you expect. Allow 2–3 hours. Rated 4.7⭐ by 57,000+ visitors.</td>
+        </tr>
+        <tr>
+          <td>~5:00 PM</td>
+          <td><strong>🏕 Rapid City / Black Hills KOA Holiday</strong></td>
+          <td>~585</td>
+          <td><span class="badge badge-sleep">💤 OVERNIGHT</span> 3010 SD-44, Rapid City. 4.2⭐ Pool ✓ Showers ✓ Playground ✓. Gateway to the Black Hills — you're already here from Rushmore. 📞 605-348-2111</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="alert">
+      <div class="alert-title">💡 Crazy Horse Memorial — Optional Add-On (Day 2)</div>
+      If you have extra time between Rushmore and camp, <strong>Crazy Horse Memorial</strong> is 17 miles southwest of Rushmore. An ongoing mountain carving (larger than Rushmore when complete). $30/vehicle. Blasting happens at 2pm when available. Well worth 1–2 hours.
+    </div>
+
+    <!-- DAY 3 -->
+    <div class="day-header">
+      <span class="day-label">Day 3 – Sunday</span>
+      <span class="day-date">March 15 · Depart ~7:30 AM</span>
+      <span class="day-miles">~500 mi | Overnight: Mitchell KOA or Iowa City area</span>
+    </div>
+
+    <table class="trip-table">
+      <thead><tr><th>Time (est.)</th><th>Location</th><th>Miles (total)</th><th>Action / Notes</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>7:30 AM</td>
+          <td>Rapid City KOA</td>
+          <td>~585</td>
+          <td>Depart east on I-90. Long driving day but flat and easy.</td>
+        </tr>
+        <tr>
+          <td>~9:30 AM</td>
+          <td><strong>Corn Palace</strong></td>
+          <td>~760</td>
+          <td><span class="badge badge-visit">🏛 ATTRACTION</span> 604 N Main St, Mitchell, SD. The world's only building decorated entirely in corn murals — exterior redone annually. Free admission! Open 8am–5pm. Stop for 30–45 min, grab breakfast. You've earned the bragging rights. Rated 4.3⭐ by 9,600+ visitors.</td>
+        </tr>
+        <tr>
+          <td>~11:00 AM</td>
+          <td>Sioux Falls, SD</td>
+          <td>~835</td>
+          <td><span class="badge badge-gas">⛽ GAS</span> Fill up BEFORE Sioux Falls metro. 30 min stop. <strong>Falls Park</strong> (free, beautiful waterfall in the city center) if you have 30 mins to stretch.</td>
+        </tr>
+        <tr>
+          <td>~1:00 PM</td>
+          <td>Iowa City / Mississippi crossing</td>
+          <td>~990</td>
+          <td>30 min stop. Grab lunch. The Mississippi River bridge crossing on I-80 is scenic — pull over at the Quad Cities overlook if you can.</td>
+        </tr>
+        <tr>
+          <td>~3:30 PM</td>
+          <td><strong>🏕 Mitchell KOA Journey</strong></td>
+          <td>~760</td>
+          <td><span class="badge badge-sleep">💤 OVERNIGHT OPT. A</span> If you stop here after Corn Palace, a relaxed shorter day. 4.7⭐ — famous for spa rain showers. 📞 605-996-1131</td>
+        </tr>
+        <tr style="font-style:italic;">
+          <td>~5:00 PM</td>
+          <td>Iowa City, IA area</td>
+          <td>~990</td>
+          <td><span class="badge badge-sleep">💤 OVERNIGHT OPT. B</span> Push further east for a shorter Day 4. Several campgrounds off I-80 near Iowa City and Coralville.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- DAY 4 -->
+    <div class="day-header">
+      <span class="day-label">Day 4 – Monday</span>
+      <span class="day-date">March 16 · Depart ~7:00 AM</span>
+      <span class="day-miles">~450 mi | Overnight: Near Williamstown, KY</span>
+    </div>
+
+    <table class="trip-table">
+      <thead><tr><th>Time (est.)</th><th>Location</th><th>Miles (total)</th><th>Action / Notes</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>7:00 AM</td>
+          <td>Iowa City / Mitchell area</td>
+          <td>~760–990</td>
+          <td>Depart. Big push east today. I-80 across Iowa then I-74 or I-65 south.</td>
+        </tr>
+        <tr>
+          <td>~9:00 AM</td>
+          <td>Des Moines, IA</td>
+          <td>~850</td>
+          <td><span class="badge badge-gas">⛽ GAS</span> Gas BEFORE Des Moines. 30 min break.</td>
+        </tr>
+        <tr>
+          <td>~10:30 AM</td>
+          <td>Davenport / Quad Cities, IA/IL</td>
+          <td>~990</td>
+          <td>30 min stop, Mississippi River crossing. Continue on I-74 E toward Indianapolis.</td>
+        </tr>
+        <tr>
+          <td>~12:30 PM</td>
+          <td>Rockford / Elgin, IL</td>
+          <td>~1,080</td>
+          <td><span class="badge badge-gas">⛽ GAS</span> Gas BEFORE Chicago if you're routing through. OR take I-74 directly to Indianapolis to bypass Chicago entirely. Recommended to skip Chicago on this leg.</td>
+        </tr>
+        <tr>
+          <td>~2:30 PM</td>
+          <td>Indianapolis, IN</td>
+          <td>~1,250</td>
+          <td><span class="badge badge-gas">⛽ GAS</span> Gas BEFORE Indy. 30 min stop east of city on I-74. Continue to Cincinnati via I-74 E.</td>
+        </tr>
+        <tr>
+          <td>~4:30 PM</td>
+          <td>Lawrenceburg, IN / Cincinnati area</td>
+          <td>~1,400</td>
+          <td><span class="badge badge-gas">⛽ GAS</span> Last gas stop BEFORE Kentucky border. 30 min break.</td>
+        </tr>
+        <tr>
+          <td>~5:30 PM</td>
+          <td><strong>🏕 Williamstown, KY area</strong></td>
+          <td>~1,445</td>
+          <td><span class="badge badge-sleep">💤 OVERNIGHT</span> Three Springs Campground (Sadieville, KY · 14 mi from Ark). 3.8⭐ · Showers ✓ · Tent sites under tall trees · You're 10 min from the Ark! 📞 859-823-0258</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- DAY 5 -->
+    <div class="day-header">
+      <span class="day-label">Day 5 – Tuesday</span>
+      <span class="day-date">March 17 · Rest & Explore Day</span>
+      <span class="day-miles">~50 mi local | Overnight: Near Williamstown, KY</span>
+    </div>
+
+    <table class="trip-table">
+      <thead><tr><th>Time (est.)</th><th>Location</th><th>Notes</th><th></th></tr></thead>
+      <tbody>
+        <tr>
+          <td>All day</td>
+          <td><strong>Williamstown / Georgetown, KY area</strong></td>
+          <td colspan="2">Rest day! Sleep in, explore the area. Visit <strong>Williamstown Lake</strong> for a walk. Drive into <strong>Georgetown, KY</strong> (Toyota plant, antique shops, nice historic downtown). Or just relax at camp and prep for the big Ark Encounter day tomorrow. ⚠️ Creation Museum (Petersburg, KY) is also closed today (Tues). Ark is closed today too — all good, Wednesday is the plan.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="alert">
+      <div class="alert-title">💡 Tuesday Bonus: Creation Museum (Option)</div>
+      <strong>Creation Museum</strong> (Petersburg, KY · 45 min north near Cincinnati) is open Wed–Sat only. You could do it Wednesday morning before the Ark: arrive at 10am, spend 3 hours, then drive 45 min south to the Ark and still get 3.5 hours there before 5pm close. It's a crammed day but doable. Or skip it and give the Ark the full day — your call.
+    </div>
+
+    <!-- DAY 6 -->
+    <div class="day-header" style="border-left-color: var(--rust);">
+      <span class="day-label" style="color:var(--rust);">Day 6 – Wednesday ⭐ THE BIG DAY</span>
+      <span class="day-date" style="color:var(--rust);">March 18 · Ark Encounter → Knoxville!</span>
+      <span class="day-miles">~300 mi | Arrive Knoxville, TN — Concert Week!</span>
+    </div>
+
+    <table class="trip-table">
+      <thead><tr><th>Time (est.)</th><th>Location</th><th>Miles (total)</th><th>Action / Notes</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>9:30 AM</td>
+          <td>Leave camp</td>
+          <td>—</td>
+          <td>Short drive to the Ark. Grab a coffee, arrive just before gates open.</td>
+        </tr>
+        <tr>
+          <td>10:00 AM</td>
+          <td><strong>⛵ ARK ENCOUNTER</strong></td>
+          <td>~1,450</td>
+          <td><span class="badge badge-visit">🎟 OPEN TODAY!</span> 1 Ark Encounter Dr, Williamstown, KY. Ticket window opens at 10am. Plan 4–6 hours inside. See the Ark tab for full pricing. Allow time for the outdoor zoo area and gift shop too.</td>
+        </tr>
+        <tr>
+          <td>4:00–5:00 PM</td>
+          <td>Depart Williamstown</td>
+          <td>—</td>
+          <td><span class="badge badge-gas">⛽ GAS</span> Fill up in Williamstown or Corbin, KY for the final stretch. I-75 South all the way to Knoxville.</td>
+        </tr>
+        <tr>
+          <td>~7:30 PM</td>
+          <td><strong>🎉 Knoxville, TN — ARRIVED!</strong></td>
+          <td>~1,745</td>
+          <td><span class="badge badge-sleep">💤 BASE CAMP</span> <span class="badge badge-koa">KOA</span> Knoxville Campground (Clinton). 4.6⭐ · Clean, friendly, 1 mile off I-75. Concert is tomorrow or this weekend — you made it in style! 📞 865-494-9386</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="alert good">
+      <div class="alert-title">✅ Departing Trip Summary — 6 Days, Packed with Memories</div>
+      Fri Mar 13: Belgrade → Little Bighorn → <strong>Devils Tower KOA</strong> 🌙<br>
+      Sat Mar 14: → Badlands → Wall Drug → Mount Rushmore → <strong>Rapid City KOA</strong> 🌙<br>
+      Sun Mar 15: → Corn Palace → Sioux Falls → → <strong>Mitchell KOA or Iowa City</strong> 🌙<br>
+      Mon Mar 16: → Chicago bypass → Indianapolis → Cincinnati → <strong>Williamstown KY</strong> 🌙<br>
+      Tue Mar 17: 🛌 <strong>Rest day near Williamstown</strong> 🌙<br>
+      Wed Mar 18: ⭐ <strong>ARK ENCOUNTER</strong> → Knoxville, TN 🎉
+    </div>
+
+    <div class="sec-head"><span class="sec-num">🏕</span><h2>KOA &amp; Campground Stops – Departing Route</h2><div class="line"></div></div>
+
+    <div class="koa-card">
+      <div>
+        <div class="koa-name">⭐ Night 1 — Devils Tower / Black Hills KOA Journey</div>
+        <div class="koa-addr">60 WY-110, Devils Tower, WY · Off US-14 toward WY-110</div>
+        <div class="koa-detail">Showers ✓ | Laundry ✓ | Store ✓ | Views of Devils Tower from your site | Outdoor Close Encounters movie screening | Bison nearby | Exceptional reviews for atmosphere. 📞 307-467-5395</div>
+      </div>
+      <div class="koa-rating">⭐ 4.5</div>
+    </div>
+    <div class="koa-card">
+      <div>
+        <div class="koa-name">⭐ Night 2 — Rapid City / Black Hills KOA Holiday</div>
+        <div class="koa-addr">3010 SD-44, Rapid City, SD</div>
+        <div class="koa-detail">Showers ✓ | Pool ✓ | Playground ✓ | 7am check-in | Near Mount Rushmore & Badlands. 📞 605-348-2111</div>
+      </div>
+      <div class="koa-rating">⭐ 4.2</div>
+    </div>
+    <div class="koa-card">
+      <div>
+        <div class="koa-name">⭐ Night 3 Option A — Mitchell KOA Journey (Best Showers on the Route)</div>
+        <div class="koa-addr">41255 SD-38, Mitchell, SD · Off I-90</div>
+        <div class="koa-detail">Showers ✓ (spa rainheads — reviewers rave!) | Laundry ✓ | Store ✓ | Near Corn Palace. 📞 605-996-1131</div>
+      </div>
+      <div class="koa-rating">⭐ 4.7</div>
+    </div>
+    <div class="koa-card">
+      <div>
+        <div class="koa-name">⭐ Night 4 — Three Springs Campground (Near Ark Encounter)</div>
+        <div class="koa-addr">595 Campground Rd, Sadieville, KY · ~14 mi from Ark Encounter</div>
+        <div class="koa-detail">Showers ✓ | Hiking trails ✓ | Tent sites under tall trees | Staff delivers firewood | Quiet, wooded, peaceful. 📞 859-823-0258</div>
+      </div>
+      <div class="koa-rating">⭐ 3.8</div>
+    </div>
+    <div class="koa-card">
+      <div>
+        <div class="koa-name">⭐ Night 5 (same as Night 4, or upgrade) — ABIDE Glamping, Williamstown KY</div>
+        <div class="koa-addr">1105 Heekin Road, Williamstown, KY · Very close to Ark Encounter</div>
+        <div class="koa-detail">RV hookups + glamping tents + domes | Outstanding reviews | Peaceful & unique | A special night before the Ark. www.abideglamping.com</div>
+      </div>
+      <div class="koa-rating">⭐ Outstanding</div>
+    </div>
+    <div class="koa-card">
+      <div>
+        <div class="koa-name">🎉 Base Camp — Knoxville Campground (Clinton)</div>
+        <div class="koa-addr">2423 N Charles G Seivers Blvd, Clinton, TN · Off I-75</div>
+        <div class="koa-detail">Showers ✓ | Laundry ✓ | Pull-through sites ✓ | Clean, friendly staff | Live entertainment on weekends | 1 mile off I-75. 📞 865-494-9386</div>
+      </div>
+      <div class="koa-rating">⭐ 4.6</div>
+    </div>
+
+  </div><!-- /depart -->
+
+  <!-- ===================== ARK ENCOUNTER ===================== -->
+  <div id="tab-ark" class="tab-panel">
+
+    <div class="alert good">
+      <div class="alert-title">✅ You're Arriving on Wednesday March 18 — Perfect!</div>
+      The Ark Encounter is <strong>open Wednesday–Saturday, 10am–5pm</strong>. You'll be overnighting near Williamstown on Monday and Tuesday, then hitting the Ark exactly as it opens Wednesday morning. Afterward, it's a straight 2.5-hour drive south on I-75 to Knoxville. No backtracking!
+    </div>
+
+    <div class="alert">
+      <div class="alert-title">⏱ Arrival Day Tips</div>
+      Arrive by 9:45am — the lot fills fast on Wednesdays. Buy tickets online in advance to skip the ticket window. A shuttle tram takes you from the large parking lot to the Ark. Scooters available to rent inside ($43 with attendant). Budget 4–6 hours minimum.
+    </div>
+
+    <div class="sec-head"><span class="sec-num">🎟</span><h2>2026 Admission Prices</h2><div class="line"></div></div>
+
+    <div class="price-grid">
+      <div class="price-card">
+        <div class="age-group">Adults (18–59)</div>
+        <div class="price">$64.99</div>
+        <div class="note">+ tax & parking</div>
+      </div>
+      <div class="price-card">
+        <div class="age-group">Seniors (60+)</div>
+        <div class="price">$54.99</div>
+        <div class="note">+ tax & parking</div>
+      </div>
+      <div class="price-card">
+        <div class="age-group">Youth (11–17)</div>
+        <div class="price">$31.99</div>
+        <div class="note">+ tax & parking</div>
+      </div>
+      <div class="price-card free">
+        <div class="age-group">Children (10 &amp; under)</div>
+        <div class="price">FREE</div>
+        <div class="note">All of 2026!</div>
+      </div>
+      <div class="price-card">
+        <div class="age-group">Parking</div>
+        <div class="price">$15</div>
+        <div class="note">Standard vehicles</div>
+      </div>
+    </div>
+
+    <div class="alert">
+      <div class="alert-title">💡 Discounts Available</div>
+      <strong>Military: 20% off</strong> with valid ID at the ticket window. <strong>AAA discount</strong> also available. <strong>Ark + Creation Museum Combo</strong> available for multi-attraction visitors. Children under 10 are FREE all of 2026 (no limit). Tickets are valid for 1 year from purchase.
+    </div>
+
+    <div class="sec-head"><span class="sec-num">🏨</span><h2>Nearby Lodging &amp; Campgrounds</h2><div class="line"></div></div>
+
+    <p style="font-size:13px; margin-bottom:12px; color:#555;">Ark Encounter is located at I-75 Exit 154, Williamstown, KY 41097 — 45 min south of Cincinnati.</p>
+
+    <div class="lodging-card">
+      <div class="lodging-name">Three Springs Campground &amp; RV Park ⭐ Recommended for Vehicle Camping</div>
+      <div class="lodging-detail">595 Campground Rd, Sadieville, KY · ~14 mi from Ark Encounter · Rated 3.8⭐ · Showers ✓ · Tent sites under trees · Hiking trails on site · Staff delivers firewood to your site. Convenient for both Ark and Creation Museum (30-45 min to each). 📞 859-823-0258</div>
+    </div>
+    <div class="lodging-card">
+      <div class="lodging-name">Oak Creek RV Resort &amp; Campground</div>
+      <div class="lodging-detail">Just 2.6 miles from Ark Encounter · 2 min off I-75 · Kentucky woodlands setting · Big-rig friendly · Showers ✓. Excellent proximity if you want to walk/drive just minutes to the Ark.</div>
+    </div>
+    <div class="lodging-card">
+      <div class="lodging-name">ABIDE Glamping</div>
+      <div class="lodging-detail">1105 Heekin Road, Williamstown, KY · RV hookup spots + glamping tents + domes · Very close to the Ark · Peaceful &amp; quiet · Reviews are outstanding. Great option for something unique. www.abideglamping.com</div>
+    </div>
+    <div class="lodging-card">
+      <div class="lodging-name">Renfro Valley KOA Holiday · 4.2⭐</div>
+      <div class="lodging-detail">184 KOA Campground Rd, Mt. Vernon, KY · ~50 miles south of Ark on I-75 · Open all year · Pool, hiking trails, dog run, laundry, showers ✓ · If using the Ark as a day trip from Knoxville direction, this is a perfect midway stop. 📞 606-256-2474</div>
+    </div>
+
+    <div class="alert good">
+      <div class="alert-title">✅ Day Plan: Wednesday March 18</div>
+      Depart Three Springs / Williamstown camp ~9:30am → Ark opens 10am → 4–6 hours inside → Depart ~4:00–5:00pm → Gas in Williamstown or Corbin, KY → Arrive Knoxville ~7:30–8:00pm. Clean, simple, one-way. You'll walk into Knoxville on a high.
+    </div>
+
+  </div><!-- /ark -->
+
+  <!-- ===================== RETURN TRIP ===================== -->
+  <div id="tab-return" class="tab-panel">
+
+    <div class="alert">
+      <div class="alert-title">📋 Return Trip Overview</div>
+      <strong>Depart Knoxville, TN — Friday March 20 at 8:00 AM</strong><br>
+      Route: I-40 W → Nashville → I-24 N → I-57 N (through West Frankfort, IL) → north through Illinois → I-80 W across Iowa/Nebraska → Wyoming → I-90 W → Billings → Belgrade.<br>
+      Total: ~1,780 miles · 28 hours driving.
+    </div>
+
+    <!-- RETURN DAY 1 -->
+    <div class="day-header">
+      <span class="day-label">Day 1 – Friday</span>
+      <span class="day-date">March 20 · Depart 8:00 AM</span>
+      <span class="day-miles">Drive ~660 mi | Overnight near Kansas City, MO</span>
+    </div>
+
+    <table class="trip-table">
+      <thead>
+        <tr>
+          <th>Time (est.)</th>
+          <th>Location</th>
+          <th>Miles (from KVL)</th>
+          <th>Action / Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>8:00 AM</td>
+          <td><strong>Knoxville, TN</strong></td>
+          <td>0</td>
+          <td>🚗 Depart. Take I-40 W toward Nashville.</td>
+        </tr>
+        <tr>
+          <td>~9:30 AM</td>
+          <td>Cookeville / Crossville, TN</td>
+          <td>~80</td>
+          <td><span class="badge badge-gas">⛽ GAS</span> Fill up BEFORE Nashville. Better prices east of the city. 30 min break. Crossville / I-40 KOA Holiday is here if needed.</td>
+        </tr>
+        <tr>
+          <td>~10:30 AM</td>
+          <td><strong>Nashville, TN</strong></td>
+          <td>~180</td>
+          <td>30 min stop. Nashville KOA Resort available (24hr). Use the bypass to avoid downtown Nashville traffic (I-440 or I-265).</td>
+        </tr>
+        <tr>
+          <td>~12:00 PM</td>
+          <td>Clarksville, TN / Hopkinsville, KY</td>
+          <td>~300</td>
+          <td>30 min stop, continuing northwest on I-24.</td>
+        </tr>
+        <tr>
+          <td>~1:37 PM</td>
+          <td><strong>West Frankfort / Benton, IL</strong></td>
+          <td>~360</td>
+          <td><span class="badge badge-koa">KOA</span> Possible stop — Benton KOA Journey (4.4⭐). On I-57, ~5h 37min mark from Knoxville. 📞 618-439-4860. Great rest point if you want a longer break.</td>
+        </tr>
+        <tr>
+          <td>~3:00 PM</td>
+          <td>Mt. Vernon / Salem, IL</td>
+          <td>~430</td>
+          <td>30 min stop heading north on I-57.</td>
+        </tr>
+        <tr>
+          <td>~4:30 PM</td>
+          <td>Champaign-Urbana, IL</td>
+          <td>~510</td>
+          <td><span class="badge badge-gas">⛽ GAS</span> Gas before I-80 junction. Head west on I-74 or I-80 toward Iowa.</td>
+        </tr>
+        <tr>
+          <td>~6:30 PM</td>
+          <td>Iowa City / Davenport, IA</td>
+          <td>~660</td>
+          <td>30 min stop. Cross the Mississippi.</td>
+        </tr>
+        <tr>
+          <td>~8:00 PM</td>
+          <td><strong>Des Moines, IA</strong></td>
+          <td>~760</td>
+          <td><span class="badge badge-gas">⛽ GAS</span> <span class="badge badge-sleep">💤 OVERNIGHT OPT.</span> Gas before Des Moines. Des Moines KOA area available. Or push to Omaha (~850 mi).</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="alert good">
+      <div class="alert-title">✅ Day 1 Return Overnight Options</div>
+      Best overnight: <strong>Kansas City RV Resort</strong> (Oak Grove, MO · 4.2⭐) at ~660 mi mark, arriving ~8–9pm. Or push to <strong>Des Moines / Omaha area</strong> if you want to cover more ground.
+    </div>
+
+    <!-- RETURN DAY 2 -->
+    <div class="day-header">
+      <span class="day-label">Day 2 – Saturday</span>
+      <span class="day-date">March 21 · Depart ~7:00 AM</span>
+      <span class="day-miles">Drive ~780 mi | Overnight near Casper or Sheridan, WY</span>
+    </div>
+
+    <table class="trip-table">
+      <thead>
+        <tr>
+          <th>Time (est.)</th>
+          <th>Location</th>
+          <th>Miles (from KVL)</th>
+          <th>Action / Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>7:00 AM</td>
+          <td>Resume from overnight (~660–850 mi)</td>
+          <td>—</td>
+          <td>Continue west on I-80 through Nebraska.</td>
+        </tr>
+        <tr>
+          <td>~9:00 AM</td>
+          <td>Grand Island / Kearney, NE</td>
+          <td>~1,000</td>
+          <td>30 min stop. Flat plains section — easy driving.</td>
+        </tr>
+        <tr>
+          <td>~11:30 AM</td>
+          <td>Ogallala / North Platte, NE</td>
+          <td>~1,150</td>
+          <td><span class="badge badge-gas">⛽ GAS</span> Fill up before Wyoming. 30 min stop.</td>
+        </tr>
+        <tr>
+          <td>~1:30 PM</td>
+          <td>Cheyenne, WY</td>
+          <td>~1,290</td>
+          <td>30 min stop. Option: continue on I-25 N toward Casper.</td>
+        </tr>
+        <tr>
+          <td>~3:30 PM</td>
+          <td>Douglas / Glenrock, WY</td>
+          <td>~1,380</td>
+          <td><span class="badge badge-gas">⛽ GAS</span> Gas before Casper. 30 min stop.</td>
+        </tr>
+        <tr>
+          <td>~4:30 PM</td>
+          <td><strong>Casper, WY</strong></td>
+          <td>~1,430</td>
+          <td><span class="badge badge-sleep">💤 OVERNIGHT OPT.</span> Casper area campground. Or push north to Sheridan (~1,545 mi) for an easier Day 3.</td>
+        </tr>
+        <tr>
+          <td>~7:00 PM</td>
+          <td>Sheridan, WY</td>
+          <td>~1,545</td>
+          <td><span class="badge badge-sleep">💤 OVERNIGHT OPT.</span> Buffalo KOA Journey near Sheridan (4.3⭐) — beautiful creekside stop. Makes Day 3 a very short final leg. 📞 Nearby.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- RETURN DAY 3 -->
+    <div class="day-header">
+      <span class="day-label">Day 3 – Sunday</span>
+      <span class="day-date">March 22 · Depart ~8:00 AM</span>
+      <span class="day-miles">Drive ~235 mi home | Arrive Belgrade by noon</span>
+    </div>
+
+    <table class="trip-table">
+      <thead>
+        <tr>
+          <th>Time (est.)</th>
+          <th>Location</th>
+          <th>Miles (from KVL)</th>
+          <th>Action / Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>8:00 AM</td>
+          <td>Sheridan, WY</td>
+          <td>~1,545</td>
+          <td>Final push west on I-90 toward Montana!</td>
+        </tr>
+        <tr>
+          <td>~9:30 AM</td>
+          <td>Hardin / Laurel, MT</td>
+          <td>~1,660</td>
+          <td><span class="badge badge-gas">⛽ GAS</span> Gas BEFORE Billings. Best prices east of the city.</td>
+        </tr>
+        <tr>
+          <td>~10:30 AM</td>
+          <td>Billings, MT</td>
+          <td>~1,700</td>
+          <td>30 min stop if needed. Almost home.</td>
+        </tr>
+        <tr>
+          <td>~12:00 PM</td>
+          <td><strong>🏠 Belgrade, MT</strong></td>
+          <td>~1,780</td>
+          <td>HOME! Welcome back.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="sec-head"><span class="sec-num">🏕</span><h2>Return Route KOA Campgrounds</h2><div class="line"></div></div>
+
+    <div class="koa-card">
+      <div>
+        <div class="koa-name">Benton KOA Journey (near West Frankfort, IL)</div>
+        <div class="koa-addr">1500 N Du Quoin St, Benton, IL · I-57 corridor</div>
+        <div class="koa-detail">Showers ✓ | Pond-side sites ✓ | 1 hr from Kentucky, Missouri, Indiana | Great midday stop. 📞 618-439-4860</div>
+      </div>
+      <div class="koa-rating">⭐ 4.4</div>
+    </div>
+    <div class="koa-card">
+      <div>
+        <div class="koa-name">Kansas City RV Resort ⭐ Overnight 1</div>
+        <div class="koa-addr">303 NE 3rd St, Oak Grove, MO · Just off I-70</div>
+        <div class="koa-detail">Showers ✓ | Pool ✓ | Clean facilities | Friendly staff | Easy access off the interstate. 📞 816-690-6660</div>
+      </div>
+      <div class="koa-rating">⭐ 4.2</div>
+    </div>
+    <div class="koa-card">
+      <div>
+        <div class="koa-name">Buffalo KOA Journey ⭐ Overnight 2 (Best)</div>
+        <div class="koa-addr">Off I-90 Exit 58 / I-25 Exit 299, Buffalo, WY</div>
+        <div class="koa-detail">Showers ✓ | Beautiful creekside sites | Pool (Memorial Day–Labor Day) | 5 min to historic Buffalo, WY | Makes for a near-perfect final push home. Lat: 44.351, Long: -106.678</div>
+      </div>
+      <div class="koa-rating">⭐ 4.3+</div>
+    </div>
+
+  </div><!-- /return -->
+
+  <!-- ===================== FUEL & BUDGET ===================== -->
+  <div id="tab-fuel" class="tab-panel">
+
+    <div class="sec-head"><span class="sec-num">⛽</span><h2>Fuel Calculations</h2><div class="line"></div></div>
+
+    <div class="fuel-box">
+      <div class="fuel-item"><div class="fuel-lbl">One-Way Distance</div><div class="fuel-val">~1,785 mi</div></div>
+      <div class="fuel-item"><div class="fuel-lbl">Vehicle MPG</div><div class="fuel-val">20 MPG</div></div>
+      <div class="fuel-item"><div class="fuel-lbl">Gallons Needed (1 way)</div><div class="fuel-val">~89 gal</div></div>
+      <div class="fuel-item"><div class="fuel-lbl">Est. Cost @ $3.50/gal</div><div class="fuel-val">~$312</div></div>
+      <div class="fuel-item"><div class="fuel-lbl">Round Trip Fuel Cost</div><div class="fuel-val">~$624</div></div>
+      <div class="fuel-item"><div class="fuel-lbl">Total Round Trip Miles</div><div class="fuel-val">~3,570 mi</div></div>
+    </div>
+
+    <div class="alert">
+      <div class="alert-title">💡 Fuel Tip</div>
+      With 20 MPG, fill up at least every 250–300 miles (assumes a ~15 gallon tank). Never let the tank drop below 1/4 in Wyoming or rural Montana — gas stations can be 50+ miles apart.
+    </div>
+
+    <div class="sec-head"><span class="sec-num">1</span><h2>Departing Gas Stops — New Fun-Stop Route</h2><div class="line"></div></div>
+
+    <div class="gas-list">
+      <div class="gas-item"><strong>Stop 1 · ~115–145 mi</strong>Hardin or Billings, MT — BEFORE heading south into Wyoming.</div>
+      <div class="gas-item"><strong>Stop 2 · ~380 mi</strong>Moorcroft / Devils Tower area, WY — fill up near camp overnight.</div>
+      <div class="gas-item"><strong>Stop 3 · ~540 mi</strong>Wall, SD (Wall Drug area) — great stop with the attraction. Fill up here.</div>
+      <div class="gas-item"><strong>Stop 4 · ~760 mi</strong>Mitchell, SD (Corn Palace) — gas + Corn Palace stop.</div>
+      <div class="gas-item"><strong>Stop 5 · ~835 mi</strong>Sioux Falls, SD — BEFORE metro. Last cheap South Dakota gas.</div>
+      <div class="gas-item"><strong>Stop 6 · ~850–990 mi</strong>Des Moines, IA — BEFORE Iowa City area. Top off for Illinois push.</div>
+      <div class="gas-item"><strong>Stop 7 · ~1,250 mi</strong>East of Indianapolis, IN — BEFORE metro on I-74.</div>
+      <div class="gas-item"><strong>Stop 8 · ~1,400 mi</strong>Lawrenceburg, IN — BEFORE Cincinnati / Kentucky border.</div>
+      <div class="gas-item"><strong>Stop 9 · ~1,445 mi</strong>Williamstown, KY — Top off the night before Ark day.</div>
+      <div class="gas-item"><strong>Stop 10 · ~1,490 mi</strong>Corbin / London, KY — BEFORE Knoxville. Last stop on Day 6.</div>
+    </div>
+
+    <div class="sec-head"><span class="sec-num">2</span><h2>Return Gas Stops (Before Major Cities)</h2><div class="line"></div></div>
+
+    <div class="gas-list">
+      <div class="gas-item"><strong>Stop 1 · ~80 mi</strong>Crossville / Cookeville, TN — BEFORE Nashville. Always cheaper here.</div>
+      <div class="gas-item"><strong>Stop 2 · ~430 mi</strong>Champaign, IL — BEFORE Iowa/I-80 stretch. Stock up well.</div>
+      <div class="gas-item"><strong>Stop 3 · ~660 mi</strong>Iowa City / Davenport — Top off for Iowa/Nebraska crossing.</div>
+      <div class="gas-item"><strong>Stop 4 · ~1,150 mi</strong>Ogallala, NE — BEFORE Colorado/Wyoming. Rural stretch ahead.</div>
+      <div class="gas-item"><strong>Stop 5 · ~1,380 mi</strong>Douglas, WY — BEFORE Casper. Good fuel availability here.</div>
+      <div class="gas-item"><strong>Stop 6 · ~1,660 mi</strong>Hardin / Laurel, MT — BEFORE Billings. Last cheap stop.</div>
+    </div>
+
+    <div class="sec-head"><span class="sec-num">3</span><h2>Trip Timing Summary</h2><div class="line"></div></div>
+
+    <table class="trip-table">
+      <thead>
+        <tr><th>Segment</th><th>Departure</th><th>Est. Arrival</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Belgrade → Night 1</td>
+          <td>Fri Mar 13, 1:00 PM</td>
+          <td>Fri Mar 13, ~7:30 PM</td>
+          <td>Devils Tower KOA, WY (~380 mi)</td>
+        </tr>
+        <tr>
+          <td>Night 1 → Night 2</td>
+          <td>Sat Mar 14, 8:00 AM</td>
+          <td>Sat Mar 14, ~5:00 PM</td>
+          <td>Badlands → Wall Drug → Rushmore → Rapid City KOA (~200 mi scenic)</td>
+        </tr>
+        <tr>
+          <td>Night 2 → Night 3</td>
+          <td>Sun Mar 15, 7:30 AM</td>
+          <td>Sun Mar 15, ~3:30–5:00 PM</td>
+          <td>Corn Palace → Sioux Falls → Mitchell KOA or Iowa City (~350–500 mi)</td>
+        </tr>
+        <tr>
+          <td>Night 3 → Night 4 &amp; 5</td>
+          <td>Mon Mar 16, 7:00 AM</td>
+          <td>Mon Mar 16, ~5:30 PM</td>
+          <td>Iowa → Indianapolis → Cincinnati → Williamstown KY (~450 mi)</td>
+        </tr>
+        <tr>
+          <td>Rest Day</td>
+          <td>Tue Mar 17</td>
+          <td>Stay near Williamstown</td>
+          <td>Explore Georgetown KY, relax, prep for Ark day</td>
+        </tr>
+        <tr>
+          <td>⭐ Ark → Knoxville</td>
+          <td>Wed Mar 18, 9:30 AM (to Ark)</td>
+          <td>Wed Mar 18, ~7:30 PM (Knoxville)</td>
+          <td>Ark Encounter 10am–5pm → Drive to Knoxville</td>
+        </tr>
+        <tr>
+          <td>Return: Knoxville → Night 1</td>
+          <td>Fri Mar 20, 8:00 AM</td>
+          <td>Fri Mar 20, ~8–9 PM</td>
+          <td>Kansas City or Des Moines area</td>
+        </tr>
+        <tr>
+          <td>Return: Night 1 → Night 2</td>
+          <td>Sat Mar 21, 7:00 AM</td>
+          <td>Sat Mar 21, ~6–8 PM</td>
+          <td>Casper or Sheridan / Buffalo, WY</td>
+        </tr>
+        <tr>
+          <td>Return: Night 2 → Belgrade</td>
+          <td>Sun Mar 22, 8:00 AM</td>
+          <td>Sun Mar 22, ~12:00 PM</td>
+          <td>Home! Short final leg.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="alert good">
+      <div class="alert-title">✅ Stop Frequency Check</div>
+      At 65 mph average with stops every 150 mi: each driving segment is ~2.3 hrs, plus 30 min stops. You'll make roughly 4–5 stops per 10 hours of driving — well within your plan. Total stop time per day (5 stops × 30 min) = 2.5 hrs. Add to drive time accordingly.
+    </div>
+
+  </div><!-- /fuel -->
+
+</div><!-- /page-wrap -->
+
+<script>
+function showTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
