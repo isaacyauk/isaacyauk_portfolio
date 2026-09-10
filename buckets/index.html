@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Buckets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --canvas:#E5E8E3;
+    --dot:rgba(30,42,47,.13);
+    --ink:#1E2A2F;
+    --muted:#6B787C;
+    --surface:#F8F9F6;
+    --line:rgba(30,42,47,.11);
+    --fill:#B3D0D2;
+    --fill-edge:#6E9CA2;
+    --honey:#EAD9AA;
+    --honey-edge:#C3A55C;
+    --accent:#2B6C76;
+    --danger:#A2463B;
+    --font:"Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--canvas);color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+  button{font:inherit;color:inherit}
+
+  #canvas{position:fixed;inset:0;overflow:hidden;touch-action:none;cursor:default;
+    background-image:radial-gradient(var(--dot) 1px, transparent 1.3px);background-size:22px 22px}
+  #canvas.panning{cursor:grabbing}
+  #inner{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+  #inner.ease{transition:transform .35s cubic-bezier(.3,.7,.2,1)}
+  #canvas.ease{transition:background-position .35s cubic-bezier(.3,.7,.2,1), background-size .35s cubic-bezier(.3,.7,.2,1)}
+  .tools{display:flex;align-items:center;gap:2px;pointer-events:auto}
+  .zoom{border:0;background:transparent;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;padding:9px 10px;border-radius:10px;cursor:pointer;min-width:52px}
+  .zoom:active{background:var(--line)}
+  .zoom:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  header{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;
+    padding:calc(12px + env(safe-area-inset-top)) 16px 18px;pointer-events:none;
+    background:linear-gradient(var(--canvas) 55%, rgba(229,232,227,0))}
+  .total{font-size:15px;color:var(--muted)}
+  .total b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums;margin-left:6px}
+  .icon-btn{pointer-events:auto;width:38px;height:38px;border-radius:12px;border:0;background:transparent;display:grid;place-items:center;cursor:pointer}
+  .icon-btn:active{background:var(--line)}
+
+  .bucket{position:absolute;left:0;top:0;padding:0;border:1px solid var(--line);background:var(--surface);
+    border-radius:18px 18px 34px 34px;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;
+    -webkit-touch-callout:none;cursor:grab;text-align:left;
+    transition:transform .18s ease, box-shadow .18s ease, left .35s cubic-bezier(.3,.7,.2,1), top .35s cubic-bezier(.3,.7,.2,1)}
+  .bucket .fill{position:absolute;left:0;right:0;bottom:0;height:0;background:var(--fill);border-top:1.5px solid var(--fill-edge);
+    transition:height .8s cubic-bezier(.3,.7,.2,1)}
+  .bucket.incoming .fill{background:var(--honey);border-top-color:var(--honey-edge)}
+  .bucket .fill[style*="height: 0%"]{border-top-color:transparent}
+  .bucket .label{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:13px 15px 16px}
+  .bucket .name{font-size:14px;font-weight:500;color:var(--ink);opacity:.78;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bucket .bottom{display:flex;align-items:baseline;justify-content:space-between;gap:6px}
+  .bucket .amt{font-size:23px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .bucket.incoming .amt{font-size:30px}
+  .bucket .share{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .bucket:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+  .bucket.source{box-shadow:0 0 0 1.5px var(--accent)}
+  .bucket.target{transform:scale(1.04);box-shadow:0 0 0 2px var(--accent), 0 10px 24px -12px rgba(30,42,47,.4)}
+  .bucket.lifted{transform:scale(1.05);box-shadow:0 16px 30px -12px rgba(30,42,47,.4);z-index:6;cursor:grabbing;transition:transform .18s ease, box-shadow .18s ease}
+
+  /* Grip handle: only on devices with a mouse/trackpad */
+  .bucket .grip{display:none}
+  @media (hover:hover) and (pointer:fine){
+    .bucket{cursor:pointer}
+    .bucket .name{padding-right:24px}
+    .bucket .grip{display:grid;place-items:center;position:absolute;top:7px;right:7px;z-index:2;width:28px;height:28px;
+      border-radius:9px;cursor:grab;opacity:0;transition:opacity .15s, background .15s}
+    .bucket:hover .grip,.bucket:focus-visible .grip,.bucket.lifted .grip{opacity:1}
+    .bucket .grip:hover{background:var(--line)}
+    .bucket.lifted,.bucket.lifted .grip{cursor:grabbing}
+    .touch-hint{display:none}
+  }
+  @media not all and (hover:hover) and (pointer:fine){ .mouse-hint{display:none} }
+
+  #noodle{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5;overflow:visible}
+  #noodle path{fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round}
+
+  #hint{position:absolute;left:24px;right:24px;text-align:center;font-size:13px;line-height:1.45;color:var(--muted);transition:opacity .3s}
+
+  #add{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:20;
+    display:flex;align-items:center;gap:8px;padding:13px 20px 13px 16px;border:0;border-radius:999px;background:var(--ink);color:var(--surface);
+    font-size:15px;font-weight:500;cursor:pointer;box-shadow:0 8px 20px -10px rgba(30,42,47,.6)}
+  #add:active{transform:translateX(-50%) scale(.97)}
+  #add:focus-visible,.btn:focus-visible,.chip:focus-visible,.icon-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  #backdrop{position:fixed;inset:0;z-index:30;background:rgba(30,42,47,.28);opacity:0;pointer-events:none;transition:opacity .25s}
+  #backdrop.open{opacity:1;pointer-events:auto}
+  #sheet{position:fixed;left:50%;bottom:0;z-index:31;width:min(100%,480px);transform:translate(-50%,105%);
+    background:var(--surface);border-radius:22px 22px 0 0;padding:10px 20px calc(20px + env(safe-area-inset-bottom));
+    transition:transform .32s cubic-bezier(.3,.7,.2,1);max-height:88vh;overflow-y:auto}
+  #sheet.open{transform:translate(-50%,0)}
+  .grab{width:36px;height:4px;border-radius:4px;background:var(--line);margin:0 auto 14px}
+  #sheet h2{margin:0;font-size:19px;font-weight:600;letter-spacing:-.01em}
+  .sub{margin:4px 0 0;font-size:14px;color:var(--muted)}
+  .section{margin:22px 0 8px;font-size:13px;color:var(--muted)}
+  .name-input{width:100%;border:0;border-bottom:1.5px solid var(--line);background:transparent;font:600 19px var(--font);
+    color:var(--ink);padding:4px 0 8px;outline:none;border-radius:0}
+  .name-input:focus{border-bottom-color:var(--accent)}
+  .amount-field{display:flex;align-items:baseline;gap:4px;margin-top:20px;border-bottom:1.5px solid var(--line);padding-bottom:6px}
+  .amount-field:focus-within{border-bottom-color:var(--accent)}
+  .amount-field span{font-size:30px;font-weight:500;color:var(--muted)}
+  .amount-field input{flex:1;min-width:0;border:0;background:transparent;outline:none;font:600 40px var(--font);letter-spacing:-.02em;
+    color:var(--ink);font-variant-numeric:tabular-nums;padding:0}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .chip{padding:8px 13px;border-radius:999px;border:1px solid var(--line);background:transparent;font-size:14px;cursor:pointer}
+  .chip:active{background:var(--line)}
+  .chip:disabled{opacity:.4}
+  .err{min-height:18px;margin:10px 0 8px;font-size:13px;color:var(--danger)}
+  .row{display:flex;gap:10px}
+  .btn{flex:1;height:50px;border-radius:14px;border:0;font-size:16px;font-weight:600;cursor:pointer}
+  .btn.primary{background:var(--accent);color:#fff}
+  .btn.ghost{background:transparent;border:1px solid var(--line)}
+  .btn.danger{background:transparent;border:1px solid var(--line);color:var(--danger)}
+  .btn:disabled{opacity:.4;cursor:default}
+  .note{margin:10px 0 0;font-size:13px;color:var(--muted)}
+  .route{display:flex;align-items:center;gap:8px;margin-top:10px}
+  .tag{padding:7px 12px;border-radius:10px;background:var(--canvas);font-size:14px;font-weight:500;max-width:40%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .route .icon-btn{width:34px;height:34px;border:1px solid var(--line)}
+
+  #toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom));z-index:25;transform:translate(-50%,12px);opacity:0;
+    display:flex;align-items:center;gap:16px;padding:10px 10px 10px 16px;border-radius:14px;background:var(--ink);color:var(--surface);
+    font-size:14px;pointer-events:none;transition:opacity .2s, transform .2s;white-space:nowrap;max-width:calc(100% - 32px)}
+  #toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+  #toast span{overflow:hidden;text-overflow:ellipsis}
+  #toast button{border:0;background:rgba(255,255,255,.1);color:#A8D6DB;font-weight:600;padding:6px 12px;border-radius:9px;cursor:pointer}
+
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important} }
+</style>
+</head>
+<body>
+
+<div id="canvas"><div id="inner">
+  <p id="hint">Drag from one bucket to another to move money.<br><span class="touch-hint">Hold a bucket to rearrange it. Pinch to zoom.</span><span class="mouse-hint">Drag the handle in a bucket's corner to rearrange it. Scroll to zoom.</span></p>
+  <svg id="noodle" aria-hidden="true"><path id="npath"/><circle id="nstart" r="4" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/><circle id="nend" r="5" fill="var(--accent)"/></svg>
+</div></div>
+
+<header>
+  <div class="total">Total<b id="total">$0</b></div>
+  <div class="tools">
+    <button class="zoom" id="zoom" aria-label="Reset zoom">100%</button>
+    <button class="icon-btn" id="menu" aria-label="Options">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="var(--ink)"><circle cx="4" cy="10" r="1.6"/><circle cx="10" cy="10" r="1.6"/><circle cx="16" cy="10" r="1.6"/></svg>
+    </button>
+  </div>
+</header>
+
+<button id="add"><svg width="18" height="18" viewBox="0 0 18 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 3.5v11M3.5 9h11"/></svg>New bucket</button>
+
+<div id="backdrop"></div>
+<div id="sheet" role="dialog" aria-modal="true"></div>
+<div id="toast" role="status"><span id="toastMsg"></span><button id="toastUndo">Undo</button></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const canvas = $('#canvas'), inner = $('#inner');
+const fmtFull = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
+const fmtWhole = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
+const money = c => (c % 100 === 0 ? fmtWhole : fmtFull).format(c / 100);
+const parseCents = s => { const n = parseFloat(String(s).replace(/[^0-9.]/g,'')); return isFinite(n) ? Math.round(n*100) : 0; };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const KEY = 'bucket-budget-v1';
+const BW = 148, BH = 124, GAP = 14, TOP = 72, IH = 112;
+const vw = () => document.documentElement.clientWidth;
+const incomingW = () => Math.min(vw() - 32, 340);
+const size = b => b.incoming ? {w: incomingW(), h: IH} : {w: BW, h: BH};
+const byId = id => state.buckets.find(b => b.id === id);
+const incoming = () => state.buckets.find(b => b.incoming);
+
+let state;
+
+/* ---------- state ---------- */
+function defaults(){
+  const st = { buckets:[{id:'in', name:'Incoming', cents:0, incoming:true, x:(vw()-incomingW())/2, y:TOP}], hintDone:false, nextId:1 };
+  ['Rent','Groceries','Savings','Fun'].forEach(n => addBucket(n, st));
+  return st;
+}
+function freeSlot(st){
+  const W = vw();
+  const cols = Math.max(2, Math.floor((W - 32 + GAP) / (BW + GAP)));
+  const left = (W - (cols*BW + (cols-1)*GAP)) / 2;
+  const startY = TOP + IH + 62;
+  for (let i = 0; i < 400; i++){
+    const x = left + (i % cols) * (BW + GAP), y = startY + Math.floor(i / cols) * (BH + GAP);
+    const hit = st.buckets.some(b => { const s = size(b); return x < b.x+s.w && x+BW > b.x && y < b.y+s.h && y+BH > b.y; });
+    if (!hit) return {x, y};
+  }
+  return {x:left, y:startY};
+}
+function addBucket(name, st = state){
+  const p = freeSlot(st);
+  const b = {id:'b' + (st.nextId++), name, cents:0, x:p.x, y:p.y};
+  st.buckets.push(b);
+  return b;
+}
+// Claude's artifact viewer provides window.storage; a normal website uses localStorage.
+const hasArtifactStore = !!(window.storage && window.storage.get);
+
+let saveT;
+function save(){
+  clearTimeout(saveT);
+  saveT = setTimeout(async () => {
+    const data = JSON.stringify(state);
+    try {
+      if (hasArtifactStore) await window.storage.set(KEY, data, false);
+      else localStorage.setItem(KEY, data);
+    } catch(e){}
+  }, 250);
+}
+async function load(){
+  try {
+    const raw = hasArtifactStore
+      ? (await window.storage.get(KEY, false))?.value
+      : localStorage.getItem(KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e){}
+  return null;
+}
+// Save right away when the tab is hidden or closed, so the 250ms debounce can't drop the last change.
+function flushSave(){
+  if (hasArtifactStore) return;
+  clearTimeout(saveT);
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){}
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden && state) flushSave(); });
+window.addEventListener('pagehide', () => state && flushSave());
+
+/* ---------- render ---------- */
+const nodes = {};
+function makeNode(b){
+  const el = document.createElement('button');
+  el.className = 'bucket' + (b.incoming ? ' incoming' : '');
+  el.dataset.id = b.id;
+  el.innerHTML = '<div class="fill"></div>'
+    + '<span class="grip" title="Drag to rearrange" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="var(--muted)">'
+    + '<circle cx="3" cy="2.5" r="1.1"/><circle cx="9" cy="2.5" r="1.1"/><circle cx="3" cy="6" r="1.1"/><circle cx="9" cy="6" r="1.1"/>'
+    + '<circle cx="3" cy="9.5" r="1.1"/><circle cx="9" cy="9.5" r="1.1"/></svg></span>'
+    + '<div class="label"><div class="name"></div><div class="bottom"><div class="amt"></div><div class="share"></div></div></div>';
+  el.addEventListener('pointerdown', e => onDown(e, b.id));
+  el.addEventListener('pointermove', onMove);
+  el.addEventListener('pointerup', onUp);
+  el.addEventListener('pointercancel', onCancel);
+  el.addEventListener('contextmenu', e => e.preventDefault());
+  el.addEventListener('click', () => { if (Date.now() < suppressClick) return; openBucket(b.id); });
+  inner.insertBefore(el, $('#noodle'));
+  nodes[b.id] = el;
+  return el;
+}
+function render(){
+  const total = state.buckets.reduce((a, b) => a + b.cents, 0);
+  $('#total').textContent = money(total);
+  const W = vw(); let maxY = 0;
+  state.buckets.forEach(b => {
+    const el = nodes[b.id] || makeNode(b);
+    const s = size(b);
+    el.style.width = s.w + 'px'; el.style.height = s.h + 'px';
+    el.style.left = b.x + 'px'; el.style.top = b.y + 'px';
+    const pct = total ? b.cents / total : 0;
+    el.querySelector('.fill').style.height = (pct * 100) + '%';
+    el.querySelector('.name').textContent = b.name;
+    el.querySelector('.amt').textContent = money(b.cents);
+    el.querySelector('.share').textContent = total ? Math.round(pct * 100) + '%' : '';
+    el.setAttribute('aria-label', `${b.name}, ${money(b.cents)}`);
+    maxY = Math.max(maxY, b.y + s.h);
+  });
+  Object.keys(nodes).forEach(id => { if (!byId(id)) { nodes[id].remove(); delete nodes[id]; } });
+  inner.style.width = W + 'px';
+  inner.style.height = Math.max(window.innerHeight, maxY + 140) + 'px';
+  const hint = $('#hint');
+  hint.style.top = (TOP + IH + 14) + 'px';
+  hint.style.opacity = state.hintDone ? 0 : 1;
+}
+
+/* ---------- drag: noodle to move money, hold to rearrange ---------- */
+let g = null, suppressClick = 0;
+const npath = $('#npath'), nstart = $('#nstart'), nend = $('#nend'), noodle = $('#noodle');
+noodle.style.display = 'none';
+
+function innerPt(e){ return {x: (e.clientX - view.tx) / view.s, y: (e.clientY - view.ty) / view.s}; }
+function center(b){ const s = size(b); return {x: b.x + s.w/2, y: b.y + s.h/2}; }
+
+function onDown(e, id){
+  if (e.button > 0 || g || pinch) return;
+  const el = nodes[id];
+  el.setPointerCapture(e.pointerId);
+  g = {id, el, pid:e.pointerId, sx:e.clientX, sy:e.clientY, mode:'pending', target:null};
+  const lift = () => {
+    if (!g || g.mode !== 'pending') return;
+    const b = byId(id);
+    g.mode = 'lift'; g.ox = b.x; g.oy = b.y;
+    el.classList.add('lifted');
+    navigator.vibrate && navigator.vibrate(8);
+  };
+  // Mouse users grabbing the corner handle rearrange right away;
+  // everywhere else, press and hold still works (touch included).
+  if (e.target.closest('.grip')) { e.preventDefault(); lift(); }
+  else g.timer = setTimeout(lift, 380);
+}
+function onMove(e){
+  if (!g || e.pointerId !== g.pid) return;
+  const dx = e.clientX - g.sx, dy = e.clientY - g.sy;
+  if (g.mode === 'pending' && Math.hypot(dx, dy) > 7){
+    clearTimeout(g.timer);
+    g.mode = 'link';
+    g.el.classList.add('source');
+    noodle.style.display = '';
+  }
+  if (g.mode === 'link'){
+    const under = document.elementFromPoint(e.clientX, e.clientY);
+    const tEl = under && under.closest('.bucket');
+    const tId = tEl && tEl.dataset.id !== g.id ? tEl.dataset.id : null;
+    if (tId !== g.target){
+      if (g.target && nodes[g.target]) nodes[g.target].classList.remove('target');
+      g.target = tId;
+      if (tId){ nodes[tId].classList.add('target'); navigator.vibrate && navigator.vibrate(5); }
+    }
+    const a = center(byId(g.id));
+    const p = tId ? center(byId(tId)) : innerPt(e);
+    const k = Math.max(40, Math.abs(p.y - a.y) * 0.5) * (p.y >= a.y ? 1 : -1);
+    npath.setAttribute('d', `M${a.x},${a.y} C${a.x},${a.y + k} ${p.x},${p.y - k} ${p.x},${p.y}`);
+    nstart.setAttribute('cx', a.x); nstart.setAttribute('cy', a.y);
+    nend.setAttribute('cx', p.x); nend.setAttribute('cy', p.y);
+  }
+  if (g.mode === 'lift'){
+    const b = byId(g.id), s = size(b);
+    b.x = g.ox + dx / view.s;
+    b.y = g.oy + dy / view.s;
+    g.el.style.left = b.x + 'px'; g.el.style.top = b.y + 'px';
+  }
+}
+function finish(commit){
+  if (!g) return;
+  clearTimeout(g.timer);
+  const {mode, id, target, el} = g;
+  el.classList.remove('lifted', 'source');
+  if (target && nodes[target]) nodes[target].classList.remove('target');
+  noodle.style.display = 'none';
+  g = null;
+  if (mode !== 'pending') suppressClick = Date.now() + 400;
+  if (mode === 'lift'){ render(); save(); }
+  if (commit && mode === 'link' && target) openTransfer(id, target);
+}
+function onUp(e){ if (g && e.pointerId === g.pid) finish(true); }
+function onCancel(e){ if (g && e.pointerId === g.pid) finish(false); }
+
+/* ---------- sheets ---------- */
+const sheet = $('#sheet'), backdrop = $('#backdrop');
+function openSheet(html){
+  sheet.innerHTML = '<div class="grab"></div>' + html;
+  sheet.classList.add('open'); backdrop.classList.add('open');
+}
+function closeSheet(){
+  sheet.classList.remove('open'); backdrop.classList.remove('open');
+  if (document.activeElement) document.activeElement.blur();
+}
+backdrop.addEventListener('click', closeSheet);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+
+function moveChips(fromId){
+  return state.buckets.filter(b => b.id !== fromId)
+    .map(b => `<button class="chip" data-to="${b.id}">${esc(b.name)}</button>`).join('');
+}
+function wireMoveChips(fromId){
+  sheet.querySelectorAll('[data-to]').forEach(c => c.onclick = () => openTransfer(fromId, c.dataset.to));
+}
+
+function openTransfer(fromId, toId){
+  let from = byId(fromId), to = byId(toId);
+  openSheet(`
+    <h2>Move money</h2>
+    <div class="route">
+      <span class="tag" id="tFrom"></span>
+      <button class="icon-btn" id="swap" aria-label="Swap direction">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 5h10l-3-3M13.5 11h-10l3 3"/></svg>
+      </button>
+      <span class="tag" id="tTo"></span>
+    </div>
+    <p class="sub" id="avail"></p>
+    <label class="amount-field"><span>$</span><input id="amt" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="Amount"></label>
+    <div class="chips">
+      <button class="chip" data-f="0.25">25%</button><button class="chip" data-f="0.5">50%</button><button class="chip" data-f="1">All</button>
+    </div>
+    <p class="err" id="err"></p>
+    <button class="btn primary" id="go" disabled>Move</button>`);
+  const amt = $('#amt'), go = $('#go'), err = $('#err');
+  function refresh(){
+    $('#tFrom').textContent = from.name; $('#tTo').textContent = to.name;
+    $('#avail').textContent = from.cents ? `${from.name} has ${money(from.cents)}` : `${from.name} is empty`;
+    sheet.querySelectorAll('[data-f]').forEach(c => c.disabled = !from.cents);
+    const c = parseCents(amt.value);
+    const over = c > from.cents;
+    err.textContent = over ? `${from.name} only has ${money(from.cents)}` : '';
+    go.disabled = !c || over;
+    go.textContent = c && !over ? `Move ${money(c)}` : 'Move';
+  }
+  amt.addEventListener('input', refresh);
+  amt.addEventListener('keydown', e => { if (e.key === 'Enter' && !go.disabled) go.click(); });
+  sheet.querySelectorAll('[data-f]').forEach(c => c.onclick = () => {
+    const v = Math.floor(from.cents * parseFloat(c.dataset.f));
+    amt.value = (v / 100).toFixed(v % 100 ? 2 : 0); refresh();
+  });
+  $('#swap').onclick = () => { [from, to] = [to, from]; refresh(); };
+  go.onclick = () => {
+    const c = parseCents(amt.value);
+    if (!c || c > from.cents) return;
+    doMove(from.id, to.id, c);
+    closeSheet();
+  };
+  refresh();
+  amt.focus();
+}
+
+function doMove(fromId, toId, c){
+  const from = byId(fromId), to = byId(toId);
+  from.cents -= c; to.cents += c;
+  state.hintDone = true;
+  render(); save();
+  toast(`Moved ${money(c)} to ${to.name}`, () => {
+    const f = byId(fromId), t = byId(toId);
+    if (f && t && t.cents >= c){ t.cents -= c; f.cents += c; render(); save(); }
+  });
+}
+
+function openBucket(id){
+  const b = byId(id);
+  if (b.incoming) return openIncoming();
+  openSheet(`
+    <input class="name-input" id="nm" aria-label="Bucket name" maxlength="28">
+    <p class="sub">Balance ${money(b.cents)}</p>
+    <p class="section">Move to</p>
+    <div class="chips">${moveChips(id)}</div>
+    <div class="row" style="margin-top:26px">
+      <button class="btn danger" id="del">Delete</button>
+      <button class="btn primary" id="done">Done</button>
+    </div>
+    <p class="note">${b.cents ? 'Deleting sends its balance back to Incoming.' : ''}</p>`);
+  const nm = $('#nm');
+  nm.value = b.name;
+  nm.addEventListener('input', () => { b.name = nm.value.trim() || 'Untitled'; render(); save(); });
+  nm.addEventListener('keydown', e => { if (e.key === 'Enter') closeSheet(); });
+  wireMoveChips(id);
+  $('#done').onclick = closeSheet;
+  $('#del').onclick = () => {
+    const idx = state.buckets.indexOf(b), snapshot = {...b};
+    incoming().cents += b.cents;
+    state.buckets.splice(idx, 1);
+    render(); save(); closeSheet();
+    toast(`Deleted ${snapshot.name}`, () => {
+      const inc = incoming();
+      if (inc.cents < snapshot.cents) return;
+      inc.cents -= snapshot.cents;
+      state.buckets.splice(idx, 0, snapshot);
+      render(); save();
+    });
+  };
+}
+
+function openIncoming(){
+  const b = incoming();
+  openSheet(`
+    <h2>Incoming</h2>
+    <p class="sub">Balance ${money(b.cents)}</p>
+    <label class="amount-field"><span>$</span><input id="amt" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="Amount"></label>
+    <p class="err" id="err"></p>
+    <div class="row">
+      <button class="btn ghost" id="take" disabled>Take out</button>
+      <button class="btn primary" id="put" disabled>Add</button>
+    </div>
+    ${state.buckets.length > 1 ? `<p class="section">Move to</p><div class="chips">${moveChips(b.id)}</div>` : ''}`);
+  const amt = $('#amt'), put = $('#put'), take = $('#take'), err = $('#err');
+  function refresh(){
+    const c = parseCents(amt.value);
+    put.disabled = !c;
+    take.disabled = !c || c > b.cents;
+    err.textContent = c > b.cents && b.cents ? `Incoming only has ${money(b.cents)} to take out` : '';
+  }
+  amt.addEventListener('input', refresh);
+  amt.addEventListener('keydown', e => { if (e.key === 'Enter' && !put.disabled) put.click(); });
+  put.onclick = () => {
+    const c = parseCents(amt.value); if (!c) return;
+    b.cents += c; render(); save(); closeSheet();
+    toast(`Added ${money(c)} to Incoming`, () => { if (b.cents >= c){ b.cents -= c; render(); save(); } });
+  };
+  take.onclick = () => {
+    const c = parseCents(amt.value); if (!c || c > b.cents) return;
+    b.cents -= c; render(); save(); closeSheet();
+    toast(`Took ${money(c)} out of Incoming`, () => { b.cents += c; render(); save(); });
+  };
+  wireMoveChips(b.id);
+  amt.focus();
+}
+
+function openNew(){
+  openSheet(`
+    <h2>New bucket</h2>
+    <input class="name-input" id="nm" placeholder="Name it, like Car or Travel" maxlength="28" style="margin-top:16px;font-weight:500">
+    <p class="err"></p>
+    <button class="btn primary" id="create" disabled>Create bucket</button>`);
+  const nm = $('#nm'), create = $('#create');
+  nm.addEventListener('input', () => create.disabled = !nm.value.trim());
+  nm.addEventListener('keydown', e => { if (e.key === 'Enter' && !create.disabled) create.click(); });
+  create.onclick = () => {
+    const b = addBucket(nm.value.trim());
+    render(); save(); closeSheet();
+    const sx = b.x * view.s + view.tx, sy = b.y * view.s + view.ty;
+    if (sx < 0 || sy < 60 || sx + BW * view.s > innerWidth || sy + BH * view.s > innerHeight - 80){
+      view.tx = innerWidth / 2 - (b.x + BW / 2) * view.s;
+      view.ty = innerHeight / 2 - (b.y + BH / 2) * view.s;
+      applyView(true);
+    }
+  };
+  nm.focus();
+}
+
+function openMenu(){
+  let armed = false;
+  openSheet(`
+    <h2>Budget</h2>
+    <p class="sub">Everything saves as you go.</p>
+    <div style="margin-top:20px;display:grid;gap:10px">
+      <button class="btn ghost" id="empty">Send all balances to Incoming</button>
+      <button class="btn danger" id="reset">Start over</button>
+    </div>`);
+  $('#empty').onclick = () => {
+    const inc = incoming();
+    state.buckets.forEach(b => { if (!b.incoming){ inc.cents += b.cents; b.cents = 0; } });
+    render(); save(); closeSheet();
+  };
+  $('#reset').onclick = e => {
+    if (!armed){ armed = true; e.target.textContent = 'Tap again to erase everything'; return; }
+    Object.keys(nodes).forEach(id => { nodes[id].remove(); delete nodes[id]; });
+    state = defaults(); Object.assign(view, {s:1, tx:0, ty:0}); applyView(true); render(); save(); closeSheet();
+  };
+}
+
+$('#add').onclick = openNew;
+$('#menu').onclick = openMenu;
+
+/* ---------- toast ---------- */
+let toastT, undoFn = null;
+function toast(msg, undo){
+  $('#toastMsg').textContent = msg;
+  undoFn = undo || null;
+  $('#toastUndo').style.display = undo ? '' : 'none';
+  $('#toast').classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => { $('#toast').classList.remove('show'); undoFn = null; }, 5000);
+}
+$('#toastUndo').onclick = () => {
+  if (undoFn) undoFn();
+  undoFn = null;
+  $('#toast').classList.remove('show');
+};
+
+/* ---------- camera: pan, pinch, wheel ---------- */
+const view = {s:1, tx:0, ty:0};
+const MIN_S = 0.35, MAX_S = 2.5;
+const clampS = s => Math.min(MAX_S, Math.max(MIN_S, s));
+let easeT;
+function applyView(animate){
+  inner.classList.toggle('ease', !!animate);
+  canvas.classList.toggle('ease', !!animate);
+  clearTimeout(easeT);
+  if (animate) easeT = setTimeout(() => { inner.classList.remove('ease'); canvas.classList.remove('ease'); }, 380);
+  inner.style.transform = `translate(${view.tx}px, ${view.ty}px) scale(${view.s})`;
+  const grid = 22 * view.s * (view.s < 0.6 ? 2 : 1);   // thin the dot grid when zoomed far out
+  canvas.style.backgroundSize = `${grid}px ${grid}px`;
+  canvas.style.backgroundPosition = `${view.tx}px ${view.ty}px`;
+  $('#zoom').textContent = Math.round(view.s * 100) + '%';
+  if (state){ state.view = {...view}; save(); }
+}
+// Zoom so the world point under (cx, cy) stays under it
+function zoomAt(cx, cy, s){
+  s = clampS(s);
+  const wx = (cx - view.tx) / view.s, wy = (cy - view.ty) / view.s;
+  view.s = s; view.tx = cx - wx * s; view.ty = cy - wy * s;
+  applyView();
+}
+
+const pts = new Map();
+let pan = null, pinch = null;
+const mid = () => { const [a, b] = [...pts.values()]; return {x:(a.x+b.x)/2, y:(a.y+b.y)/2, d:Math.hypot(a.x-b.x, a.y-b.y) || 1}; };
+
+// Capture phase: runs before a bucket's own pointerdown, so a second finger can take over
+canvas.addEventListener('pointerdown', e => {
+  if (e.button > 0) return;
+  pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  if (pts.size === 2){
+    if (g) finish(false);
+    if (pan){ pan = null; canvas.classList.remove('panning'); }
+    const m = mid();
+    pinch = {...m, s:view.s, tx:view.tx, ty:view.ty};
+  } else if (pts.size === 1 && !e.target.closest('.bucket')){
+    canvas.setPointerCapture(e.pointerId);
+    pan = {id:e.pointerId, sx:e.clientX, sy:e.clientY, tx:view.tx, ty:view.ty};
+    canvas.classList.add('panning');
+  }
+}, true);
+
+canvas.addEventListener('pointermove', e => {
+  if (!pts.has(e.pointerId)) return;
+  pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  if (pinch && pts.size >= 2){
+    const m = mid();
+    const s = clampS(pinch.s * m.d / pinch.d);
+    const wx = (pinch.x - pinch.tx) / pinch.s, wy = (pinch.y - pinch.ty) / pinch.s;
+    view.s = s; view.tx = m.x - wx * s; view.ty = m.y - wy * s;   // zoom and two-finger pan together
+    applyView();
+  } else if (pan && e.pointerId === pan.id){
+    view.tx = pan.tx + e.clientX - pan.sx;
+    view.ty = pan.ty + e.clientY - pan.sy;
+    applyView();
+  }
+});
+
+function ptrEnd(e){
+  if (!pts.has(e.pointerId)) return;
+  pts.delete(e.pointerId);
+  if (pinch && pts.size < 2){ pinch = null; suppressClick = Date.now() + 400; }
+  if (pan && e.pointerId === pan.id){ pan = null; canvas.classList.remove('panning'); }
+}
+window.addEventListener('pointerup', ptrEnd);
+window.addEventListener('pointercancel', ptrEnd);
+
+// Mouse wheel zooms; trackpad pinch arrives as ctrl+wheel in Chrome/Firefox/Edge
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1;
+  const dy = Math.max(-120, Math.min(120, e.deltaY * unit));
+  zoomAt(e.clientX, e.clientY, view.s * Math.exp(-dy * (e.ctrlKey ? 0.01 : 0.0018)));
+}, {passive:false});
+
+// Desktop Safari reports trackpad pinch as gesture events; on touch devices pointer pinch handles it
+let gs = null;
+const noTouch = !('ontouchstart' in window);
+document.addEventListener('gesturestart', e => { e.preventDefault(); if (noTouch) gs = view.s; });
+document.addEventListener('gesturechange', e => { e.preventDefault(); if (gs != null) zoomAt(e.clientX, e.clientY, gs * e.scale); });
+document.addEventListener('gestureend', e => { e.preventDefault(); gs = null; });
+
+$('#zoom').onclick = () => { Object.assign(view, {s:1, tx:0, ty:0}); applyView(true); };
+
+window.addEventListener('resize', () => state && render());
+
+(async () => {
+  state = (await load()) || defaults();
+  if (state.view) Object.assign(view, state.view);
+  applyView();
+  render();
+})();
+</script>
+</body>
+</html>
