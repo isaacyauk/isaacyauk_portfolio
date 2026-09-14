@@ -1,0 +1,2230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Dicebound — prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pitch:#12100e;      /* ink black-brown */
+  --felt:#1c2a24;       /* table felt */
+  --felt-2:#152019;
+  --stock:#e7dcc4;      /* card stock */
+  --stock-2:#d3c5a6;
+  --bone:#f4efe3;
+  --brass:#c9973f;
+  --oxblood:#a03328;
+  --verdigris:#4e8c7d;
+  --ink:#221c14;
+  --ink-soft:#5d5241;
+  --slot:44px;          /* touch floor */
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{
+  background:var(--pitch);
+  color:var(--bone);
+  font-family:Inter,"Helvetica Neue",Arial,sans-serif;
+  font-size:14px;line-height:1.45;
+  overflow:hidden;
+  user-select:none;-webkit-user-select:none;
+}
+h1,h2,h3,.num{font-family:Bitter,Georgia,serif;font-weight:700;letter-spacing:.01em}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+
+#app{
+  position:fixed;inset:0;
+  display:flex;flex-direction:column;
+  max-width:520px;margin:0 auto;
+  background:
+    radial-gradient(120% 70% at 50% 0%, #24332b 0%, var(--felt) 45%, var(--felt-2) 100%);
+  overflow:hidden;
+}
+#app::after{ /* felt grain */
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.35;
+  background-image:radial-gradient(rgba(255,255,255,.05) .5px, transparent .5px);
+  background-size:3px 3px;
+}
+.screen{position:absolute;inset:0;display:none;flex-direction:column}
+.screen.on{display:flex}
+
+/* ---------- shared chrome ---------- */
+.topbar{
+  display:flex;align-items:center;gap:10px;
+  padding:calc(8px + var(--safe-t)) 12px 8px;
+  border-bottom:1px solid rgba(201,151,63,.22);
+  background:linear-gradient(#0f1613cc,#0f161300);
+  position:relative;z-index:3;
+}
+.stat{display:flex;align-items:center;gap:5px;font-variant-numeric:tabular-nums}
+.stat svg{width:16px;height:16px;flex:none}
+.stat b{font-family:Bitter,serif;font-size:15px}
+.spacer{flex:1}
+.tag{font-size:11px;color:#a9b6ac;letter-spacing:.02em}
+
+.btn{
+  min-height:var(--slot);padding:11px 18px;border-radius:3px;
+  background:linear-gradient(#2c3a32,#1b2620);
+  border:1px solid rgba(201,151,63,.5);
+  color:var(--bone);font-weight:600;
+  box-shadow:0 2px 0 rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06);
+  transition:transform .08s ease, filter .12s ease;
+}
+.btn:active{transform:translateY(2px);box-shadow:0 0 0 rgba(0,0,0,.5)}
+.btn.primary{background:linear-gradient(#c9973f,#9c6f24);border-color:#e5c07c;color:#1a1408}
+.btn.danger{border-color:rgba(160,51,40,.7);color:#e9b9b3}
+.btn[disabled]{opacity:.4;pointer-events:none}
+.btn.wide{width:100%}
+
+/* ---------- camp ---------- */
+.camp-body{flex:1;overflow-y:auto;padding:16px 16px calc(20px + var(--safe-b))}
+.camp-hero{
+  position:relative;border:1px solid rgba(201,151,63,.3);border-radius:4px;
+  padding:16px;margin-bottom:14px;overflow:hidden;
+  background:linear-gradient(160deg,#233129,#141c17);
+}
+.camp-hero h1{margin:0 0 4px;font-size:26px;letter-spacing:.03em}
+.camp-hero p{margin:0;color:#b3bfb4;max-width:34ch}
+.camp-hero .emberfire{position:absolute;right:-10px;bottom:-18px;width:130px;opacity:.5}
+.row{display:flex;gap:10px;margin-bottom:10px}
+.card-panel{
+  border:1px solid rgba(201,151,63,.22);border-radius:4px;padding:12px;
+  background:rgba(9,14,11,.5);margin-bottom:12px;
+}
+.card-panel h3{margin:0 0 8px;font-size:14px;color:var(--brass)}
+.shoprow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid rgba(255,255,255,.07)}
+.shoprow:first-of-type{border-top:0}
+.shoprow p{margin:0;flex:1;font-size:13px;color:#c3cec5}
+.price{font-family:Bitter,serif;color:var(--brass);white-space:nowrap}
+.decklist{display:flex;flex-wrap:wrap;gap:6px}
+.chip{
+  padding:6px 9px;border-radius:2px;font-size:12px;
+  background:linear-gradient(#e7dcc4,#cdbe9c);color:var(--ink);font-weight:600;
+  border:1px solid #a08f6c;
+}
+.chip.sel{outline:2px solid var(--oxblood);outline-offset:1px}
+.chip.up{background:linear-gradient(#f6e6bb,#dcc389);border-color:var(--brass);box-shadow:0 0 0 1px rgba(201,151,63,.45)}
+.chip.dim{opacity:.4;pointer-events:none}
+.pcard.upgraded{border-color:var(--brass);box-shadow:0 4px 10px rgba(0,0,0,.55), inset 0 0 0 1px rgba(201,151,63,.55)}
+.pcard.upgraded .cname{color:#7a5410}
+.pick.upgraded{border-color:var(--brass)}
+
+/* ---------- floor map ---------- */
+.map{flex:1;position:relative;margin:10px;border:1px solid rgba(201,151,63,.2);border-radius:4px;overflow:hidden;
+  background:radial-gradient(90% 60% at 50% 20%, #22302a, #101715)}
+.map svg.links{position:absolute;inset:0;width:100%;height:100%}
+.node{
+  position:absolute;transform:translate(-50%,-50%);
+  width:74px;min-height:var(--slot);
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+}
+.node .disc{
+  width:60px;height:60px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #3a4c41, #131c17);
+  border:2px solid rgba(201,151,63,.55);
+  display:grid;place-items:center;
+  box-shadow:0 3px 10px rgba(0,0,0,.6);
+}
+.node .disc svg{width:40px;height:40px}
+.node small{font-size:10.5px;color:#a7b3a8;text-align:center;line-height:1.2}
+.node.cleared .disc{filter:grayscale(1) brightness(.5);border-color:#4a5249}
+.node.cleared small{color:#5f6a61}
+.node.boss .disc{border-color:var(--oxblood);box-shadow:0 0 16px rgba(160,51,40,.45)}
+.node.locked .disc{opacity:.45}
+.node:not(.cleared):not(.locked) .disc{animation:breathe 2.6s ease-in-out infinite}
+@keyframes breathe{50%{box-shadow:0 3px 18px rgba(201,151,63,.35)}}
+.mapfoot{padding:0 14px calc(14px + var(--safe-b));display:flex;gap:10px;align-items:center}
+
+/* ---------- battle ---------- */
+.field{flex:1;position:relative;display:flex;justify-content:center;align-items:flex-end;gap:14px;padding:6px 12px 0;min-height:0}
+.enemy{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding-bottom:6px}
+.enemy .art{width:96px;height:104px;filter:drop-shadow(0 6px 6px rgba(0,0,0,.55))}
+.enemy.small .art{width:80px;height:88px}
+.enemy.targeted::after{
+  content:"";position:absolute;left:50%;bottom:0;transform:translateX(-50%);
+  width:86px;height:16px;border-radius:50%;
+  background:radial-gradient(ellipse, rgba(201,151,63,.5), transparent 70%);
+}
+.enemy.dead{opacity:0;transform:translateY(10px) scale(.9);transition:.4s}
+.hpbar{width:88px;height:7px;border-radius:2px;background:#2a211d;border:1px solid #453a2f;overflow:hidden}
+.hpbar i{display:block;height:100%;background:linear-gradient(#c0483c,#7d2a22)}
+.enemy .label{font-size:11px;color:#c8d2c9;display:flex;gap:6px;align-items:center;font-variant-numeric:tabular-nums}
+.intent{
+  display:flex;align-items:center;gap:4px;
+  font-family:Bitter,serif;font-size:14px;color:#f0dcbb;
+  background:rgba(10,15,12,.75);border:1px solid rgba(201,151,63,.35);
+  padding:2px 7px;border-radius:2px;
+}
+.intent svg{width:14px;height:14px}
+.eblock{display:flex;align-items:center;gap:3px;color:#8fd0bd;font-size:11px}
+
+.floattext{position:absolute;font-family:Bitter,serif;font-size:22px;pointer-events:none;
+  animation:floatUp .9s ease-out forwards;text-shadow:0 2px 3px #000;z-index:5}
+@keyframes floatUp{to{transform:translateY(-46px);opacity:0}}
+.shake{animation:shake .28s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+/* player strip */
+.playerbar{display:flex;align-items:center;gap:10px;padding:6px 12px;position:relative;z-index:2}
+.hero{width:46px;height:46px;flex:none}
+.pstats{flex:1}
+.pbar{height:9px;border-radius:2px;background:#241f1a;border:1px solid #453a2f;overflow:hidden;margin-top:3px}
+.pbar i{display:block;height:100%;background:linear-gradient(#d9584a,#8c2f26)}
+.shield{
+  display:flex;align-items:center;justify-content:center;
+  width:34px;height:34px;flex:none;position:relative;color:#0d1a16;font-family:Bitter,serif;font-size:14px}
+.shield svg{position:absolute;inset:0;width:100%;height:100%}
+.shield span{position:relative}
+
+/* dice tray */
+.tray{
+  display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:8px 12px;
+  border-top:1px solid rgba(201,151,63,.2);border-bottom:1px solid rgba(201,151,63,.2);
+  background:linear-gradient(#0e1512,#111a15);
+}
+.trayrow{display:flex;align-items:center;gap:8px}
+#dicebox{flex:1;display:flex;gap:7px;min-width:0}
+.rollbtn{
+  min-width:58px;padding:5px 8px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:1px;line-height:1;
+}
+.rollbtn b{font-family:Bitter,serif;font-size:14px}
+.rollbtn small{font-size:9px;opacity:.75;letter-spacing:.02em}
+.rollbtn.hot{background:linear-gradient(#c9973f,#9c6f24);border-color:#e5c07c;color:#1a1408}
+.rollbtn.hot small{opacity:.85}
+.trayempty{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  height:var(--slot);border:1px dashed rgba(201,151,63,.3);border-radius:6px;
+  font-size:11.5px;color:#7f8c82;
+}
+.cardgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.cardgrid .pick{width:100%;height:auto;min-height:142px}
+.wheretag{
+  position:absolute;right:4px;bottom:4px;padding:1px 5px;border-radius:2px;
+  background:rgba(59,50,39,.8);color:var(--stock);font-size:9.5px;
+}
+.pricetag{
+  position:absolute;left:4px;bottom:4px;padding:1px 6px;border-radius:2px;
+  background:#3b3227;color:var(--brass);font-family:Bitter,serif;font-size:11px;
+}
+.pick.tooexpensive{filter:grayscale(.6) brightness(.75)}
+.pick .count{
+  position:absolute;top:4px;right:4px;padding:1px 5px;border-radius:2px;
+  background:#3b3227;color:var(--stock);font-family:Bitter,serif;font-size:10px;
+}
+.pick.big{width:152px;height:218px;padding:10px}
+.pick.big .cname{font-size:14px;padding-left:22px;min-height:30px}
+.pick.big .cart svg{width:72px;height:72px}
+.pick.big .ctext{font-size:11.5px;line-height:1.3}
+.pick.big .cost{width:22px;height:22px;font-size:13px}
+.uppath{margin-top:2px}
+.uprow{display:flex;gap:10px;align-items:baseline;padding:5px 0;
+  border-top:1px solid rgba(255,255,255,.07);font-size:12px;color:#c3cec5}
+.uprow:first-child{border-top:0}
+.uprow .uplvl{font-family:Bitter,serif;color:#e3c88a;white-space:nowrap;min-width:88px}
+.uprow.past{opacity:.45}
+.uprow.here{background:rgba(201,151,63,.1)}
+.uprow.here .uplvl{color:var(--brass)}
+.piptable{margin-top:8px}
+.piptable .prow{
+  display:flex;gap:9px;align-items:center;font-size:12px;color:#c3cec5;
+  padding:5px 0;border-top:1px solid rgba(255,255,255,.07);
+}
+.piptable .prow b{font-family:Bitter,serif;color:#e3c88a;font-weight:700}
+.die.mini{width:24px;height:24px;flex:none;padding:3.5px;border-radius:5px;box-shadow:0 1px 0 #8d836d}
+.die.mini i{width:4px;height:4px}
+.die{
+  width:var(--slot);height:var(--slot);flex:none;position:relative;
+  border-radius:8px;
+  background:linear-gradient(150deg,#f7f2e6,#cfc4ab);
+  box-shadow:0 3px 0 #8d836d, 0 5px 8px rgba(0,0,0,.5), inset 0 1px 0 #fff;
+  display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
+  padding:6px;transition:transform .12s ease;
+}
+.die i{width:7px;height:7px;border-radius:50%;background:var(--ink);align-self:center;justify-self:center}
+.die.armed{transform:translateY(-6px) rotate(-4deg);box-shadow:0 6px 0 #8d836d,0 0 0 2px var(--brass),0 8px 12px rgba(0,0,0,.6)}
+.die.spent{opacity:.22;box-shadow:none;transform:none;pointer-events:none}
+.die.tight{width:38px;height:38px;padding:5px;border-radius:7px}
+.die.tight i{width:6px;height:6px}
+.die.heavy{                       /* pushed past a real die face by Weighted Die */
+  background:linear-gradient(150deg,#f7e6bd,#dcbe86);
+  box-shadow:0 3px 0 #9a7c46, 0 0 0 1px rgba(201,151,63,.75), 0 5px 8px rgba(0,0,0,.5), inset 0 1px 0 #fff;
+}
+.die.heavy i{background:#4a3410}
+.die.mini.heavy{box-shadow:0 1px 0 #9a7c46, 0 0 0 1px rgba(201,151,63,.7)}
+.die.rolling{animation:tumble .5s ease-out}
+@keyframes tumble{0%{transform:translateY(-14px) rotate(-90deg) scale(.8)}60%{transform:translateY(2px) rotate(12deg)}100%{transform:none}}
+.trayhint{flex:1;font-size:11.5px;color:#93a397;line-height:1.25}
+.energy{
+  width:42px;height:42px;flex:none;display:grid;place-items:center;position:relative;
+  font-family:Bitter,serif;font-size:16px;color:#2a1e08;
+}
+.energy svg{position:absolute;inset:0;width:100%;height:100%}
+.energy span{position:relative}
+
+/* hand */
+.hand{
+  height:190px;position:relative;flex:none;
+  display:flex;justify-content:center;align-items:flex-end;
+  padding-bottom:calc(6px + var(--safe-b));
+}
+.pcard{
+  position:absolute;bottom:8px;width:104px;height:150px;
+  touch-action:none;cursor:grab;
+  transform-origin:50% 130%;
+  border-radius:5px;padding:7px 7px 6px;
+  background:linear-gradient(170deg,var(--stock),var(--stock-2));
+  color:var(--ink);
+  border:1px solid #8e7d5c;
+  box-shadow:0 4px 10px rgba(0,0,0,.55);
+  display:flex;flex-direction:column;
+  transition:transform .16s cubic-bezier(.2,.8,.3,1), box-shadow .16s;
+}
+.pcard.raised{box-shadow:0 12px 22px rgba(0,0,0,.65), 0 0 0 2px var(--brass);z-index:6}
+.pcard.unaffordable{filter:grayscale(.55) brightness(.8)}
+.pcard .cname{font-family:Bitter,serif;font-size:12px;line-height:1.1;padding-left:20px;min-height:26px}
+.pcard .cart{flex:1;display:grid;place-items:center;margin:2px 0}
+.pcard .cart svg{width:52px;height:52px;opacity:.9}
+.pcard .ctext{font-size:10px;line-height:1.25;color:#3b3227;min-height:38px}
+.pcard .ctext b{font-family:Bitter,serif;font-size:12px;color:#7a2b1f}
+.pcard .cost{
+  position:absolute;top:5px;left:5px;width:20px;height:20px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#e8c176,#9c6f24);
+  border:1px solid #6d4c14;color:#22190a;font-family:Bitter,serif;font-size:12px;
+  display:grid;place-items:center;
+}
+.pcard .slot{
+  position:absolute;top:5px;right:5px;width:18px;height:18px;border-radius:4px;
+  border:1.5px dashed #8a7b5c;display:grid;place-items:center;font-size:10px;color:#8a7b5c;
+}
+.pcard .slot.req{border-style:solid;border-color:var(--oxblood);color:var(--oxblood)}
+.pcard .slot.charged{
+  background:linear-gradient(150deg,#f7e6bd,#dcbe86);border-color:#a9832f;color:#4a3410;
+  box-shadow:0 0 0 2px rgba(201,151,63,.35);
+}
+.pcard .slot.filled{
+  border-style:solid;background:linear-gradient(150deg,#fdfaf2,#d8cdb4);border-color:var(--brass);
+  color:var(--ink);font-family:Bitter,serif;font-size:11px;
+}
+.playhint{
+  position:absolute;bottom:2px;left:50%;transform:translateX(-50%);
+  font-size:11px;color:var(--brass);letter-spacing:.04em;
+  max-width:92%;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.piles{position:absolute;bottom:calc(8px + var(--safe-b));width:100%;display:flex;justify-content:space-between;padding:0 10px;pointer-events:none}
+.pile{font-size:11px;color:#8b978c;font-variant-numeric:tabular-nums}
+.turnbtn{position:absolute;right:10px;bottom:calc(26px + var(--safe-b));z-index:7}
+
+/* overlay */
+#overlay{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;padding:18px;
+  background:rgba(6,10,8,.82);backdrop-filter:blur(2px)}
+#overlay.on{display:flex}
+.sheet{
+  width:100%;max-width:420px;max-height:88%;overflow-y:auto;
+  background:linear-gradient(#1d2823,#121a16);
+  border:1px solid rgba(201,151,63,.45);border-radius:5px;padding:18px;
+}
+.sheet h2{margin:0 0 6px;font-size:20px}
+.sheet p{margin:0 0 14px;color:#b6c2b7}
+.loot{display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap}
+.loot div{font-family:Bitter,serif;font-size:16px}
+.pickrow{display:flex;gap:8px;justify-content:center;margin-bottom:14px}
+.pick{width:96px;height:138px;position:relative;border-radius:5px;padding:7px;
+  background:linear-gradient(170deg,var(--stock),var(--stock-2));color:var(--ink);border:1px solid #8e7d5c;
+  display:flex;flex-direction:column;text-align:left}
+.pick:active{transform:translateY(2px)}
+.pick .cname{font-family:Bitter,serif;font-size:11.5px;padding-left:18px;min-height:24px}
+.pick .cart{flex:1;display:grid;place-items:center}
+.pick .cart svg{width:44px;height:44px}
+.pick .ctext{font-size:9.5px;line-height:1.2;min-height:34px;color:#3b3227}
+.pick .cost{position:absolute;top:4px;left:4px;width:18px;height:18px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#e8c176,#9c6f24);border:1px solid #6d4c14;
+  display:grid;place-items:center;font-family:Bitter,serif;font-size:11px}
+.stack{display:flex;flex-direction:column;gap:9px}
+
+#toast{
+  position:absolute;left:50%;bottom:210px;transform:translateX(-50%);
+  background:rgba(10,15,12,.94);border:1px solid rgba(201,151,63,.5);
+  padding:9px 14px;border-radius:3px;font-size:13px;z-index:30;
+  opacity:0;pointer-events:none;transition:opacity .2s;max-width:80%;text-align:center;
+}
+#toast.on{opacity:1}
+/* --- slotting a die: the cues that make the mechanic legible --- */
+.die.armed::after{
+  content:"";position:absolute;inset:-6px;border-radius:12px;
+  border:1px solid rgba(201,151,63,.6);animation:pulsering 1.5s ease-out infinite;
+}
+@keyframes pulsering{0%{opacity:.85;transform:scale(1)}100%{opacity:0;transform:scale(1.22)}}
+.flydie{                            /* the ghost die that travels tray → card */
+  position:absolute;z-index:40;pointer-events:none;margin:0;
+  transition:transform .22s cubic-bezier(.3,.85,.35,1), opacity .22s;
+}
+.pcard.candidate .slot{border-color:var(--brass);color:#7a5410;animation:slotcall .85s ease-in-out 2}
+@keyframes slotcall{50%{transform:scale(1.2);box-shadow:0 0 0 4px rgba(201,151,63,.28)}}
+.pcard.inert{filter:grayscale(.45) brightness(.86)}   /* can't take the armed die */
+.pcard.commit{animation:commit .34s ease-out}
+@keyframes commit{45%{filter:brightness(1.3) drop-shadow(0 0 9px rgba(201,151,63,.8))}}
+.slot.filled{animation:seat .3s ease-out}
+@keyframes seat{0%{transform:scale(1.7);box-shadow:0 0 0 7px rgba(201,151,63,.35)}}
+
+/* --- aiming --- */
+.aimmark{display:inline-flex;width:13px;height:13px;vertical-align:-2px}
+.aimmark svg{width:13px;height:13px}
+.field.aiming .enemy{transition:filter .18s, opacity .18s}
+.field.aiming .enemy.dim{filter:grayscale(.6) brightness(.68);opacity:.6}
+.field.aiming .enemy.targeted::after{animation:aimpulse 1.2s ease-in-out infinite}
+@keyframes aimpulse{50%{transform:translateX(-50%) scale(1.3);opacity:.7}}
+.enemy.struck .art{animation:struck .3s ease-out}
+@keyframes struck{0%{filter:brightness(2.2) saturate(.3)}45%{transform:translateX(3px)}100%{filter:none}}
+/* Phones get the real thing: #app fills the screen and the layout flexes.
+   On a mouse-driven screen the same layout runs at a fixed logical size and
+   is scaled up to fit — see layout(). Scaling rather than stretching is what
+   makes a bigger window mean bigger cards and text instead of a taller empty
+   arena, which is what a fluid frame gave. CSS here is only the framing;
+   width, height and scale are set inline. */
+@media (min-width:700px) and (pointer:fine){
+  body{background:#070a08}
+  body::before{
+    content:"";position:fixed;inset:0;
+    background:radial-gradient(60% 55% at 50% 28%, #18211b, #070a08 72%);
+  }
+  #app{
+    inset:auto;left:50%;top:50%;max-width:none;margin:0;
+    transform-origin:50% 50%;
+    border-radius:20px;
+    border:1px solid rgba(201,151,63,.26);
+    box-shadow:0 24px 60px rgba(0,0,0,.75), 0 0 0 9px #0b0f0c, 0 0 0 10px rgba(201,151,63,.14);
+  }
+}
+/* A wide canvas is answered by the layout, not just by bigger pixels.
+   Container queries, not media queries: what matters is how wide #app itself
+   is, which on desktop is a computed logical width, not the viewport. */
+#app{container-type:inline-size}
+
+@container (min-width:720px){
+  .camp-body{
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;align-content:start;
+  }
+  .camp-body > .card-panel{margin-bottom:0}
+  .camp-hero{grid-column:1/-1;margin-bottom:0}
+  #go-dungeon{grid-column:1/-1;margin-bottom:0 !important}
+  #show-rules{grid-column:1/-1;margin-bottom:0 !important}
+  .camp-body > .shoprow{grid-column:1/-1}
+  /* combat stays a column — a hand of cards spread over 1400px is unreadable */
+  .playerbar,.tray,.hand{max-width:760px;margin-left:auto;margin-right:auto;width:100%}
+  .map{max-width:920px;margin-left:auto;margin-right:auto;width:100%}
+}
+@container (min-width:1080px){
+  .camp-body{grid-template-columns:repeat(3,minmax(0,1fr))}
+  #go-dungeon{grid-column:1/3}
+  #show-rules{grid-column:3/-1}
+  .cardgrid{grid-template-columns:repeat(4,1fr)}
+}
+@container (min-width:1460px){
+  .camp-body{grid-template-columns:repeat(4,minmax(0,1fr))}
+  #go-dungeon{grid-column:1/4}
+  #show-rules{grid-column:4/-1}
+  .cardgrid{grid-template-columns:repeat(6,1fr)}
+}
+/* --- a copy travelling into the draw pile --- */
+.copyfly{
+  position:absolute;width:44px;height:62px;border-radius:4px;z-index:30;pointer-events:none;
+  background:linear-gradient(170deg,var(--stock),var(--stock-2));
+  border:1px solid #8e7d5c;box-shadow:0 6px 14px rgba(0,0,0,.6);
+  display:grid;place-items:center;
+  transition:transform .55s cubic-bezier(.3,.8,.3,1), opacity .55s ease-in;
+}
+.copyfly svg{width:26px;height:26px;opacity:.85}
+.pile.bump{animation:pilebump .45s ease-out}
+@keyframes pilebump{35%{color:var(--brass);transform:scale(1.35)}}
+
+/* --- the player's own roll --- */
+#rollsplash{
+  position:absolute;inset:0;z-index:26;display:none;
+  align-items:center;justify-content:center;
+  background:rgba(6,10,8,.72);backdrop-filter:blur(3px);
+}
+#rollsplash.on{display:flex}
+.rollbox{display:flex;flex-direction:column;align-items:center;gap:14px;padding:20px;text-align:center}
+.rolltitle{margin:0;font-family:Bitter,serif;font-size:17px;color:var(--bone);max-width:15ch;line-height:1.25}
+.rollnote{margin:0;font-size:13px;color:#b6c2b7;min-height:19px;max-width:22ch}
+.rollnote b{color:var(--brass);font-family:Bitter,serif}
+.die.huge{
+  width:104px;height:104px;padding:14px;border-radius:18px;cursor:pointer;
+  box-shadow:0 7px 0 #8d836d, 0 12px 22px rgba(0,0,0,.6), inset 0 2px 0 #fff;
+}
+.die.huge i{width:16px;height:16px}
+.die.huge.waiting{animation:rollbob 1.6s ease-in-out infinite}
+@keyframes rollbob{50%{transform:translateY(-7px) rotate(-3deg)}}
+.die.huge.spin{animation:rollspin .07s linear}
+@keyframes rollspin{to{transform:rotate(22deg) scale(1.04)}}
+.die.huge.landed{animation:rollland .35s ease-out}
+@keyframes rollland{0%{transform:scale(1.18)}60%{transform:scale(.96)}}
+
+/* --- the die's path into a card's slot --- */
+#slotarrow{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:13;display:none}
+#slotarrow.on{display:block}
+#slotpath{
+  stroke:rgba(201,151,63,.5);stroke-width:2.5;stroke-linecap:round;
+  stroke-dasharray:5 6;animation:slotflow .9s linear infinite;
+}
+@keyframes slotflow{to{stroke-dashoffset:-22}}
+#slothead{fill:rgba(201,151,63,.75)}
+
+/* --- drag to target --- */
+#aimarrow{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:14;display:none}
+#aimarrow.on{display:block}
+#aimpath{stroke:rgba(201,151,63,.9);stroke-width:5;filter:drop-shadow(0 2px 4px rgba(0,0,0,.7))}
+#aimhead{fill:rgba(201,151,63,.95);filter:drop-shadow(0 2px 4px rgba(0,0,0,.7))}
+#aimarrow.valid #aimpath{stroke:#e8c176;stroke-width:6}
+#aimarrow.valid #aimhead{fill:#f2d79c}
+#aimarrow.dud #aimpath{stroke:rgba(150,160,152,.55);stroke-dasharray:9 8}
+#aimarrow.dud #aimhead{fill:rgba(150,160,152,.6)}
+.pcard.dragging{transition:none;z-index:22;box-shadow:0 18px 30px rgba(0,0,0,.7), 0 0 0 2px var(--brass)}
+.hand.armedrop::before{                 /* where an untargeted card can be dropped */
+  content:"";position:absolute;left:8px;right:8px;top:-2px;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(201,151,63,.55),transparent);
+}
+.enemy.hover .art{filter:drop-shadow(0 0 12px rgba(240,168,159,.6)) brightness(1.12)}
+.enemy.hover::after{
+  content:"";position:absolute;left:50%;bottom:0;transform:translateX(-50%);
+  width:94px;height:18px;border-radius:50%;
+  background:radial-gradient(ellipse, rgba(217,72,63,.5), transparent 70%);
+}
+body.grabbing{cursor:grabbing}
+/* --- deck and collection --- */
+.segwrap{display:flex;gap:8px;padding:10px 12px 6px}
+.seg{
+  flex:1;min-height:var(--slot);border-radius:3px;font-weight:600;
+  border:1px solid rgba(201,151,63,.35);background:rgba(9,14,11,.5);color:#a9b6ac;
+}
+.seg.on{background:linear-gradient(#c9973f,#9c6f24);border-color:#e5c07c;color:#1a1408}
+#collection-hint{margin:0;padding:0 14px 8px;font-size:11.5px;color:#93a397}
+.collection-body{flex:1;overflow-y:auto;padding:0 12px calc(16px + var(--safe-b))}
+.collection-body .pick{cursor:pointer}
+.infodot{
+  position:absolute;right:4px;bottom:4px;width:20px;height:20px;border-radius:50%;
+  border:1px solid #8e7d5c;background:rgba(255,255,255,.5);color:#3b3227;
+  font-family:Bitter,serif;font-size:11px;line-height:18px;text-align:center;
+}
+.emptynote{padding:22px 6px;color:#8b978c;font-size:13px;text-align:center}
+/* --- mana gauge and spend telegraphing --- */
+.energy{width:46px;height:46px}
+.energy svg{position:absolute;inset:0;width:100%;height:100%}
+/* the mana well: a full circle that drains downward, not a pie chart */
+.ewell{fill:#101a26}
+.eliquid{fill:#4f7fc4;transition:y .18s ease-out, height .18s ease-out}
+.edrain{fill:#d9483f;animation:penpulse .85s ease-in-out infinite}
+.esurface{fill:#a9cdf5}
+.erim{fill:none;stroke:rgba(201,151,63,.75);stroke-width:2}
+@keyframes penpulse{50%{opacity:.4}}
+.energy span{position:relative;font-family:Bitter,serif;font-size:13px;color:#f7f2e6;
+  text-shadow:0 1px 3px rgba(0,0,0,.85)}
+.energy.short{animation:nope .3s}
+@keyframes nope{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.pcard.raised .cost, .pcard.dragging .cost{box-shadow:0 0 0 3px rgba(217,72,63,.4)}
+.costtag{
+  position:absolute;font-family:Bitter,serif;font-size:15px;color:#f0a89f;
+  pointer-events:none;z-index:30;animation:floatUp .8s ease-out forwards;
+  text-shadow:0 2px 3px #000;
+}
+#playconfirm{
+  position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% + 4px);
+  display:none;min-height:var(--slot);padding:9px 18px;border-radius:4px;
+  background:linear-gradient(#c9973f,#9c6f24);border:1px solid #e5c07c;color:#1a1408;
+  font-weight:600;font-size:13px;white-space:nowrap;z-index:9;
+  box-shadow:0 4px 12px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.25);
+}
+#playconfirm.on{display:block}
+#playconfirm:active{transform:translateX(-50%) translateY(2px)}
+#playconfirm b{font-family:Bitter,serif}
+#playbanner{
+  position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% + 4px);
+  background:rgba(10,15,12,.9);border:1px solid rgba(201,151,63,.4);
+  padding:5px 12px;border-radius:3px;font-size:12px;color:#e7dcc4;white-space:nowrap;
+  opacity:0;transition:opacity .18s;pointer-events:none;z-index:8;
+}
+#playbanner.on{opacity:1}
+#playbanner b{font-family:Bitter,serif;color:var(--brass)}
+#playbanner .drain{color:#f0a89f}
+.hand{position:relative}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ CAMP ============ -->
+  <section class="screen" id="scr-camp">
+    <div class="topbar">
+      <div class="stat" id="camp-hp"></div>
+      <div class="stat" id="camp-gold"></div>
+      <div class="stat" id="camp-xp"></div>
+      <div class="spacer"></div>
+      <div class="tag" id="camp-depth"></div>
+    </div>
+    <div class="camp-body">
+      <div class="camp-hero">
+        <h1>Camp</h1>
+        <p id="camp-line">Everything here is yours to keep. Nothing you carry below is, until you climb back out.</p>
+      </div>
+
+      <div class="card-panel">
+        <h3>Skills</h3>
+        <div id="skilllist"></div>
+      </div>
+
+      <div class="card-panel">
+        <h3>Market</h3>
+        <div class="shoprow">
+          <p>Cards for sale. <span class="tag" id="market-note"></span></p>
+          <button class="btn" id="go-market">Visit</button>
+        </div>
+      </div>
+
+      <div class="card-panel">
+        <h3>Training</h3>
+        <div class="shoprow">
+          <p>Sharpen a card. <span class="tag">Every card has a stronger version.</span></p>
+          <span class="price" id="p-up"></span>
+          <button class="btn" id="buy-up">Choose</button>
+        </div>
+      </div>
+
+      <div class="card-panel">
+        <h3>Deck <span class="tag" id="deck-count"></span></h3>
+        <div class="decklist" id="camp-deck"></div>
+        <div style="height:10px"></div>
+        <button class="btn wide" id="view-deck">Deck &amp; collection</button>
+      </div>
+
+      <button class="btn primary wide" id="go-dungeon" style="margin-bottom:10px">Enter the dungeon</button>
+      <button class="btn wide" id="show-rules" style="margin-bottom:12px">How the dice work</button>
+      <div class="shoprow" style="border-top:1px solid rgba(255,255,255,.07)">
+        <p class="tag" id="savenote"></p>
+        <button class="btn danger" id="wipe">Erase</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FLOOR ============ -->
+  <section class="screen" id="scr-floor">
+    <div class="topbar">
+      <div class="stat" id="f-hp"></div>
+      <div class="stat" id="f-carry"></div>
+      <div class="spacer"></div>
+      <div class="tag" id="f-depth"></div>
+    </div>
+    <div class="map" id="map"></div>
+    <div class="mapfoot">
+      <div class="tag" style="flex:1" id="f-hint">Clear every fight to open the way out.</div>
+      <button class="btn danger" id="abandon">Abandon</button>
+    </div>
+  </section>
+
+  <!-- ============ BATTLE ============ -->
+  <section class="screen" id="scr-battle">
+    <div class="topbar">
+      <div class="tag" id="b-where"></div>
+      <div class="spacer"></div>
+      <div class="stat" id="b-carry"></div>
+    </div>
+    <div class="field" id="field"></div>
+    <div class="playerbar">
+      <svg class="hero" viewBox="0 0 48 48" id="hero-art"></svg>
+      <div class="pstats">
+        <div class="stat" id="b-hp"></div>
+        <div class="pbar"><i id="b-hpfill"></i></div>
+      </div>
+      <div class="shield" id="b-shield" hidden></div>
+    </div>
+    <div class="tray">
+      <div class="trayrow">
+        <div class="energy" id="b-energy"></div>
+        <div id="dicebox"></div>
+        <button class="btn rollbtn" id="rollbtn"></button>
+      </div>
+      <div class="trayhint" id="trayhint"></div>
+    </div>
+    <div id="playbanner"></div>
+    <button id="playconfirm"></button>
+    <div class="hand" id="hand">
+      <div class="piles">
+        <span class="pile" id="p-draw"></span>
+        <span class="pile" id="p-disc"></span>
+      </div>
+      <button class="btn turnbtn" id="endturn">End turn</button>
+    </div>
+  </section>
+
+  <!-- ============ MARKET ============ -->
+  <section class="screen" id="scr-market">
+    <div class="topbar">
+      <div class="stat" id="market-gold"></div>
+      <div class="spacer"></div>
+      <button class="btn" id="market-done">Done</button>
+    </div>
+    <p class="tag" id="market-hint"></p>
+    <div class="collection-body">
+      <div class="cardgrid" id="market-grid"></div>
+      <div style="height:12px"></div>
+      <button class="btn wide" id="market-restock"></button>
+    </div>
+  </section>
+
+  <!-- ============ POUCH / DECK ============ -->
+  <section class="screen" id="scr-collection">
+    <div class="topbar">
+      <div class="stat" id="collection-count"></div>
+      <div class="spacer"></div>
+      <button class="btn" id="collection-done">Done</button>
+    </div>
+    <div class="segwrap">
+      <button class="seg" data-tab="deck" id="tab-deck"></button>
+      <button class="seg" data-tab="collection" id="tab-collection"></button>
+    </div>
+    <p class="tag" id="collection-hint"></p>
+    <div class="collection-body"><div class="cardgrid" id="collection-grid"></div></div>
+  </section>
+
+  <div id="rollsplash"></div>
+
+  <svg id="slotarrow" xmlns="http://www.w3.org/2000/svg">
+    <path id="slotpath" fill="none"/>
+    <polygon id="slothead"/>
+  </svg>
+
+  <svg id="aimarrow" xmlns="http://www.w3.org/2000/svg">
+    <path id="aimpath" fill="none" stroke-linecap="round"/>
+    <polygon id="aimhead"/>
+  </svg>
+
+  <div id="overlay"><div class="sheet" id="sheet"></div></div>
+  <div id="toast"></div>
+</div>
+
+<script>
+/* =========================================================================
+   Dicebound — prototype
+   Loop: Camp -> floor of encounters -> extract to bank, or lose it all.
+   Dice: each turn you roll a small pool. A die can be slotted into one card
+   to scale its effect. Unspent dice are lost at end of turn.
+   ========================================================================= */
+
+const $ = s => document.querySelector(s);
+const rnd = n => Math.floor(Math.random()*n);
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+/* ---------------- art (inline svg, no bitmaps) ---------------- */
+const A = {
+  heart:`<svg viewBox="0 0 24 24"><path d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6-8 11-8 11z" fill="#c0483c" stroke="#f0b9b2" stroke-width="1"/></svg>`,
+  coin:`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#c9973f" stroke="#f0d79a" stroke-width="1.2"/><circle cx="12" cy="12" r="5.2" fill="none" stroke="#7d5a17" stroke-width="1"/></svg>`,
+  sack:`<svg viewBox="0 0 24 24"><path d="M9 5h6l-1.5 3H10.5z" fill="#8a6f45"/><path d="M12 8c5 0 7 4 7 7.5S16 22 12 22s-7-2.5-7-6.5S7 8 12 8z" fill="#a98a55" stroke="#e0cba0" stroke-width="1"/></svg>`,
+  sword:`<svg viewBox="0 0 24 24"><path d="M4 20l3-1 10-10 2-6-6 2L3 15l-1 3z" fill="#cdd6d2" stroke="#2b2b2b" stroke-width="1.1"/><path d="M7 19l-2-2" stroke="#2b2b2b" stroke-width="1.1"/></svg>`,
+  shieldIcon:`<svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6z" fill="#4e8c7d" stroke="#c9e6dc" stroke-width="1.1"/></svg>`,
+  buff:`<svg viewBox="0 0 24 24"><path d="M12 4l6 8h-4v8h-4v-8H6z" fill="#c9973f" stroke="#f0d79a" stroke-width="1"/></svg>`,
+  hex:`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="#a06fd0" stroke-width="1.6"/><path d="M8 8l8 8M16 8l-8 8" stroke="#a06fd0" stroke-width="1.6"/></svg>`,
+  skull:`<svg viewBox="0 0 24 24"><path d="M12 3c5 0 8 3.4 8 7.6 0 2.6-1.3 4-2.4 5-.5.5-.6 1-.6 1.8V19H7v-1.6c0-.8-.1-1.3-.6-1.8C5.3 14.6 4 13.2 4 10.6 4 6.4 7 3 12 3z" fill="#ded4c0" stroke="#3a3226" stroke-width="1"/><circle cx="9" cy="11" r="1.9" fill="#3a3226"/><circle cx="15" cy="11" r="1.9" fill="#3a3226"/></svg>`,
+  chalice:`<svg viewBox="0 0 24 24"><path d="M6 4h12l-1.5 6a4.5 4.5 0 0 1-9 0z" fill="#a03328" stroke="#e8b0a8" stroke-width="1"/><path d="M12 15v4M8 20h8" stroke="#c9973f" stroke-width="1.6"/></svg>`,
+  whet:`<svg viewBox="0 0 24 24"><rect x="3" y="12" width="18" height="5" rx="1.5" fill="#8b8478" stroke="#e2ddd2" stroke-width="1"/><path d="M6 11l12-5" stroke="#cdd6d2" stroke-width="2.2"/></svg>`,
+  dice:`<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4" fill="#f2ecdf" stroke="#3a3226" stroke-width="1.2"/><circle cx="8.5" cy="8.5" r="1.6" fill="#3a3226"/><circle cx="15.5" cy="15.5" r="1.6" fill="#3a3226"/><circle cx="12" cy="12" r="1.6" fill="#3a3226"/></svg>`,
+  wall:`<svg viewBox="0 0 24 24"><path d="M3 8h18v11H3z" fill="#6f7a72" stroke="#dfe6e1" stroke-width="1"/><path d="M3 13h18M9 8v5M15 13v6" stroke="#dfe6e1" stroke-width=".9"/></svg>`,
+  axe:`<svg viewBox="0 0 24 24"><path d="M11 4c4 0 8 2 9 6-3 1-6 .6-8 0l-2 12H8l1-12c-1-1-2-3-1-4z" fill="#cdd6d2" stroke="#2b2b2b" stroke-width="1"/></svg>`,
+  crosshair:`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="none" stroke="#e8c176" stroke-width="1.8"/><path d="M12 1v5M12 18v5M1 12h5M18 12h5" stroke="#e8c176" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="1.8" fill="#e8c176"/></svg>`,
+  xp:`<svg viewBox="0 0 24 24"><path d="M12 3l2.4 6.2L21 11l-5.2 3.4L17 21l-5-3.6L7 21l1.2-6.6L3 11l6.6-1.8z" fill="none" stroke="#9fd0e0" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
+  snakeeyes:`<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4" fill="#2c2620" stroke="#e2dac9" stroke-width="1.3"/><circle cx="8.5" cy="8.5" r="2" fill="#e2dac9"/><circle cx="15.5" cy="15.5" r="2" fill="#e2dac9"/></svg>`,
+  weight:`<svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3" fill="#f2ecdf" stroke="#3a3226" stroke-width="1.2"/><circle cx="9" cy="15" r="1.6" fill="#3a3226"/><circle cx="15" cy="18" r="1.6" fill="#3a3226"/><path d="M12 2v6m0-6l-3 3m3-3l3 3" stroke="#c9973f" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>`,
+  cairn:`<svg viewBox="0 0 24 24"><ellipse cx="12" cy="19" rx="8" ry="2.6" fill="#6f7a72" stroke="#2b2f2a" stroke-width="1"/><ellipse cx="12" cy="14" rx="6" ry="2.4" fill="#8a938a" stroke="#2b2f2a" stroke-width="1"/><ellipse cx="12" cy="9.5" rx="4.2" ry="2.1" fill="#6f7a72" stroke="#2b2f2a" stroke-width="1"/><ellipse cx="12" cy="6" rx="2.6" ry="1.6" fill="#a3aba1" stroke="#2b2f2a" stroke-width="1"/></svg>`,
+  press:`<svg viewBox="0 0 24 24"><path d="M4 9a8 8 0 0 1 14-4" stroke="#c9973f" stroke-width="1.6" fill="none"/><path d="M18 2v4h-4" stroke="#c9973f" stroke-width="1.6" fill="none" stroke-linecap="round"/><rect x="6" y="10" width="12" height="12" rx="3.5" fill="#f2ecdf" stroke="#3a3226" stroke-width="1.2"/><circle cx="10" cy="14" r="1.5" fill="#3a3226"/><circle cx="14" cy="18" r="1.5" fill="#3a3226"/><circle cx="14" cy="14" r="1.5" fill="#3a3226"/><circle cx="10" cy="18" r="1.5" fill="#3a3226"/></svg>`,
+  hook:`<svg viewBox="0 0 24 24"><path d="M18 3c2 6 0 12-6 15-3 1.5-6 1-8-1 4 1 7-1 9-4s3-7 5-10z" fill="#cdd6d2" stroke="#2b2b2b" stroke-width="1.1"/><path d="M6 20l-2 2" stroke="#2b2b2b" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+  spark:`<svg viewBox="0 0 24 24"><path d="M13 2L6 13h4.5L9 22l8-12h-4.6z" fill="#e0913a" stroke="#3a2410" stroke-width="1.1" stroke-linejoin="round"/><path d="M4 4l1.5 2M20 6l-2 1.5M4 19l2-1" stroke="#c9973f" stroke-width="1.4" stroke-linecap="round"/></svg>`,
+  tally:`<svg viewBox="0 0 24 24"><path d="M6 5v14M10 5v14M14 5v14M18 5v14" stroke="#e2dac9" stroke-width="1.8" stroke-linecap="round"/><path d="M4 18L20 6" stroke="#a03328" stroke-width="2" stroke-linecap="round"/></svg>`,
+  ember:`<svg class="emberfire" viewBox="0 0 100 100"><path d="M50 8c6 18 22 22 22 42a22 22 0 1 1-44 0c0-12 8-16 12-26 3 6 6 8 6 14 4-8 4-20 4-30z" fill="#c9973f" opacity=".55"/></svg>`,
+  hero:`<svg viewBox="0 0 48 48"><ellipse cx="24" cy="44" rx="12" ry="3" fill="#000" opacity=".35"/><path d="M24 8a7 7 0 0 1 7 7v2a7 7 0 0 1-14 0v-2a7 7 0 0 1 7-7z" fill="#e0c9a6" stroke="#2b2419" stroke-width="1.2"/><path d="M14 43V27c0-5 4-8 10-8s10 3 10 8v16z" fill="#3f5c50" stroke="#0f1a15" stroke-width="1.2"/><path d="M34 24l6 4-2 3-6-4z" fill="#cdd6d2" stroke="#2b2419" stroke-width="1"/></svg>`
+};
+
+/* creature art — ink-drawn, one per enemy kind */
+const CREATURE = {
+  slime:`<svg class="art" viewBox="0 0 100 110"><defs><radialGradient id="sg" cx="35%" cy="30%"><stop offset="0" stop-color="#8fd8a8"/><stop offset="1" stop-color="#2f6b46"/></radialGradient></defs>
+    <ellipse cx="50" cy="100" rx="34" ry="6" fill="#000" opacity=".4"/>
+    <path d="M50 30c22 0 34 22 34 40 0 18-16 26-34 26S16 88 16 70c0-18 12-40 34-40z" fill="url(#sg)" stroke="#123222" stroke-width="2"/>
+    <path d="M30 52c2-8 8-13 14-14" stroke="#d9ffe8" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/>
+    <circle cx="40" cy="66" r="5" fill="#0f2b1c"/><circle cx="62" cy="66" r="5" fill="#0f2b1c"/>
+    <path d="M40 82c5 5 15 5 20 0" stroke="#0f2b1c" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>`,
+  wretch:`<svg class="art" viewBox="0 0 100 110"><ellipse cx="50" cy="102" rx="26" ry="5" fill="#000" opacity=".4"/>
+    <path d="M50 14c16 0 24 12 24 28l6 58H20l6-58c0-16 8-28 24-28z" fill="#3a3444" stroke="#171320" stroke-width="2"/>
+    <path d="M50 20c11 0 17 9 17 19 0 6-6 9-17 9s-17-3-17-9c0-10 6-19 17-19z" fill="#191524"/>
+    <circle cx="43" cy="36" r="3" fill="#e8b34a"/><circle cx="57" cy="36" r="3" fill="#e8b34a"/>
+    <path d="M22 62l-8 26M78 62l8 26" stroke="#2a2536" stroke-width="6" stroke-linecap="round"/>
+    <path d="M14 86l12-4" stroke="#9aa0a8" stroke-width="3" stroke-linecap="round"/></svg>`,
+  brute:`<svg class="art" viewBox="0 0 100 110"><ellipse cx="50" cy="104" rx="32" ry="5" fill="#000" opacity=".45"/>
+    <rect x="24" y="34" width="52" height="48" rx="7" fill="#6c6f66" stroke="#24261f" stroke-width="2"/>
+    <rect x="34" y="12" width="32" height="26" rx="6" fill="#7d8177" stroke="#24261f" stroke-width="2"/>
+    <circle cx="43" cy="25" r="3.4" fill="#e2673c"/><circle cx="57" cy="25" r="3.4" fill="#e2673c"/>
+    <rect x="10" y="40" width="14" height="42" rx="6" fill="#5f6259" stroke="#24261f" stroke-width="2"/>
+    <rect x="76" y="40" width="14" height="42" rx="6" fill="#5f6259" stroke="#24261f" stroke-width="2"/>
+    <path d="M30 82v20M70 82v20" stroke="#4c4f47" stroke-width="11" stroke-linecap="round"/>
+    <path d="M32 50h36M40 62h20" stroke="#3c3f38" stroke-width="2"/></svg>`,
+  wraith:`<svg class="art" viewBox="0 0 100 110"><defs><linearGradient id="wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9b6ff"/><stop offset="1" stop-color="#3a2f5c" stop-opacity=".2"/></linearGradient></defs>
+    <path d="M50 8c18 0 28 14 28 32 0 14-4 22-4 34s-8 22-24 22-24-10-24-22 -4-20-4-34C22 22 32 8 50 8z" fill="url(#wg)" stroke="#2a2140" stroke-width="2"/>
+    <circle cx="40" cy="40" r="6" fill="#1b1430"/><circle cx="62" cy="40" r="6" fill="#1b1430"/>
+    <circle cx="41" cy="39" r="2" fill="#f0c04a"/><circle cx="63" cy="39" r="2" fill="#f0c04a"/>
+    <path d="M40 58c6 6 14 6 22 0" stroke="#1b1430" stroke-width="2.5" fill="none"/>
+    <g transform="translate(6 62) rotate(-12)"><rect x="0" y="0" width="20" height="20" rx="5" fill="#f2ecdf" stroke="#2a2140" stroke-width="2"/><circle cx="6" cy="6" r="2" fill="#2a2140"/><circle cx="14" cy="14" r="2" fill="#2a2140"/><circle cx="10" cy="10" r="2" fill="#2a2140"/></g>
+    <g transform="translate(74 66) rotate(14)"><rect x="0" y="0" width="18" height="18" rx="5" fill="#f2ecdf" stroke="#2a2140" stroke-width="2"/><circle cx="5" cy="5" r="1.9" fill="#2a2140"/><circle cx="13" cy="13" r="1.9" fill="#2a2140"/><circle cx="13" cy="5" r="1.9" fill="#2a2140"/><circle cx="5" cy="13" r="1.9" fill="#2a2140"/></g></svg>`
+};
+
+/* ---------------- cards ----------------
+   die: 'none' | 'opt' | 'req'
+   text(pips, up) renders live with the armed die, so the numbers are visible
+   before you commit. Every card has a sharpened version: a deck entry is an
+   id, and an id ending in '+' is the upgraded copy of that same card.      */
+const CARDS = {
+  strike:{name:'Strike',cost:1,die:'opt',aim:'one',art:'sword',
+    text:(p,u)=>`Deal <b>${(u?7:5)+(u?3:2)*p}</b> damage.`, note:u=>`+${u?3:2} per pip`,
+    play(p,u){damageTarget((u?7:5)+(u?3:2)*p)}},
+
+  guard:{name:'Guard',cost:1,die:'opt',art:'shieldIcon',
+    text:(p,u)=>`Gain <b>${(u?7:5)+(u?3:2)*p}</b> block.`, note:u=>`+${u?3:2} per pip`,
+    play(p,u){gainBlock((u?7:5)+(u?3:2)*p)}},
+
+  cleave:{name:'Cleave',cost:2,die:'opt',aim:'all',art:'axe',
+    text:(p,u)=>`Deal <b>${(u?8:6)+(u?2:1)*p}</b> damage to everything.`, note:u=>`+${u?2:1} per pip`,
+    play(p,u){damageAll((u?8:6)+(u?2:1)*p)}},
+
+  gambit:{name:'Gambit',cost:0,die:'req',aim:'one',art:'dice',
+    text:(p,u)=>p?`Deal <b>${p*(u?5:4)}</b> damage.`:`Deal <b>${u?5:4}× pips</b> damage. Needs a die.`,
+    note:'a six or better draws a card',
+    play(p,u){damageTarget(p*(u?5:4)); if(p>=6){drawCards(1); toast(`${p} — a card off the top.`)}}},
+
+  loaded:{name:'Loaded Dice',cost:1,die:'none',art:'chalice',
+    text:(p,u)=>`Reroll the tray and add <b>${u?2:1}</b> more dice. No roll spent. Draw 1.`,
+    play(p,u){ liveDice().forEach(d=>{d.v=1+rnd(6);d.fresh=true});
+      let got=0; for(let i=0;i<(u?2:1);i++) if(addDie()) got++;
+      if(!got && liveDice().length>=MAX_TRAY) toast('Tray was full — only the reroll landed.');
+      drawCards(1); }},
+
+  bulwark:{name:'Bulwark',cost:2,die:'none',art:'wall',
+    text:(p,u)=>`Gain <b>${u?18:13}</b> block.`,
+    play(p,u){gainBlock(u?18:13)}},
+
+  whetstone:{name:'Whetstone',cost:1,die:'req',art:'whet',
+    text:(p,u)=>p?`Your attacks deal <b>+${p+(u?2:0)}</b> damage this turn.`
+                 :`Attacks deal <b>+pips${u?' +2':''}</b> damage this turn. Needs a die.`,
+    play(p,u){B.edge+=p+(u?2:0); toast(`Edge +${p+(u?2:0)} this turn.`)}},
+
+  siphon:{name:'Siphon',cost:2,die:'opt',aim:'one',art:'heart',
+    text:(p,u)=>`Deal <b>${(u?8:6)+p}</b> damage. Heal <b>${(u?4:3)+(p>=4?(u?4:3):0)}</b>.`,
+    note:'pips 4+ heal more',
+    play(p,u){damageTarget((u?8:6)+p); heal((u?4:3)+(p>=4?(u?4:3):0))}},
+
+  fortune:{name:"Fortune's Favour",cost:1,die:'req',aim:'one',art:'hex',
+    text:(p,u)=>!p?`Even die: <b>${u?4:3}× pips</b> damage and <b>${u?3:2}× pips</b> block. Odd: <b>${u?3:2}× pips</b> damage.`
+                 :(p%2===0?`Deal <b>${p*(u?4:3)}</b> damage, gain <b>${p*(u?3:2)}</b> block.`
+                          :`Deal <b>${p*(u?3:2)}</b> damage.`),
+    play(p,u){ if(p%2===0){damageTarget(p*(u?4:3)); gainBlock(p*(u?3:2))} else {damageTarget(p*(u?3:2))} }},
+
+  /* --- the dice-shaped ones --- */
+  snakeeyes:{name:'Snake Eyes',cost:0,die:'req',aim:'one',art:'snakeeyes',
+    text:(p,u)=>p===1?`Deal <b>${u?24:18}</b> damage.`
+              :p?`Deal <b>${p*(u?3:2)}</b> damage.`
+                :`<b>${u?3:2}× pips</b> damage — but a <b>one</b> deals <b>${u?24:18}</b>.`,
+    note:'the worst die is the best die',
+    play(p,u){ damageTarget(p===1 ? (u?24:18) : p*(u?3:2)) }},
+
+  weighted:{name:'Weighted Die',cost:1,die:'none',art:'weight',
+    text:(p,u)=>`Raise every unspent die by <b>${u?3:2}</b> pips, as far as <b>${MAX_PIP}</b>.`,
+    note:'the only way past a six',
+    play(p,u){ const n=u?3:2; liveDice().forEach(d=>{d.v=Math.min(MAX_PIP,d.v+n); d.fresh=true}); }},
+
+  cairn:{name:'Cairn',cost:2,die:'req',art:'cairn',
+    text:(p,u)=>p?`Gain <b>${tri(p)+(u?p:0)}</b> block.`
+                 :`Block equal to <b>1+2+…+pips</b>${u?' plus the pips again':''}. Needs a die.`,
+    note:'six stacks to 21',
+    play(p,u){ gainBlock(tri(p)+(u?p:0)) }},
+
+  press:{name:'Press the Luck',cost:1,die:'req',aim:'one',art:'press',
+    text:(p,u)=>p?`Deal <b>${p*(u?4:3)}</b>, then reroll the die — if it beats ${p}, deal it again.`
+                 :`Deal <b>${u?4:3}× pips</b>, then reroll: beat the first roll and it hits again.`,
+    play(p,u){
+      const m=u?4:3;
+      damageTarget(p*m);
+      playerRoll({
+        title:`Beat ${p} and it hits again`,
+        face:p,
+        result:v=> v>p ? `<b>${v}</b> — it lands again, for ${v*m}`
+                       : `<b>${v}</b> — not enough`
+      }, v=>{ if(v>p) damageTarget(v*m); });
+    }},
+
+  hamstring:{name:'Hamstring',cost:1,die:'opt',aim:'one',art:'hook',
+    text:(p,u)=>`Deal <b>${u?6:4}</b> damage. Its next attack is weakened by <b>${(u?4:2)+p}</b>.`,
+    note:'+1 weakness per pip',
+    play(p,u){ const e=currentTarget(); damageTarget(u?6:4);
+      if(e){ e.weak=(e.weak||0)+(u?4:2)+p; floatOn(e,'weakened','#c9a6ff'); } }},
+
+  /* Free, small, and it refills itself — the pressure is your draw, not your
+     mana. Its die slot is locked until it has been trained three times, so a
+     deck that wants to pour dice into it has to earn that. */
+  tinder:{name:'Tinder',cost:0,aim:'one',maxLvl:6,art:'spark',
+    die:l=>l>=3?'opt':'none',
+    text:(p,l)=>`Deal <b>${tinderDmg(p,l)}</b> damage. Shuffle ${l>=5?'<b>two</b> copies':'a copy'} of Tinder into your draw pile for this fight${p>0?', holding the same die':''}.`,
+    note:l=>l>=6?'+3 per pip, two copies'
+             :l>=5?'+2 per pip, two copies'
+             :l>=3?'+2 per pip'
+             :'no die slot until +++',
+    step:l=>l===3?'die slot opens' : l===5?'second copy' : l===6?'+3 per pip' : 'more damage',
+    play(p,l,key){
+      damageTarget(tinderDmg(p,l));
+      /* the copy carries the same die: a Tinder thrown with a six keeps
+         hitting for a six until the fight ends */
+      /* key is the card that was played; fall back to its plain form so the
+         effect is still callable outside a hand (tests, tooling) */
+      const self = stripPip(key) || ('tinder'+'+'.repeat(l));
+      const copy = p>0 ? self+'#'+p : self;
+      for(let i=0;i<(l>=5?2:1);i++) shuffleIntoDraw(copy);
+    }},
+
+  tally:{name:'Tally',cost:0,die:'opt',art:'tally',
+    text:(p,u)=>`Draw <b>${u?2:1}</b>. On a ${u?'three':'five'} or better, draw another.`,
+    play(p,u){ drawCards(u?2:1); if(p>=(u?3:5)) drawCards(1); }}
+};
+const tri = n => n*(n+1)/2;
+/* Tinder's whole curve in one place: damage grows every level, the die slot
+   opens at 3, the second copy only at 5, and the last level pays 3 a pip. */
+const tinderDmg = (p,l) => 3 + l + (l>=3 ? (l>=6?3:2)*p : 0);
+const REWARD_POOL=['cleave','bulwark','whetstone','siphon','fortune','gambit','loaded',
+                   'snakeeyes','weighted','cairn','press','hamstring','tally','tinder'];
+
+/* Deck entries are ids, and each trailing '+' is one level of sharpening.
+   Most cards stop at one; a card can declare maxLvl to keep going, which is
+   how Tinder hides its die slot behind three levels of training. The level is
+   passed to text() and play() as the same argument the old boolean used, so
+   `u?7:5` still reads correctly for a one-level card. */
+/* A key can carry a baked pip: 'tinder+++#6' is a copy that was made by a
+   card slotted with a six, and it keeps that six. Baked copies only ever live
+   in a fight's draw and discard piles, never in the deck or the collection,
+   so nothing durable is ever written in this form. */
+const bakedPip = k => { const m=/#(\d+)$/.exec(k); return m ? +m[1] : 0; };
+const stripPip = k => String(k||'').replace(/#\d+$/,'');
+const lvl    = k => (stripPip(k).match(/\+/g)||[]).length;
+const baseId = k => stripPip(k).replace(/\+/g,'');
+const isUp   = k => lvl(k)>0;
+const def    = k => CARDS[baseId(k)];
+const maxLvl = k => def(k).maxLvl || 1;
+/* Sharpening is priced per card and per level: a cheap card starts cheap, and
+   every level you put into one makes its next level dearer. Nothing a card
+   costs here makes any other card cost more, so training a Tinder to ++++++
+   never taxes the first sharpening of a Strike. */
+const sharpenCost = k => (11 + 3.4*def(k).cost) * Math.pow(1.55, lvl(k));
+const cardName = k => def(k).name + '+'.repeat(lvl(k));
+/* a card's die slot depends on its level — and a copy that already carries a
+   baked pip has no slot left to fill */
+const dieOf = k => {
+  if(bakedPip(k)) return 'none';
+  const d=def(k).die; return typeof d==='function' ? d(lvl(k)) : d;
+};
+const fmt = n => { const r=Math.round(n*10)/10; return Number.isInteger(r)? String(r) : r.toFixed(1); };
+/* f1 and f2 keep the decimal even when it is a zero — the point is that the
+   player can see these are real numbers, not integers that happen to be round */
+const f1 = n => (+n).toFixed(1);
+const f2 = n => (+n).toFixed(2);
+
+/* ---------------- enemies ---------------- */
+const BESTIARY = {
+  slime:{name:'Rot Slime',hp:28,art:'slime',small:true,pattern:[{atk:6},{atk:6},{blk:7}]},
+  wretch:{name:'Grave Wretch',hp:22,art:'wretch',small:true,pattern:[{atk:9},{buff:2},{atk:9}]},
+  brute:{name:'Stone Brute',hp:48,art:'brute',pattern:[{blk:9},{atk:13},{atk:8}]},
+  wraith:{name:'Dicewraith',hp:92,art:'wraith',boss:true,pattern:[{atk:9},{hex:1},{atk:17},{blk:12}]}
+};
+
+/* ---------------- the dice economy ----------------
+   Dice are not handed out each turn any more. A roll is a resource with a
+   budget for the whole floor, you decide when to spend one, and whatever you
+   don't use stays in the tray — through the rest of the turn, the rest of the
+   fight, and into the next fight on that floor. So the question stops being
+   "what do I do with these dice" and becomes "is this fight worth a roll, or
+   do I want to meet the deep one holding a six?"                          */
+const MIN_DECK = 8;           /* a deck can be thinned, not emptied */
+const DICE_PER_ROLL = 3;      /* a roll is a handful, not a die */
+const MAX_TRAY      = 5;      /* the tray only holds so much — rolling at 4 spills */
+const MAX_PIP       = 8;      /* a rolled die stops at 6; Weighted Die pushes past it */
+const rollsForFloor = f => 5 + f;
+
+/* ---------------- player skills ----------------
+   Every skill's value follows sqrt(rank): rank 1 moves the number a lot,
+   rank 20 barely moves it, and it never stops moving. Cost climbs linearly
+   while the payoff climbs as a square root, so the ratio keeps getting worse.
+   Nothing is capped — it just stops being worth the xp, which is the cap that
+   matters. Mana and stamina have to land on whole numbers, so their ranks
+   bank fractional progress until the next point tips over.                 */
+const SKILLS = {
+  health:{name:'Health', blurb:'Maximum health', cost:11.4,
+    value:r=>60+12*Math.sqrt(r)},
+  mana:{name:'Mana', blurb:'Mana each turn', cost:18.6,
+    value:r=>3+0.32*Math.sqrt(r)},
+  stamina:{name:'Stamina', blurb:'Cards drawn each turn', cost:17.3,
+    value:r=>5+0.34*Math.sqrt(r)},
+  defense:{name:'Defense', blurb:'Block you start each turn with', cost:13.7,
+    value:r=>2.5*Math.sqrt(r)}          /* rank 0 is 0, always */
+};
+/* Everything the game reads is the rounded value; the raw curve is what the
+   camp screen shows you when a rank buys less than a whole point. */
+/* Every skill is a real number, never rounded. A rank is worth a fraction of
+   a point and the fraction is kept: mana carries inside a turn, health and
+   block simply are fractional, and cards drawn accumulate a carry across
+   turns (see B.drawCarry) so a stamina of 5.34 really does deal a sixth card
+   every third turn. Nobody rounds their way to five mana in two delves. */
+const skillVal  = k => SKILLS[k].value(S.skills[k]);
+/* Prices are floats like the xp that pays them: rounding a cost to a whole
+   number is what made a float economy read as an integer one. */
+const skillCost = k => SKILLS[k].cost * (S.skills[k]+1) * (1 + 0.04*S.skills[k]);
+function skillStep(k){                      /* what the next rank actually buys */
+  const s=SKILLS[k], r=S.skills[k];
+  return {now:s.value(r), then:s.value(r+1)};
+}
+
+/* ---------------- saving ----------------
+   Three backends, best first. window.storage is what works inside Claude's
+   artifact viewer, which blocks localStorage outright; localStorage is what
+   works when this file is opened from disk or served anywhere normal; memory
+   is the honest fallback where neither exists, and the camp screen says so
+   rather than pretending the game saved.
+   Saves happen at safe points only — camp, floor map, and entering a fight —
+   so there is never a half-serialized battle to restore. */
+const Store = (()=>{
+  const KEY='dicebound:v1';
+  let mode='memory', mem=null;
+  function init(){
+    if(typeof window!=='undefined' && window.storage && typeof window.storage.get==='function'){ mode='cloud'; return mode; }
+    try{ localStorage.setItem('__dbtest','1'); localStorage.removeItem('__dbtest'); mode='local'; }
+    catch(e){ mode='memory'; }
+    return mode;
+  }
+  async function load(){
+    try{
+      if(mode==='cloud'){ const r=await window.storage.get(KEY); return r&&r.value?JSON.parse(r.value):null; }
+      if(mode==='local'){ const v=localStorage.getItem(KEY); return v?JSON.parse(v):null; }
+      return mem;
+    }catch(e){ return null; }          /* a missing key throws on window.storage */
+  }
+  async function save(obj){
+    try{
+      const str=JSON.stringify(obj);
+      if(mode==='cloud') await window.storage.set(KEY,str);
+      else if(mode==='local') localStorage.setItem(KEY,str);
+      else mem=JSON.parse(str);
+    }catch(e){ /* a full or unavailable store must never break a turn */ }
+  }
+  async function wipe(){
+    try{
+      if(mode==='cloud') await window.storage.delete(KEY);
+      else if(mode==='local') localStorage.removeItem(KEY);
+    }catch(e){}
+    mem=null;
+  }
+  return {init,load,save,wipe,get mode(){return mode}};
+})();
+
+const SAVE_VERSION = 2;      /* 1 called the collection a pouch */
+function saveGame(){ Store.save({v:SAVE_VERSION, s:S}); }
+function applySave(data){
+  if(!data || !data.s) return false;
+  if(data.v!==SAVE_VERSION && data.v!==1) return false;
+  const d=data.s;
+  if(data.v===1 && d.pouch && !d.collection) d.collection=d.pouch;   /* renamed in 2 */
+  Object.keys(S).forEach(k=>{ if(d[k]!==undefined) S[k]=d[k]; });
+  S.skills = Object.assign({health:0,mana:0,stamina:0,defense:0}, d.skills||{});
+  S.maxHP = skillVal('health');        /* derived, never trusted from the file */
+  S.hp = Math.min(S.hp, S.maxHP);
+  return true;
+}
+const SAVE_NOTE = {
+  cloud:'Progress saves automatically.',
+  local:'Progress saves automatically in this browser.',
+  memory:'Storage is unavailable here — progress lasts until you close the tab.'
+};
+
+/* ---------------- run state ---------------- */
+function freshState(){ return {
+  maxHP:60, hp:60, bank:0, xp:0,
+  skills:{health:0, mana:0, stamina:0, defense:0},
+  deck:['strike','strike','strike','strike','guard','guard','guard','cleave','gambit','loaded'],
+  collection:[],                      /* owned, not slotted — the deck is chosen, never grown by accident */
+  burnCost:55,
+  market:{stock:[], stamp:-1},   /* stamp is the delve the stock was cut for */
+  floor:1, carried:{gold:0,cards:[],xp:0},
+  rolls:0, tray:[], inDive:false,
+  seed:Date.now()|0, floorState:null, delves:0, best:0
+}}
+const S = freshState();
+let B = null; /* battle */
+let B_dieSeq = 1;
+
+/* The tray is the dive's, not the fight's — every change writes straight back
+   to S.tray so leftovers survive the battle scene being torn down. */
+function syncTray(){ S.tray = B.dice.filter(d=>!d.spent).map(d=>({v:d.v})); }
+function liveDice(){ return B.dice.filter(d=>!d.spent) }
+function addDie(v){
+  if(liveDice().length>=MAX_TRAY) return false;
+  B.dice.push({v:v||(1+rnd(6)),spent:false,id:B_dieSeq++,fresh:true});
+  B.dieId=B_dieSeq;
+  return true;
+}
+function rollDice(){
+  if(!B || B.busy || B.over) return;
+  if(S.rolls<=0) return toast('No rolls left on this floor.');
+  const room = MAX_TRAY - liveDice().length;
+  if(room<=0) return toast('The tray is full. Spend some dice first.');
+  S.rolls--;
+  let got=0;
+  for(let i=0;i<DICE_PER_ROLL;i++) if(addDie()) got++;
+  if(got<DICE_PER_ROLL) toast(`Only room for ${got} — ${DICE_PER_ROLL-got} spilled off the table.`);
+  syncTray(); renderBattle();
+}
+
+/* ---------------- presentation ----------------
+   Phones: #app fills the screen, one column, exactly as authored.
+
+   Desktop: the canvas takes the whole window. Zoom is for legibility only —
+   capped, and never below 1:1 — and everything left over becomes *more
+   canvas*, not more empty margin. A wide canvas then triggers the container
+   queries in the stylesheet, which lay camp out in columns so it fits without
+   scrolling. Holding phone proportions on a 2560px monitor was the mistake:
+   it guaranteed a narrow column no matter how the window changed.
+
+   Driven by a ResizeObserver on the document element rather than the resize
+   event, because inside an iframe the inner window never fires resize when
+   the frame's box changes; the observer sees it either way.
+
+   VIEW_SCALE is the zoom, and every place that turns a screen rect into #app
+   coordinates divides by it: a scaled parent reports scaled rects but
+   positions its children in unscaled pixels. */
+const DESIGN_W = 400, DESIGN_H = 840;      /* the shape everything is authored at */
+const MIN_W = 360, MAX_W = 1900;           /* logical canvas bounds */
+const MIN_H = 520, MAX_H = 1400;
+const MAX_ZOOM = 1.35, HARD_ZOOM = 2.2, MARGIN = 24;
+let VIEW_SCALE = 1;
+function layout(){
+  const app=$('#app'), el=document.documentElement;
+  const desktop = window.matchMedia('(min-width:700px) and (pointer:fine)').matches;
+  if(!desktop){
+    VIEW_SCALE = 1;
+    app.style.width=''; app.style.height=''; app.style.transform='';
+    return;
+  }
+  const availW = el.clientWidth - MARGIN, availH = el.clientHeight - MARGIN;
+
+  /* 1. zoom: enough to be comfortable, never enough to waste the screen */
+  let s = Math.min(MAX_ZOOM, Math.max(1, Math.min(availW/DESIGN_W, availH/DESIGN_H)));
+  if(availH/s < MIN_H) s = Math.max(0.5, availH/MIN_H);   /* very short window */
+
+  /* 2. canvas: everything the zoom didn't take */
+  let w = Math.min(MAX_W, Math.max(MIN_W, availW/s));
+  let h = Math.min(MAX_H, Math.max(MIN_H, availH/s));
+
+  /* 3. a screen so large the canvas maxed out — spend the rest on zoom */
+  if(w>=MAX_W && h>=MAX_H) s = Math.min(HARD_ZOOM, availW/w, availH/h);
+
+  VIEW_SCALE = s;
+  app.style.width = Math.round(w)+'px';
+  app.style.height = Math.round(h)+'px';
+  app.style.transform = `translate(-50%,-50%) scale(${s})`;
+}
+if(typeof ResizeObserver!=='undefined')
+  new ResizeObserver(()=>layout()).observe(document.documentElement);
+window.addEventListener('pointerup', ev=>{ if(drag) dragEnd(ev); });
+window.addEventListener('resize', layout);
+window.addEventListener('orientationchange', layout);
+if(window.visualViewport) window.visualViewport.addEventListener('resize', layout);
+
+/* ---------------- helpers ---------------- */
+const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),1400)}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));$('#'+id).classList.add('on')}
+function sheet(html){$('#sheet').innerHTML=html;$('#overlay').classList.add('on')}
+function closeSheet(){$('#overlay').classList.remove('on')}
+function stat(icon,val,cls){return `${icon}<b class="${cls||''}">${val}</b>`}
+
+/* ================= CAMP ================= */
+function renderCamp(){
+  $('#camp-hp').innerHTML = stat(A.heart, `${fmt(S.hp)}/${f1(S.maxHP)}`);
+  $('#camp-gold').innerHTML = stat(A.coin, S.bank);
+  $('#camp-xp').innerHTML = stat(A.xp, f1(S.xp));
+  $('#camp-depth').textContent = S.best ? `deepest floor ${S.best}` : 'no delves yet';
+  const cheapest = [...S.deck,...S.collection].filter(k=>lvl(k)<maxLvl(k))
+                     .reduce((m,k)=>Math.min(m, sharpenCost(k)), Infinity);
+  $('#p-up').textContent = isFinite(cheapest) ? `from ${f2(cheapest)} xp` : '—';
+  ensureStock();
+  $('#market-note').textContent = S.market.stock.length
+    ? `${S.market.stock.length} on the table, from ${Math.min(...S.market.stock.map(o=>o.price))}g`
+    : 'sold out until your next delve';
+  $('#buy-up').disabled = !isFinite(cheapest) || S.xp < cheapest;
+
+  $('#skilllist').innerHTML = Object.keys(SKILLS).map(k=>{
+    const s=SKILLS[k], r=S.skills[k], step=skillStep(k), cost=skillCost(k);
+    const detail = `${f2(step.now)} → <b style="color:#e3c88a">${f2(step.then)}</b>`
+      + ` <span class="tag">+${f2(step.then-step.now)}</span>`;
+    return `<div class="shoprow">
+      <p>${s.name} <span class="tag">rank ${r} · ${s.blurb}</span><br><span class="tag">${detail}</span></p>
+      <span class="price">${f2(cost)} xp</span>
+      <button class="btn" data-skill="${k}" ${S.xp<cost?'disabled':''}>Train</button>
+    </div>`;
+  }).join('');
+  $('#skilllist').querySelectorAll('button[data-skill]').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.skill; S.xp-=skillCost(k); S.skills[k]++;
+    if(k==='health'){ const gain=skillVal('health')-S.maxHP; S.maxHP=skillVal('health'); S.hp+=gain; }
+    renderCamp(); toast(`${SKILLS[k].name} is now ${f2(skillVal(k))}.`);
+  });
+
+  $('#deck-count').textContent = `${S.deck.length} cards${S.collection.length?` · ${S.collection.length} in the collection`:''}`;
+  $('#camp-deck').innerHTML = deckGroups()
+    .map(x=>`<span class="chip ${isUp(x.key)?'up':''}" data-key="${x.key}">${cardName(x.key)}${x.n>1?' ×'+x.n:''}</span>`).join('');
+  $('#camp-deck').querySelectorAll('.chip').forEach(el=>el.onclick=()=>openCardDetail(el.dataset.key));
+  $('#savenote').textContent = SAVE_NOTE[Store.mode];
+  S.inDive=false;
+  show('scr-camp');
+  saveGame();
+}
+$('#view-deck').onclick=()=>openCollection('deck');
+
+/* ---- deck and collection ----
+   The collection is everything owned. The deck is what you carry down, and it only
+   ever changes because you changed it: a card found underground lands in the
+   collection, never in the deck. */
+function groups(list){
+  const counts={}; list.forEach(k=>counts[k]=(counts[k]||0)+1);
+  return Object.entries(counts).map(([key,n])=>({key,n}))
+    .sort((a,b)=> def(a.key).cost-def(b.key).cost || cardName(a.key).localeCompare(cardName(b.key)));
+}
+function deckGroups(){ return groups(S.deck); }
+let collectionTab='deck';
+function openCollection(tab){ collectionTab=tab||collectionTab; renderCollection(); show('scr-collection'); }
+function renderCollection(){
+  const deckMode = collectionTab==='deck';
+  const list = deckMode ? S.deck : S.collection;
+  const g = groups(list);
+  $('#collection-count').innerHTML = stat(A.xp, `${S.deck.length} in deck · ${S.collection.length} in collection`);
+  $('#tab-deck').textContent = `Deck (${S.deck.length})`;
+  $('#tab-collection').textContent = `Collection (${S.collection.length})`;
+  $('#tab-deck').classList.toggle('on', deckMode);
+  $('#tab-collection').classList.toggle('on', !deckMode);
+  $('#collection-hint').textContent = deckMode
+    ? `Tap a card to open it — moving, burning and sharpening are in there. A deck needs at least ${MIN_DECK} cards.`
+    : 'Tap a card to open it. Slotting it into the deck, burning it and sharpening it are all in there.';
+  const grid=$('#collection-grid');
+  grid.innerHTML = g.length
+    ? g.map(x=>cardFaceHTML(x.key,'pick',x.n)
+        .replace('</button>',`<span class="wheretag">${deckMode?'in deck':'collection'}</span></button>`)).join('')
+    : `<div class="emptynote" style="grid-column:1/-1">${deckMode?'No cards in the deck.':'Nothing in the collection yet. Cards you take underground land here when you climb out.'}</div>`;
+  /* A tap reads the card. Moving it, burning it and sharpening it all live
+     inside that window — a tap used to move the card, which meant browsing
+     your own deck quietly rebuilt it. */
+  grid.querySelectorAll('.pick').forEach((el,i)=>{ const key=g[i].key; el.onclick=()=>openCardDetail(key); });
+  saveGame();
+}
+function toDeck(key){
+  const i=S.collection.indexOf(key); if(i<0) return false;
+  S.collection.splice(i,1); S.deck.push(key); renderCollection();
+  toast(`${cardName(key)} slotted into the deck.`); return true;
+}
+function toCollection(key){
+  if(S.deck.length<=MIN_DECK){ toast(`A deck needs at least ${MIN_DECK} cards.`); return false; }
+  const i=S.deck.indexOf(key); if(i<0) return false;
+  S.deck.splice(i,1); S.collection.push(key); renderCollection();
+  toast(`${cardName(key)} back in the collection.`); return true;
+}
+$('#collection-done').onclick=()=>renderCamp();
+$('#tab-deck').onclick=()=>openCollection('deck');
+$('#tab-collection').onclick=()=>openCollection('collection');
+/* The pip table is the thing a card face can't say: what this card is worth
+   at each die, which is the whole question when you're deciding where a six
+   goes. Cards with no slot skip it. */
+function pipTable(key){
+  const c=def(key), u=lvl(key);
+  if(dieOf(key)==='none') return '';
+  const rows=[];
+  for(let p=1;p<=MAX_PIP;p++) rows.push(
+    `<div class="prow"><span class="die mini ${p>6?'heavy':''}">${pipLayout(p)}</span>`
+    + `<span>${c.text(p,u)}${p===7?' <span class="tag">Weighted Die only</span>':''}</span></div>`);
+  return `<div class="piptable">${rows.join('')}</div>`;
+}
+function openCardDetail(key){
+  const c=def(key), u=lvl(key), d=dieOf(key);
+  const inDeck=S.deck.filter(k=>k===key).length, inCollection=S.collection.filter(k=>k===key).length;
+  const slot = d==='req' ? 'Needs a die' : d==='opt' ? 'Takes a die' : 'No die slot';
+  const aim  = c.aim==='all' ? ' · hits everything' : c.aim ? ' · aimed' : '';
+  const note = typeof c.note==='function' ? c.note(u) : c.note;
+  const owned = inDeck+inCollection > 0;
+  const where = [inDeck?`${inDeck} in your deck`:'', inCollection?`${inCollection} in your collection`:'']
+    .filter(Boolean).join(' · ') || 'on the market';
+  sheet(`<h2>${cardName(key)}</h2>
+    <p>${where} · ${c.cost} mana · ${slot}${aim}</p>
+    <div class="pickrow">${cardFaceHTML(key,'pick big')}</div>
+    <div class="card-panel" style="margin-bottom:12px">
+      <h3>${d==='none'?'What it does':'What each die is worth'}</h3>
+      <p style="font-size:12.5px;color:#c3cec5;margin:0">${c.text(0,u)}${note?` <span class="tag">${note}</span>`:''}</p>
+      ${pipTable(key)}
+    </div>
+    <div class="card-panel" style="margin-bottom:12px">
+      <h3>Upgrade path</h3>
+      ${upgradePath(key)}
+    </div>
+    <div class="stack">
+      ${inCollection?'<button class="btn primary" id="to-deck">Slot into the deck</button>':''}
+      ${inDeck?'<button class="btn" id="to-collection">Return to the collection</button>':''}
+      ${owned && lvl(key)<maxLvl(key)
+          ? `<button class="btn" id="sharpen-card" ${S.xp>=sharpenCost(key)?'':'disabled'}>
+               ${S.xp>=sharpenCost(key) ? `Sharpen — ${f2(sharpenCost(key))} xp`
+                                        : `Sharpen needs ${f2(sharpenCost(key)-S.xp)} more xp`}</button>`
+          : ''}
+      ${owned?`<button class="btn danger" id="burn-card">Burn this copy — ${S.burnCost}g</button>`:''}
+      <button class="btn" onclick="closeSheet()">Close</button>
+    </div>`);
+  const back=()=>{ closeSheet(); if($('#scr-collection').classList.contains('on')) renderCollection();
+                   else if($('#scr-market').classList.contains('on')) renderMarket();
+                   else renderCamp(); };
+  if(inCollection) $('#to-deck').onclick=()=>{ toDeck(key); back(); };
+  if(inDeck)  $('#to-collection').onclick=()=>{ if(toCollection(key)) back(); };
+  if(owned)   $('#burn-card').onclick=()=>burnCard(key, back);
+  if(owned && lvl(key)<maxLvl(key) && S.xp>=sharpenCost(key))
+    $('#sharpen-card').onclick=()=>{
+      const where = inDeck ? 'deck' : 'collection';
+      const i = (where==='deck'?S.deck:S.collection).indexOf(key);
+      openSharpenOne({id:key, i, where});
+    };
+}
+/* Every level a card can reach, spelled out, with the one you are on marked
+   and the next one named. A card that gains something other than numbers —
+   Tinder's die slot at 3, its second copy at 5 — says so on that row. */
+function upgradePath(key){
+  const c=def(key), here=lvl(key), top=maxLvl(key);
+  const rows=[];
+  for(let l=0;l<=top;l++){
+    const name = c.name + '+'.repeat(l);
+    const gain = l>0 && c.step ? c.step(l) : '';
+    const die  = (typeof c.die==='function' ? c.die(l) : c.die);
+    rows.push(`<div class="uprow ${l===here?'here':''} ${l<here?'past':''}">
+      <span class="uplvl">${l===here?'▸ ':''}${name}</span>
+      <span class="uptext">${c.text(0,l)}${gain?` <span class="tag">${gain}</span>`:''}
+        ${die==='none'?'<span class="tag">no die slot</span>':''}</span>
+    </div>`);
+  }
+  return `<div class="uppath">${rows.join('')}</div>` +
+    (here>=top ? '<p class="tag" style="margin:8px 0 0">Fully sharpened.</p>'
+               : `<p class="tag" style="margin:8px 0 0">${top-here} level${top-here===1?'':'s'} left · next costs ${f2(sharpenCost(key))} xp</p>`);
+}
+
+/* Taking a card out of the deck is free and lives one tap away on the collection
+   screen. Burning is the other thing: it destroys the copy for good, costs
+   gold, and so it sits behind a confirmation on the card itself. */
+function burnCard(key, done){
+  if(S.bank < S.burnCost) return toast(`Burning costs ${S.burnCost}g — you have ${S.bank}g.`);
+  const inCollection=S.collection.indexOf(key), inDeck=S.deck.indexOf(key);
+  if(inCollection<0 && inDeck<0) return;
+  if(inCollection<0 && S.deck.length<=MIN_DECK) return toast(`A deck needs at least ${MIN_DECK} cards.`);
+  sheet(`<h2>Burn ${cardName(key)}?</h2>
+    <p>${S.burnCost}g, and this copy is gone for good — ${inCollection>=0?'out of your collection':'out of your deck'}.
+       To simply take it out of the deck, close this and tap it in the Deck tab; that costs nothing.</p>
+    <div class="stack">
+      <button class="btn danger" id="burn-yes">Burn it</button>
+      <button class="btn" id="burn-no">Keep it</button>
+    </div>`);
+  $('#burn-no').onclick=()=>{ closeSheet(); openCardDetail(key); };
+  $('#burn-yes').onclick=()=>{
+    if(inCollection>=0) S.collection.splice(inCollection,1); else S.deck.splice(inDeck,1);
+    S.bank-=S.burnCost; S.burnCost+=25;
+    done(); toast(`${cardName(key)} burned.`);
+  };
+}
+/* ---------------- market ----------------
+   Stock is cut once per delve and sits there until you buy it or come back
+   from another one, so a visit is a decision about what is on the table
+   rather than a reroll. Everything bought lands in the collection, like everything
+   else you acquire — the deck is still only ever changed on purpose. */
+function priceOf(key){
+  const c=def(key);
+  return Math.round((46 + 20*c.cost + 8*lvl(key)) * (1 + 0.12*lvl(key)));
+}
+function cutStock(n){
+  const keys=pickN(REWARD_POOL, n);
+  return keys.map(k=>{
+    /* the odd sharpened copy shows up, at a price */
+    const key = (Math.random()<0.18 && maxLvl(k)>0) ? k+'+' : k;
+    return {key, price:priceOf(key)};
+  });
+}
+function ensureStock(){
+  if(S.market.stamp!==S.delves){ S.market.stock=cutStock(4); S.market.stamp=S.delves; }
+}
+$('#go-market').onclick=()=>{ ensureStock(); renderMarket(); show('scr-market'); };
+$('#market-done').onclick=()=>renderCamp();
+$('#market-restock').onclick=()=>{
+  if(S.bank<RESTOCK_COST) return toast(`Restocking costs ${RESTOCK_COST}g.`);
+  S.bank-=RESTOCK_COST; S.market.stock=cutStock(4); renderMarket(); toast('New cards on the table.');
+};
+const RESTOCK_COST = 40;
+function renderMarket(){
+  $('#market-gold').innerHTML = stat(A.coin, S.bank);
+  $('#market-hint').textContent = S.market.stock.length
+    ? 'Tap a card to buy it — it goes to your collection. Tap the dot to read one first.'
+    : 'The table is bare. Restock, or come back from a delve.';
+  const grid=$('#market-grid');
+  grid.innerHTML = S.market.stock.length
+    ? S.market.stock.map(o=>cardFaceHTML(o.key, 'pick'+(S.bank<o.price?' tooexpensive':''))
+        .replace('</button>', `<span class="pricetag">${o.price}g</span><span class="infodot">i</span></button>`)).join('')
+    : `<div class="emptynote" style="grid-column:1/-1">Nothing left on the table.</div>`;
+  grid.querySelectorAll('.pick').forEach((el,i)=>{
+    const o=S.market.stock[i];
+    el.onclick=(ev)=>{
+      if(ev.target.classList.contains('infodot')) return openCardDetail(o.key);
+      if(S.bank<o.price) return toast(`${o.price}g — you have ${S.bank}g.`);
+      S.bank-=o.price; S.collection.push(o.key);
+      S.market.stock.splice(i,1);
+      renderMarket(); saveGame();
+      toast(`${cardName(o.key)} is in your collection — slot it into the deck.`);
+    };
+  });
+  const rb=$('#market-restock');
+  rb.textContent = `Restock the table — ${RESTOCK_COST}g`;
+  rb.disabled = S.bank < RESTOCK_COST;
+}
+/* Training: spend banked XP to turn one copy into its sharpened version. */
+$('#buy-up').onclick=()=>openSharpen();
+
+/* ---- sharpening ----
+   Shown as cards, the same faces as the deck and the collection, because
+   picking which card to train is the same act as picking which card to slot
+   and a row of names made it feel like a different game. */
+function sharpenable(){
+  const rows=[...S.deck.map((id,i)=>({id,i,where:'deck'})),
+              ...S.collection.map((id,i)=>({id,i,where:'collection'}))]
+             .filter(r=>lvl(r.id)<maxLvl(r.id));
+  /* fold identical copies in the same place into one face with a count */
+  const seen=new Map();
+  for(const r of rows){
+    const k=r.where+'|'+r.id;
+    if(seen.has(k)) seen.get(k).n++;
+    else seen.set(k, {...r, n:1});
+  }
+  return [...seen.values()].sort((a,b)=>
+    def(a.id).cost-def(b.id).cost || cardName(a.id).localeCompare(cardName(b.id)));
+}
+function openSharpen(){
+  const rows=sharpenable();
+  sheet(`<h2>Sharpen a card</h2>
+    <p>Each card is priced on its own, and gets dearer the more you put into it. You have ${f1(S.xp)} xp.</p>
+    ${rows.length
+      ? `<div class="cardgrid" id="uplist">${rows.map(r=>
+          cardFaceHTML(r.id,'pick'+(S.xp<sharpenCost(r.id)?' tooexpensive':''),r.n)
+            .replace('</button>',
+              `<span class="pricetag">${f2(sharpenCost(r.id))} xp</span>`
+             +`<span class="wheretag">${r.where}</span></button>`)).join('')}</div>`
+      : '<div class="emptynote">Everything you own is fully sharpened.</div>'}
+    <button class="btn wide" onclick="closeSheet()">Not now</button>`);
+  document.querySelectorAll('#uplist .pick').forEach((el,i)=>el.onclick=()=>openSharpenOne(rows[i]));
+}
+function openSharpenOne(r){
+  const key=r.id, c=def(key), L=lvl(key), next=L+1, price=sharpenCost(key), afford=S.xp>=price;
+  sheet(`<h2>${cardName(key)} → ${c.name+'+'.repeat(next)}</h2>
+    <p>in your ${r.where} · ${f2(price)} xp for this level · you have ${f1(S.xp)} xp</p>
+    <div class="pickrow">${cardFaceHTML(key,'pick big')}${cardFaceHTML(key+'+','pick big')}</div>
+    <div class="card-panel" style="margin-bottom:12px">
+      <h3>Upgrade path</h3>
+      ${upgradePath(key)}
+    </div>
+    <div class="stack">
+      <button class="btn primary" id="confirm-up" ${afford?'':'disabled'}>
+        ${afford?`Sharpen for ${f2(price)} xp`:`Needs ${f2(price-S.xp)} more xp`}</button>
+      <button class="btn" id="back-up">Other cards</button>
+    </div>`);
+  $('#back-up').onclick=()=>openSharpen();
+  if(afford) $('#confirm-up').onclick=()=>{
+    (r.where==='deck'?S.deck:S.collection)[r.i]=key+'+';
+    S.xp-=price;
+    closeSheet();
+    if($('#scr-collection').classList.contains('on')) renderCollection(); else renderCamp();
+    toast(cardName(key+'+')+' is yours.');
+  };
+}
+$('#show-rules').onclick=()=>sheet(`<h2>How the dice work</h2>
+  <p>Dice do not arrive on their own. You get a budget of rolls for each floor — six on the first, one more each floor down — and a roll drops three dice into the tray. Tap a die to arm it, then tap a card: the die goes into the card's slot and scales it. The card text updates as soon as you arm a die, so you see the number before you commit.</p><p>Nothing sweeps the tray. A die you don't spend is still there next turn, and still there in the next fight on that floor, which is the whole decision: burn rolls to crush a skirmish, or walk into the deep fight holding a six. The tray holds five, so rolling when you already hold four spills what doesn't fit.</p><p>Nothing you roll comes up higher than a six. Weighted Die is the exception — it pushes what is already in the tray past a real die face, as far as eight, and a die that heavy is worth holding for the card that scales hardest off it.</p><p>A dashed slot means the die is optional. A solid red slot means the card does nothing without one — and with an empty tray and no rolls left, that card is dead weight until you descend.</p>
+  <p>Gold, xp and cards you win underground are <em>carried</em>, not banked. Clear a floor and you get one chance to climb out with them. Die or abandon and they are gone — your deck, your health and anything already banked survive.</p>
+  <p>A card you take underground is yours, but it is not in your deck. It goes to the collection, and you slot it in at camp — the deck you go down with is the deck you built, never one that grew by accident. A tap on a card in the deck or the collection opens it; moving, burning and sharpening all happen in that window. Taking cards out of the deck costs nothing. Burning destroys a copy for good, and lives on the card itself — open any card from Deck &amp; collection and the option is there. New cards come from the market, whose table is cut fresh after every delve.</p><p>Any die the game would otherwise roll behind your back is rolled by you: a card that rerolls hands you a single die, says in one line what the roll is for, and waits for you to tap it.</p><p>A tap never plays a card. Tapping one picks it up, tapping it again puts it down, and tapping a creature only aims at it. To play, either press the Play button that appears above your hand — it names the card, the cost and the target — or drag the card: up for anything, onto a creature for an aimed one.</p><p>Nothing you train is a whole number. Every skill grows by a fraction of a point per rank and the fraction is kept, not rounded away: mana carries inside a turn, health and block are simply fractional, and cards drawn accumulate a carry across turns, so a stamina of 5.34 deals a sixth card every third turn. The camp screen shows two decimals on purpose.</p><p>Mana in particular is not a whole number. Each rank of the skill adds a fraction of a point, and the leftovers carry inside a turn — a 3.4 turn is three cards and change, and the change is what buys the fourth card a few ranks later. The well by the tray shows what you hold; the red band on its surface is what the card in your hand is about to take.</p><p>Banked xp sharpens cards at camp. Most cards have one stronger version; a few keep going for several levels, and Tinder only grows a die slot at its third. A sharpened copy stays sharpened for good. Each card is priced on its own and gets dearer the more you put into that card, so pouring xp into one favourite never raises the price of starting on another.</p>
+  <p>The same xp trains four skills: health, mana per turn, cards drawn per turn, and the block you start each turn holding. Every one of them grows on a square root, so the first rank is worth several later ones and the price climbs while the payoff flattens. Nothing is capped. It simply stops being the best thing to buy, which is the only cap that matters.</p>
+  <button class="btn wide" onclick="closeSheet()">Got it</button>`);
+$('#go-dungeon').onclick=()=>{
+  if(S.deck.length<MIN_DECK){ toast(`Slot at least ${MIN_DECK} cards into your deck first.`); return openCollection('collection'); }
+  S.floor=1;S.carried={gold:0,cards:[],xp:0};S.rolls=rollsForFloor(1);S.tray=[];
+  S.seed=(Date.now()|0);S.delves++;genFloor();renderFloor()};
+
+function pickN(arr,n){const a=[...arr];const out=[];while(out.length<n&&a.length)out.push(a.splice(rnd(a.length),1)[0]);return out}
+function cardFaceHTML(key,cls,count){
+  const c=def(key), u=lvl(key);
+  return `<button class="${cls}${u?' upgraded':''}"><span class="cost">${fmt(c.cost)}</span>
+    ${count>1?`<span class="count">×${count}</span>`:''}
+    <div class="cname">${cardName(key)}</div>
+    <div class="cart">${A[c.art]}</div>
+    <div class="ctext">${c.text(0,u)}</div></button>`;
+}
+
+/* ================= FLOOR ================= */
+function genFloor(){
+  const rng=mulberry32(S.seed + S.floor*7919);
+  const kinds = S.floor<2 ? ['slime','wretch'] : (S.floor<4?['slime','wretch','brute']:['wretch','brute','brute']);
+  const normals = 2 + Math.min(S.floor,2);
+  const entries=[];
+  /* Tokens sit on a two-column grid with a little jitter inside each cell.
+     Free-floating random positions let two tokens land on top of each other;
+     the cell is what guarantees they can't. Positions stay normalized 0..1
+     so the board is the same shape at any resolution. */
+  const cols=2, rows=Math.ceil(normals/cols), jx=0.05, jy=0.035;
+  for(let i=0;i<normals;i++){
+    const group=[];
+    const size = rng()<0.35+0.08*S.floor ? 2 : 1;
+    for(let j=0;j<size;j++) group.push(kinds[Math.floor(rng()*kinds.length)]);
+    const r=Math.floor(i/cols), c=i%cols;
+    const inRow=Math.min(cols, normals-r*cols);
+    const x = inRow===1 ? 0.5 : 0.28 + c*0.44;
+    const y = rows===1 ? 0.32 : 0.17 + r*(0.42/(rows-1));
+    entries.push({id:`f${S.floor}_e${i}`, group, boss:false, cleared:false,
+      x:clamp(x + (rng()*2-1)*jx, 0.2, 0.8),
+      y:clamp(y + (rng()*2-1)*jy, 0.14, 0.66)});
+  }
+  entries.push({id:`f${S.floor}_boss`, group:[S.floor%3===0?'wraith':'brute'], boss:true, cleared:false, x:0.5, y:0.86});
+  S.floorState={floor:S.floor, entries};
+}
+function renderFloor(){
+  const fs=S.floorState, map=$('#map');
+  const open = fs.entries.filter(e=>!e.boss&&!e.cleared).length===0;
+  $('#f-hp').innerHTML=stat(A.heart,`${fmt(S.hp)}/${f1(S.maxHP)}`);
+  $('#f-carry').innerHTML=stat(A.sack,`${S.carried.gold}g · ${f1(S.carried.xp)}xp`+(S.carried.cards.length?` · ${S.carried.cards.length} cards`:''));
+  $('#f-depth').textContent=`floor ${S.floor} · ${S.rolls} rolls`;
+  $('#f-hint').textContent = (S.tray.length?`${S.tray.length} dice held (${S.tray.map(d=>d.v).join(' ')}). `:'Tray empty. ')
+    + (open ? 'Only the deep fight left.' : 'Clear every fight to unlock the deep one.');
+  const links = fs.entries.map(e=>`<line x1="50%" y1="8%" x2="${e.x*100}%" y2="${e.y*100}%" stroke="rgba(201,151,63,.18)" stroke-width="1.5" stroke-dasharray="4 5"/>`).join('');
+  map.innerHTML = `<svg class="links">${links}</svg>` + fs.entries.map(e=>{
+    const locked = e.boss && !open;
+    const art = e.boss ? A.skull : (e.group.length>1?A.sword:A.sword);
+    return `<div class="node ${e.cleared?'cleared':''} ${e.boss?'boss':''} ${locked?'locked':''}" data-id="${e.id}" style="left:${e.x*100}%;top:${e.y*100}%">
+      <div class="disc">${art}</div>
+      <small>${e.boss?'Deep fight':e.group.map(g=>BESTIARY[g].name.split(' ')[1]||BESTIARY[g].name).join(' + ')}</small></div>`;
+  }).join('');
+  S.inDive=true;
+  saveGame();
+  map.querySelectorAll('.node').forEach(n=>n.onclick=()=>{
+    const e=fs.entries.find(x=>x.id===n.dataset.id);
+    if(e.cleared) return toast('Already cleared.');
+    if(e.boss && !open) return toast('Clear the rest of the floor first.');
+    startBattle(e);
+  });
+  show('scr-floor');
+}
+$('#abandon').onclick=()=>{
+  if(!S.carried.gold && !S.carried.cards.length && !S.carried.xp){ S.hp=S.maxHP; S.tray=[]; S.rolls=0; renderCamp(); return; }
+  sheet(`<h2>Walk away?</h2><p>You lose ${S.carried.gold} gold, ${f1(S.carried.xp)} xp and ${S.carried.cards.length} card${S.carried.cards.length===1?'':'s'}. Your deck and health come back with you.</p>
+    <div class="stack"><button class="btn danger" id="ab-yes">Lose it and go</button>
+    <button class="btn" onclick="closeSheet()">Keep delving</button></div>`);
+  $('#ab-yes').onclick=()=>{S.carried={gold:0,cards:[],xp:0};S.tray=[];S.rolls=0;S.hp=S.maxHP;closeSheet();renderCamp();toast('You climb out empty-handed.')};
+};
+
+/* ================= BATTLE ================= */
+function startBattle(entry){
+  /* Health per floor is superlinear: a linear curve loses to a deck that is
+     also gaining upgrades, dice boosts and skill ranks, so fights on floor 5
+     were ending in one turn. The squared term is what keeps a deep fight a
+     fight. Damage still climbs linearly, through str, so deeper floors get
+     longer rather than swingier. */
+  const f = S.floor-1;
+  const scale = 1 + 0.28*f + 0.04*f*f;
+  B={
+    entry, enemies: entry.group.map((k,i)=>{
+      const b=BESTIARY[k], hp=Math.round(b.hp*scale);
+      return {key:k,name:b.name,hp,maxHP:hp,block:0,str:S.floor-1,weak:0,art:b.art,small:!!b.small,
+              pattern:b.pattern,pi:i%b.pattern.length,intent:null,boss:!!b.boss,dead:false};
+    }),
+    draw:shuffle([...S.deck]), hand:[], discard:[],
+    energy:skillVal('mana'), maxEnergy:skillVal('mana'),
+    drawN:skillVal('stamina'), drawCarry:0, baseBlock:skillVal('defense'),
+    block:0, edge:0,
+    dice:S.tray.map(d=>({v:d.v,spent:false,id:B_dieSeq++,fresh:false})),
+    dieId:B_dieSeq, armed:null, armedAt:0, busy:false, lock:0, sel:null, target:0, turn:0, over:false
+  };
+  B.enemies.forEach(nextIntent);
+  $('#hero-art').outerHTML = A.hero.replace('<svg','<svg class="hero" id="hero-art"');
+  saveGame();          /* the fight itself is not serialized — this is the point you return to */
+  show('scr-battle');
+  startTurn();
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function startTurn(){
+  B.turn++; B.block=B.baseBlock; B.edge=0; B.energy=B.maxEnergy; B.armed=null; B.sel=null; B.busy=false;
+  /* the fraction is not thrown away — it waits for the turn it completes */
+  B.drawCarry += B.drawN;
+  const take = Math.floor(B.drawCarry + 1e-9);
+  B.drawCarry -= take;
+  drawCards(take);
+  renderBattle();
+}
+function drawCards(n){
+  for(let i=0;i<n;i++){
+    if(!B.draw.length){ B.draw=shuffle(B.discard); B.discard=[]; }
+    if(!B.draw.length) break;
+    if(B.hand.length>=10){ B.discard.push(B.draw.pop()); continue; }
+    B.hand.push(B.draw.pop());
+  }
+}
+/* A copy that exists only for this fight: B.draw and B.discard are rebuilt
+   from S.deck at the start of every battle, so nothing here can leak into the
+   deck the player built. */
+function shuffleIntoDraw(key){
+  B.draw.splice(rnd(B.draw.length+1), 0, key);
+  /* queued rather than played here: the hand is about to be re-rendered, and
+     the animation needs the DOM it will land in */
+  (B.copyFx = B.copyFx || []).push(key);
+}
+/* A card-shaped scrap flies from the hand into the draw counter, which then
+   bumps. Without it a copy arriving in the draw pile is invisible — the only
+   evidence was a number quietly going up. */
+function flyCopiesToDraw(keys){
+  const app=$('#app'), p=app.getBoundingClientRect();
+  const hand=$('#hand').getBoundingClientRect();
+  const pile=$('#p-draw').getBoundingClientRect();
+  keys.forEach((key,i)=>setTimeout(()=>{
+    const el=document.createElement('div');
+    el.className='copyfly';
+    el.innerHTML=A[def(key).art]||'';
+    const x0=(hand.left+hand.width/2-p.left)/VIEW_SCALE-22;
+    const y0=(hand.top-p.top)/VIEW_SCALE+20;
+    el.style.left=x0+'px'; el.style.top=y0+'px';
+    app.appendChild(el);
+    const dx=(pile.left+pile.width/2-p.left)/VIEW_SCALE-22-x0;
+    const dy=(pile.top-p.top)/VIEW_SCALE-y0;
+    requestAnimationFrame(()=>{
+      el.style.transform=`translate(${dx}px,${dy}px) scale(.34) rotate(-160deg)`;
+      el.style.opacity='.15';
+    });
+    setTimeout(()=>{
+      el.remove();
+      const d=$('#p-draw');
+      if(d){ d.classList.remove('bump'); void d.offsetWidth; d.classList.add('bump'); }
+      floatAt($('#p-draw'), '+1', '#e3c88a');
+    },560);
+  }, i*160));
+}
+function floatAt(el, txt, color){
+  if(!el) return;
+  const p=$('#app').getBoundingClientRect(), r=el.getBoundingClientRect();
+  const f=document.createElement('div'); f.className='floattext'; f.textContent=txt;
+  f.style.color=color; f.style.fontSize='15px';
+  f.style.left=((r.left-p.left)/VIEW_SCALE)+'px';
+  f.style.top=((r.top-p.top)/VIEW_SCALE-16)+'px';
+  $('#app').appendChild(f); setTimeout(()=>f.remove(),900);
+}
+function aliveEnemies(){return B.enemies.filter(e=>!e.dead)}
+function currentTarget(){
+  let e=B.enemies[B.target];
+  if(!e||e.dead) {e=aliveEnemies()[0]; B.target=B.enemies.indexOf(e);}
+  return e;
+}
+function damageTarget(n){ hit(currentTarget(), n+B.edge) }
+function damageAll(n){ aliveEnemies().slice().forEach(e=>hit(e,n+B.edge)) }
+function hit(e,n){
+  if(!e||e.dead) return;
+  let dmg=n;
+  if(e.block>0){ const absorbed=Math.min(e.block,dmg); e.block-=absorbed; dmg-=absorbed; }
+  e.hp-=dmg;
+  e.flash=true;
+  floatOn(e,`-${n}`,'#f0a89f');
+  if(e.hp<=0){e.hp=0;e.dead=true}
+}
+function gainBlock(n){ B.block+=n; floatOnPlayer(`+${n}`,'#8fd0bd') }
+function heal(n){ S.hp=Math.min(S.maxHP,S.hp+n); floatOnPlayer(`+${n}`,'#9be08a') }
+
+function nextIntent(e){
+  const step=e.pattern[e.pi % e.pattern.length]; e.pi++;
+  e.intent={...step};
+  if(e.intent.atk) e.intent.atk += e.str;
+}
+function enemyTurn(){
+  let i=0;
+  const step=()=>{
+    const e=aliveEnemies()[i];
+    if(!e){ if(!checkEnd()) startTurn(); return; }
+    e.block=0;
+    const it=e.intent;
+    if(it.atk!=null){
+      const raw=Math.max(0, it.atk - (e.weak||0)); e.weak=0;
+      let dmg=raw;
+      const absorbed=Math.min(B.block,dmg); B.block-=absorbed; dmg-=absorbed;
+      S.hp-=dmg; floatOnPlayer(`-${raw}`,'#f0a89f');
+      $('#app').classList.add('shake'); setTimeout(()=>$('#app').classList.remove('shake'),300);
+    } else if(it.blk!=null){ e.block+=it.blk; floatOn(e,`+${it.blk}`,'#8fd0bd') }
+    else if(it.buff!=null){ e.str+=it.buff; floatOn(e,`str +${it.buff}`,'#f0c96b') }
+    else if(it.hex!=null){
+      /* The hex used to shrink next turn's automatic roll. With rolls as a
+         floor budget it takes from that budget instead — and if the budget is
+         already gone, it takes the best die off your tray. */
+      if(S.rolls>0){ S.rolls--; floatOn(e,'a roll, gone','#c9a6ff'); }
+      else {
+        const live=liveDice();
+        if(live.length){ const best=live.reduce((a,b)=>b.v>a.v?b:a); best.spent=true;
+          B.dice=B.dice.filter(d=>!d.spent); floatOn(e,`took your ${best.v}`,'#c9a6ff'); }
+        else floatOn(e,'nothing left to take','#c9a6ff');
+      }
+      syncTray();
+    }
+    nextIntent(e); renderBattle(); i++;
+    if(S.hp<=0){ return defeat(); }
+    setTimeout(step,380);
+  };
+  step();
+}
+function checkEnd(){
+  if(!aliveEnemies().length){ victory(); return true }
+  if(S.hp<=0){ defeat(); return true }
+  return false;
+}
+function endTurn(){
+  if(B.over || B.busy) return;
+  B.discard.push(...B.hand); B.hand=[]; B.armed=null; B.sel=null;
+  renderBattle();
+  setTimeout(()=>{ if(!checkEnd()) enemyTurn(); },200);
+}
+$('#endturn').onclick=endTurn;
+$('#rollbtn').onclick=rollDice;
+
+/* The die visibly travels from the tray into the card's slot, then the card
+   flashes and resolves. Input is locked for the ~360ms that takes, so a
+   double-tap can't play two cards out from under the animation. */
+function flyDie(dieEl, cardEl, value, done){
+  const app=$('#app'), p=app.getBoundingClientRect();
+  const a=dieEl.getBoundingClientRect();
+  const slot=cardEl.querySelector('.slot') || cardEl;
+  const b=slot.getBoundingClientRect();
+  const ghost=document.createElement('div');
+  ghost.className='die flydie'+(value>6?' heavy':'');
+  ghost.innerHTML=pipLayout(value);
+  ghost.style.left=((a.left-p.left)/VIEW_SCALE)+'px';
+  ghost.style.top=((a.top-p.top)/VIEW_SCALE)+'px';
+  app.appendChild(ghost);
+  dieEl.style.opacity='0';
+  const dx=((b.left+b.width/2)-(a.left+a.width/2))/VIEW_SCALE;
+  const dy=((b.top+b.height/2)-(a.top+a.height/2))/VIEW_SCALE;
+  requestAnimationFrame(()=>{
+    ghost.style.transform=`translate(${dx}px,${dy}px) scale(.4) rotate(200deg)`;
+  });
+  setTimeout(()=>{
+    ghost.remove();
+    cardEl.classList.add('commit');
+    setTimeout(done,140);
+  },220);
+}
+
+function playCard(handIdx, aimAt){
+  if(B.over || B.busy) return;
+  if(Date.now() < (B.lock||0)) return;      /* no second card off one twitch */
+  const id=B.hand[handIdx], c=def(id), u=lvl(id), dslot=dieOf(id), baked=bakedPip(id);
+  if(c.cost > B.energy + 1e-9) return toast(`Not enough mana — ${fmt(c.cost)} needed, ${f1(B.energy)} left.`);
+  const die = B.armed!=null ? B.dice.find(d=>d.id===B.armed) : null;
+  if(dslot==='req' && !die) return toast('This one needs a die. Tap a die first.');
+  const pip = baked || ((dslot!=='none' && die) ? die.v : 0);
+  if(dslot==='none' && die) B.armed=null;
+  if(aimAt!=null) B.target=aimAt;
+
+  const resolve=()=>{
+    B.busy=false;
+    const manaBefore=B.energy;
+    B.energy-=c.cost;
+    if(die && dslot!=='none'){ die.spent=true; B.armed=null; }
+    B.hand.splice(handIdx,1); B.discard.push(id);
+    B.sel=null;
+    c.play(pip,u,id);
+    B.dice = B.dice.filter(d=>!d.spent);   /* a used die leaves the tray for good */
+    syncTray();
+    B.lock = Date.now()+260;
+    renderBattle();
+    if(B.copyFx && B.copyFx.length){ flyCopiesToDraw(B.copyFx); B.copyFx=[]; }
+    flashPlay(id, c.cost, pip);
+    if(c.cost>0){ animateEnergy(manaBefore, B.energy); costTag(`−${fmt(c.cost)}`); }
+    checkEnd();
+  };
+
+  const cardEl=$(`.pcard[data-i="${handIdx}"]`);
+  const dieEl = die && dslot!=='none' ? $(`.die[data-id="${die.id}"]`) : null;
+  if(cardEl && dieEl){ B.busy=true; flyDie(dieEl, cardEl, die.v, resolve); }
+  else resolve();
+}
+
+/* ---------------- drag to target ----------------
+   Slay the Spire's split: a card that needs a target lifts out of the hand
+   and throws an arrow at the cursor, and you drop that arrow on a creature;
+   a card that doesn't simply follows the cursor and is dropped anywhere above
+   the hand. Tapping still works untouched — a pointerup that never moved far
+   enough falls through to the old select-then-confirm path, which is what
+   keeps this usable one-handed on a phone. */
+const DRAG_SLOP = 9;        /* px of movement before a press becomes a drag */
+let drag = null;
+
+function appPoint(ev){
+  const p=$('#app').getBoundingClientRect();
+  return {x:(ev.clientX-p.left)/VIEW_SCALE, y:(ev.clientY-p.top)/VIEW_SCALE};
+}
+function enemyUnder(ev){
+  const els=[...document.querySelectorAll('.enemy[data-i]')];
+  for(const el of els){
+    const r=el.getBoundingClientRect();
+    if(ev.clientX>=r.left-10 && ev.clientX<=r.right+10 &&
+       ev.clientY>=r.top-14  && ev.clientY<=r.bottom+16) return +el.dataset.i;
+  }
+  return null;
+}
+function hoverEnemy(i){
+  document.querySelectorAll('.enemy[data-i]').forEach(el=>
+    el.classList.toggle('hover', +el.dataset.i===i));
+}
+function showArrow(from, to, state){
+  const svg=$('#aimarrow');
+  svg.className.baseVal = 'on '+state;
+  const lift = Math.max(70, Math.hypot(to.x-from.x, to.y-from.y)*0.45);
+  const cx=(from.x+to.x)/2, cy=Math.min(from.y,to.y)-lift*0.35;
+  $('#aimpath').setAttribute('d',`M ${from.x} ${from.y} Q ${cx} ${cy} ${to.x} ${to.y}`);
+  const a=Math.atan2(to.y-cy, to.x-cx), s=13;
+  const pt=(ang,len)=>`${to.x+Math.cos(ang)*len},${to.y+Math.sin(ang)*len}`;
+  $('#aimhead').setAttribute('points',
+    `${pt(a,s)} ${pt(a+2.5,s)} ${pt(a-2.5,s)}`);
+}
+function hideArrow(){ $('#aimarrow').className.baseVal=''; }
+
+/* A thin dashed line from the armed die to the slot it is about to fill, so
+   the two halves of the action read as one gesture rather than two taps in
+   different corners of the screen. Only drawn when both ends exist: no die
+   armed, no card held, or a card with no slot, and it stays hidden. */
+function drawSlotArrow(){
+  const svg=$('#slotarrow');
+  const die  = (B && B.armed!=null) ? $(`.die[data-id="${B.armed}"]`) : null;
+  const card = (B && B.sel!=null)   ? $(`.pcard[data-i="${B.sel}"]`)  : null;
+  const slot = card ? card.querySelector('.slot') : null;
+  if(!die || !slot){ svg.classList.remove('on'); return; }
+  const p=$('#app').getBoundingClientRect();
+  const a=die.getBoundingClientRect(), b=slot.getBoundingClientRect();
+  const from={x:(a.left+a.width/2-p.left)/VIEW_SCALE, y:(a.bottom-p.top)/VIEW_SCALE+2};
+  const to  ={x:(b.left+b.width/2-p.left)/VIEW_SCALE, y:(b.top-p.top)/VIEW_SCALE-5};
+  const bow = Math.max(14, Math.abs(to.x-from.x)*0.35) * (to.x>=from.x?1:-1);
+  const cx=(from.x+to.x)/2 + bow, cy=(from.y+to.y)/2;
+  $('#slotpath').setAttribute('d',`M ${from.x.toFixed(1)} ${from.y.toFixed(1)} Q ${cx.toFixed(1)} ${cy.toFixed(1)} ${to.x.toFixed(1)} ${to.y.toFixed(1)}`);
+  const ang=Math.atan2(to.y-cy, to.x-cx), h=7;
+  const pt=(r,l)=>`${(to.x+Math.cos(r)*l).toFixed(1)},${(to.y+Math.sin(r)*l).toFixed(1)}`;
+  $('#slothead').setAttribute('points', `${pt(ang,h)} ${pt(ang+2.5,h)} ${pt(ang-2.5,h)}`);
+  svg.classList.add('on');
+}
+
+function dragStart(ev, i, el){
+  if(B.busy || B.over) return;
+  const c=def(B.hand[i]);
+  drag={i, el, card:c, aimed:!!c.aim, moved:false,
+        x0:ev.clientX, y0:ev.clientY, off:el._off||0, lift:el._lift||0};
+  try{ el.setPointerCapture(ev.pointerId); }catch(e){}
+}
+function dragMove(ev){
+  if(!drag) return;
+  const dx=(ev.clientX-drag.x0)/VIEW_SCALE, dy=(ev.clientY-drag.y0)/VIEW_SCALE;
+  if(!drag.moved){
+    if(Math.hypot(ev.clientX-drag.x0, ev.clientY-drag.y0) < DRAG_SLOP) return;
+    drag.moved=true;
+    drag.el.classList.add('dragging');
+    document.body.classList.add('grabbing');
+    B.sel=drag.i;
+    if(!drag.aimed) $('#hand').classList.add('armedrop');
+    renderEnergy(pendingCost());        /* show what this card will take */
+  }
+  if(drag.aimed){
+    /* the card stays put and lifted; the arrow does the reaching */
+    drag.el.style.transform=`translate(${drag.off}px, ${drag.lift-52}px) scale(1.06)`;
+    const r=drag.el.getBoundingClientRect(), p=$('#app').getBoundingClientRect();
+    const from={x:(r.left+r.width/2-p.left)/VIEW_SCALE, y:(r.top-p.top)/VIEW_SCALE+6};
+    const to=appPoint(ev);
+    const over=enemyUnder(ev);
+    hoverEnemy(over);
+    if(over!=null) B.target=over;
+    showArrow(from, to, over!=null ? 'valid' : (drag.card.aim==='all' ? 'valid' : 'dud'));
+  } else {
+    drag.el.style.transform=`translate(${drag.off+dx}px, ${drag.lift+dy}px) scale(1.06)`;
+  }
+  drawSlotArrow();          /* the line follows the card while it moves */
+}
+function dragEnd(ev){
+  if(!drag) return;
+  const d=drag; drag=null;
+  document.body.classList.remove('grabbing');
+  hideArrow(); hoverEnemy(null); $('#slotarrow').classList.remove('on');
+  $('#hand').classList.remove('armedrop');
+  if(!d.moved){
+    /* A tap only ever picks a card up or puts it down. Playing takes either
+       the Play button or a deliberate drag — two stray taps in a row used to
+       spend a card, which is the thing to protect against. */
+    B.sel = (B.sel===d.i) ? null : d.i;
+    renderBattle();
+    return;
+  }
+  const over=enemyUnder(ev);
+  if(d.aimed){
+    if(over!=null || d.card.aim==='all') playCard(d.i, over);
+    else { toast('Drop it on a target.'); renderBattle(); }
+  } else {
+    const handTop=$('#hand').getBoundingClientRect().top;
+    if(ev.clientY < handTop) playCard(d.i);
+    else renderBattle();
+  }
+}
+
+/* ---------------- the player's roll ----------------
+   Anything random that happens mid-card is rolled by the player, not by the
+   game behind their back. The splash shows one die and one line saying what
+   the roll is for; tapping the die rolls it, the result is named, and the
+   effect lands after. Input is locked while it is up. */
+function playerRoll(opts, cb){
+  if(!B || !aliveEnemies().length){ return; }     /* nothing left to roll for */
+  B.busy=true;
+  const el=$('#rollsplash');
+  el.innerHTML=`<div class="rollbox">
+      <p class="rolltitle">${opts.title}</p>
+      <button class="die huge waiting" id="rolldie">${pipLayout(opts.face||1)}</button>
+      <p class="rollnote" id="rollnote">tap the die to roll</p>
+    </div>`;
+  el.classList.add('on');
+  const die=$('#rolldie');
+  let rolled=false;
+  die.onclick=()=>{
+    if(rolled) return; rolled=true;
+    die.classList.remove('waiting');
+    let ticks=0;
+    const spin=setInterval(()=>{
+      die.innerHTML=pipLayout(1+rnd(6));
+      die.classList.remove('spin'); void die.offsetWidth; die.classList.add('spin');
+      if(++ticks>=9){
+        clearInterval(spin);
+        const v=1+rnd(6);
+        die.innerHTML=pipLayout(v);
+        die.classList.remove('spin'); die.classList.add('landed');
+        $('#rollnote').innerHTML=opts.result(v);
+        setTimeout(()=>{
+          el.classList.remove('on'); el.innerHTML='';
+          B.busy=false;
+          cb(v);
+          renderBattle();
+          checkEnd();
+        }, 1150);
+      }
+    }, 75);
+  };
+}
+
+/* ---------------- mana gauge ----------------
+   Mana is a float now, so a level reads better than a number alone. The well
+   is a full circle, the brass liquid in it is what you hold, and the red band
+   floating on the surface is exactly what the card in your hand will take —
+   so you see the cost before you commit and watch the level fall when you
+   spend it. */
+function pendingCost(){
+  if(!B) return 0;
+  const key = drag ? B.hand[drag.i] : (B.sel!=null ? B.hand[B.sel] : null);
+  return key ? def(key).cost : 0;
+}
+function renderEnergy(pending, shown){
+  const v = shown!=null ? shown : B.energy;
+  const max = Math.max(B.maxEnergy, v, 0.001);
+  const frac = Math.max(0, Math.min(1, v/max));
+  const pend = Math.max(0, Math.min(v, pending||0))/max;
+  const short = (pending||0) > v + 1e-9;
+  /* the well is the whole circle; the liquid sits in the bottom of it and the
+     cost about to be spent is the band skimmed off the top of that liquid */
+  const TOP=2.5, BOT=39.5, H=BOT-TOP;
+  const yCur  = BOT - frac*H;
+  const yDrain= BOT - Math.max(0, frac-pend)*H;
+  const el=$('#b-energy');
+  el.classList.toggle('short', short);
+  el.innerHTML = `<svg viewBox="0 0 42 42">
+      <defs><clipPath id="ewellclip"><circle cx="21" cy="21" r="18.5"/></clipPath></defs>
+      <circle class="ewell" cx="21" cy="21" r="18.5"/>
+      <g clip-path="url(#ewellclip)">
+        <rect class="eliquid" x="0" y="${yCur.toFixed(2)}" width="42" height="${(BOT-yCur+3).toFixed(2)}"/>
+        ${pend>0?`<rect class="edrain" x="0" y="${yCur.toFixed(2)}" width="42" height="${(yDrain-yCur).toFixed(2)}"/>`:''}
+        ${frac>0.02?`<rect class="esurface" x="0" y="${yCur.toFixed(2)}" width="42" height="1.3"/>`:''}
+      </g>
+      <circle class="erim" cx="21" cy="21" r="18.5"/>
+    </svg><span>${f1(v)}</span>`;
+}
+function animateEnergy(from,to){
+  const t0=performance.now(), dur=340;
+  (function step(t){
+    const k=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-k,3);
+    if(!B) return;
+    renderEnergy(0, from+(to-from)*e);
+    if(k<1) requestAnimationFrame(step);
+  })(t0);
+}
+function costTag(text){
+  const el=$('#b-energy'), p=$('#app').getBoundingClientRect(), r=el.getBoundingClientRect();
+  const f=document.createElement('div'); f.className='costtag'; f.textContent=text;
+  f.style.left=((r.left-p.left)/VIEW_SCALE+4)+'px';
+  f.style.top=((r.top-p.top)/VIEW_SCALE-14)+'px';
+  $('#app').appendChild(f); setTimeout(()=>f.remove(),800);
+}
+function flashPlay(key, cost, pip){
+  const b=$('#playbanner');
+  b.innerHTML = `<b>${cardName(key)}</b>${pip?` · die ${pip}`:''}`
+    + (cost>0?` · <span class="drain">−${fmt(cost)} mana</span>`:' · free');
+  b.classList.add('on');
+  clearTimeout(b._h); b._h=setTimeout(()=>b.classList.remove('on'),1150);
+}
+
+/* ---------------- battle render ---------------- */
+function pipLayout(v){
+  /* 7 and 8 are not real die faces — nothing rolls them, only Weighted Die
+     makes them — so they read as a crowded six: six-face plus a centre, then
+     every cell but the centre. */
+  const grid=[[],[5],[1,9],[1,5,9],[1,3,7,9],[1,3,5,7,9],[1,3,4,6,7,9],
+              [1,3,4,5,6,7,9],[1,2,3,4,6,7,8,9]][v] || [1,2,3,4,5,6,7,8,9];
+  let out='';
+  for(let i=1;i<=9;i++) out += grid.includes(i)?'<i></i>':'<span></span>';
+  return out;
+}
+function renderBattle(){
+  /* enemies */
+  $('#b-where').textContent = `Floor ${S.floor} · ${B.entry.boss?'the deep fight':'skirmish'}`;
+  $('#b-carry').innerHTML = stat(A.sack,`${S.carried.gold}g`) + stat(A.dice,`${S.rolls}`);
+  const field=$('#field');
+  const selCard = (B.sel!=null && B.hand[B.sel]) ? def(B.hand[B.sel]) : null;
+  const aiming = !!(selCard && selCard.aim);
+  field.classList.toggle('aiming', aiming);
+  field.innerHTML = B.enemies.map((e,i)=>{
+    if(e.dead) return `<div class="enemy dead"></div>`;
+    const it=e.intent, ic = it.atk!=null?A.sword : it.blk!=null?A.shieldIcon : it.buff!=null?A.buff : A.hex;
+    const atk = it.atk!=null ? Math.max(0, it.atk-(e.weak||0)) : null;
+    const iv = atk!=null?atk : it.blk!=null?it.blk : it.buff!=null?'+'+it.buff : '';
+    const targeted = i===B.target;
+    const cls = [e.small?'small':'', targeted?'targeted':'', aiming&&!targeted?'dim':'', e.flash?'struck':''].join(' ');
+    return `<div class="enemy ${cls}" data-i="${i}">
+      <div class="intent">${ic}<span>${iv}</span></div>
+      ${CREATURE[e.art]}
+      <div class="hpbar"><i style="width:${100*e.hp/e.maxHP}%"></i></div>
+      <div class="label">${targeted?`<span class="aimmark">${A.crosshair}</span>`:''}${e.hp}/${e.maxHP}${e.block?` <span class="eblock">${A.shieldIcon}${e.block}</span>`:''}${e.weak?` <span style="color:#c9a6ff">−${e.weak}</span>`:''}</div>
+    </div>`;
+  }).join('');
+  B.enemies.forEach(e=>e.flash=false);
+  /* Tapping an enemy aims. With a damage card already raised, that same tap
+     plays it at what you tapped — one gesture to choose the target and swing. */
+  /* Tapping a creature aims at it — it never plays the held card. Firing is
+     the Play button or a drag, both of which are deliberate. */
+  field.querySelectorAll('.enemy[data-i]').forEach(el=>el.onclick=()=>{
+    if(B.busy) return;
+    B.target=+el.dataset.i;
+    renderBattle();
+  });
+
+  /* player */
+  $('#b-hp').innerHTML = stat(A.heart,`${fmt(S.hp)}/${f1(S.maxHP)}`);
+  $('#b-hpfill').style.width = (100*Math.max(0,S.hp)/S.maxHP)+'%';
+  const sh=$('#b-shield'); sh.hidden = B.block<=0;
+  sh.innerHTML = `${A.shieldIcon}<span>${fmt(B.block)}</span>`;
+  renderEnergy(pendingCost());
+
+  /* dice — the tray, not a per-turn handout */
+  const live=liveDice(), tight=live.length>3;
+  $('#dicebox').innerHTML = live.length
+    ? live.map(d=>`<div class="die ${tight?'tight':''} ${d.v>6?'heavy':''} ${B.armed===d.id?'armed':''} ${d.fresh?'rolling':''}" data-id="${d.id}">${pipLayout(d.v)}</div>`).join('')
+    : `<div class="trayempty">tray empty</div>`;
+  B.dice.forEach(d=>d.fresh=false);
+  $('#dicebox').querySelectorAll('.die').forEach(el=>el.onclick=()=>{
+    if(B.busy) return;
+    const id=+el.dataset.id;
+    B.armed = B.armed===id?null:id;
+    if(B.armed!=null) B.armedAt=Date.now();
+    renderBattle();
+  });
+  const rb=$('#rollbtn'), room=MAX_TRAY-live.length;
+  rb.innerHTML = `<b>Roll</b><small>${S.rolls} left</small>`;
+  rb.disabled = S.rolls<=0 || room<=0;
+  rb.classList.toggle('hot', !rb.disabled && live.length===0);
+  $('#trayhint').textContent =
+    B.armed!=null ? 'Armed. The line shows where it lands — tap a card to hold it.'
+    : !live.length ? (S.rolls>0 ? `No dice held. A roll drops ${DICE_PER_ROLL}, and you have ${S.rolls} for this whole floor.`
+                                : 'No dice, no rolls. Cards that need one are dead until you descend.')
+    : room<DICE_PER_ROLL ? `${live.length} held, room for ${room} — rolling now would spill ${DICE_PER_ROLL-room}.`
+    : `${live.length} held, ${S.rolls} rolls left on this floor. Dice you keep carry into the next fight.`;
+
+  /* hand */
+  const hand=$('#hand');
+  hand.querySelectorAll('.pcard,.playhint').forEach(n=>n.remove());
+  const n=B.hand.length, armedDie=B.armed!=null?B.dice.find(d=>d.id===B.armed):null;
+  B.hand.forEach((id,i)=>{
+    const c=def(id), u=lvl(id), dslot=dieOf(id), baked=bakedPip(id);
+    const off=i-(n-1)/2;
+    const raised=B.sel===i;
+    const pip = baked || ((armedDie && dslot!=='none') ? armedDie.v : 0);
+    const el=document.createElement('div');
+    el.className='pcard'+(raised?' raised':'')+(u?' upgraded':'')+(c.cost>B.energy+1e-9?' unaffordable':'');
+    el.style.transform=`translateX(${off*(n>6?40:n>4?54:62)}px) rotate(${off*(n>6?3:4.5)}deg) translateY(${Math.abs(off)*Math.abs(off)*3 - (raised?34:0)}px)`;
+    el.style.zIndex = raised?9:i;
+    const slot = baked ? `<span class="slot filled charged">${baked}</span>`
+      : dslot==='none' ? ''
+      : `<span class="slot ${dslot==='req'?'req':''} ${pip?'filled':''}">${pip?pip:(dslot==='req'?'!':'◇')}</span>`;
+    const note = typeof c.note==='function' ? c.note(u) : c.note;
+    const takesDie = dslot!=='none';
+    const fresh = armedDie && Date.now()-B.armedAt < 1300;
+    el.dataset.i = i;
+    if(armedDie && takesDie && fresh) el.classList.add('candidate');
+    if(armedDie && !takesDie) el.classList.add('inert');
+    el.innerHTML=`<span class="cost">${fmt(c.cost)}</span>${slot}
+      <div class="cname">${cardName(id)}</div>
+      <div class="cart">${A[c.art]}</div>
+      <div class="ctext">${c.text(pip,u)}${note?`<br><span style="color:#7a6c52">${note}</span>`:''}</div>`;
+    /* the fan offsets are remembered so a drag can rebuild the transform
+       without the rotation, rather than fighting the inline one */
+    el._off = off*(n>6?40:n>4?54:62);
+    el._lift = Math.abs(off)*Math.abs(off)*3 - (raised?34:0);
+    el.addEventListener('pointerdown', ev=>{ ev.preventDefault(); dragStart(ev,i,el); });
+    el.addEventListener('pointermove', dragMove);
+    el.addEventListener('pointerup', dragEnd);
+    el.addEventListener('pointercancel', ()=>{ if(drag){drag=null; hideArrow(); hoverEnemy(null);
+      document.body.classList.remove('grabbing'); $('#hand').classList.remove('armedrop'); renderBattle();} });
+    hand.appendChild(el);
+  });
+  const pc=$('#playconfirm');
+  if(selCard){
+    const t = selCard.aim==='all' ? 'everything'
+            : selCard.aim ? (currentTarget()?currentTarget().name:'the front') : null;
+    pc.innerHTML = `Play <b>${cardName(B.hand[B.sel])}</b>`
+      + (selCard.cost>0?` · ${fmt(selCard.cost)} mana`:' · free')
+      + (t?` ▸ ${t}`:'');
+    pc.classList.add('on');
+    pc.onclick=()=>{ if(!B.busy) playCard(B.sel); };
+  } else { pc.classList.remove('on'); pc.onclick=null; }
+
+  if(selCard){
+    const h=document.createElement('div'); h.className='playhint';
+    const c=selCard;
+    h.textContent = c.aim
+      ? 'tap a creature to aim · drag onto one to throw it'
+      : 'drag it up, or use the button';
+    hand.appendChild(h);
+  }
+  drawSlotArrow();
+  $('#p-draw').textContent = `draw ${B.draw.length} · ${f2(B.drawN)}/turn`;
+  $('#p-disc').textContent = `discard ${B.discard.length}`;
+}
+$('#field').addEventListener('click',e=>{ if(e.target.id==='field'&&B){B.sel=null;renderBattle()} });
+
+function floatOn(e,txt,color){
+  const i=B.enemies.indexOf(e); const el=$(`.enemy[data-i="${i}"]`); if(!el) return;
+  const f=document.createElement('div'); f.className='floattext'; f.textContent=txt; f.style.color=color;
+  const r=el.getBoundingClientRect(), p=$('#app').getBoundingClientRect();
+  f.style.left=((r.left-p.left+r.width/2)/VIEW_SCALE-14)+'px';
+  f.style.top=((r.top-p.top)/VIEW_SCALE+18)+'px';
+  $('#app').appendChild(f); setTimeout(()=>f.remove(),900);
+}
+function floatOnPlayer(txt,color){
+  const el=$('#hero-art'); const f=document.createElement('div'); f.className='floattext';
+  f.textContent=txt; f.style.color=color;
+  const r=el.getBoundingClientRect(), p=$('#app').getBoundingClientRect();
+  f.style.left=((r.left-p.left)/VIEW_SCALE)+'px';
+  f.style.top=((r.top-p.top)/VIEW_SCALE-10)+'px';
+  $('#app').appendChild(f); setTimeout(()=>f.remove(),900);
+}
+
+/* ---------------- outcomes ---------------- */
+function victory(){
+  if(B.over) return; B.over=true;
+  const boss=B.entry.boss;
+  const gold = Math.round((boss?28:12) * (1+0.3*(S.floor-1)) + rnd(6));
+  const xp = (boss ? 13.4 : 4.6) + (boss?2.85:1.65)*(S.floor-1) + 0.9*B.enemies.length;
+  S.carried.gold += gold;
+  S.carried.xp += xp;
+  B.entry.cleared = true;
+  const offers = pickN(REWARD_POOL, 3);
+  setTimeout(()=>{
+    sheet(`<h2>${boss?'The deep one falls':'Cleared'}</h2>
+      <p>Carried, not banked, and not in your deck — a card you take goes to the collection when you climb out, for you to slot in at camp.</p>
+      <div class="loot"><div>${A.coin} +${gold} gold</div><div>${A.xp} +${f1(xp)} xp</div></div>
+      <p>Take a card:</p>
+      <div class="pickrow">${offers.map(id=>cardFaceHTML(id,'pick')).join('')}</div>
+      <button class="btn wide" id="skipcard">Take nothing</button>`);
+    document.querySelectorAll('#sheet .pick').forEach((el,i)=>el.onclick=()=>{
+      S.carried.cards.push(offers[i]); closeSheet(); afterBattle(); });
+    $('#skipcard').onclick=()=>{closeSheet();afterBattle()};
+  },500);
+}
+function afterBattle(){
+  const fs=S.floorState;
+  if(fs.entries.every(e=>e.cleared)) floorClear(); else renderFloor();
+}
+function floorClear(){
+  const bonus = 18*S.floor, xpBonus = 7.4*S.floor;
+  S.carried.gold += bonus; S.carried.xp += xpBonus;
+  S.best=Math.max(S.best,S.floor);
+  sheet(`<h2>Floor ${S.floor} is clear</h2>
+    <p>Stairs up on one side, stairs down on the other.</p>
+    <div class="loot"><div>${A.coin} +${bonus}</div><div>${A.xp} +${f1(xpBonus)}</div>
+      <div>${A.sack} ${S.carried.gold}g · ${f1(S.carried.xp)}xp · ${S.carried.cards.length} cards carried</div></div>
+    <div class="stack">
+      <button class="btn primary" id="extract">Climb out and bank it</button>
+      <button class="btn" id="descend">Go down to floor ${S.floor+1}</button>
+    </div>
+    <p style="margin-top:12px;font-size:12px">Deeper floors pay more. You keep nothing if you fall.</p>`);
+  $('#extract').onclick=()=>{
+    S.bank+=S.carried.gold; S.xp+=S.carried.xp; S.collection.push(...S.carried.cards);
+    const g=S.carried.gold,x=S.carried.xp,c=S.carried.cards.length;
+    S.carried={gold:0,cards:[],xp:0}; S.tray=[]; S.rolls=0; S.hp=S.maxHP; closeSheet(); renderCamp();
+    toast(`Banked ${g} gold, ${f1(x)} xp${c?` and ${c} card${c===1?'':'s'} into the collection`:''}.`);
+  };
+  $('#descend').onclick=()=>{S.floor++;S.rolls=rollsForFloor(S.floor);genFloor();closeSheet();renderFloor();
+    toast(`Floor ${S.floor}. ${S.rolls} fresh rolls.`)};
+}
+function defeat(){
+  if(B.over) return; B.over=true;
+  const g=S.carried.gold,x=S.carried.xp,c=S.carried.cards.length;
+  S.carried={gold:0,cards:[],xp:0}; S.tray=[]; S.rolls=0; S.hp=S.maxHP;
+  setTimeout(()=>{
+    sheet(`<h2>You go down on floor ${S.floor}</h2>
+      <p>${g||c||x?`The floor keeps ${g} gold, ${f1(x)} xp and ${c} card${c===1?'':'s'}.`:'You were carrying nothing, at least.'} Your deck, your health and everything already banked are still yours.</p>
+      <button class="btn wide primary" id="backcamp">Wake up at camp</button>`);
+    $('#backcamp').onclick=()=>{closeSheet();renderCamp()};
+  },600);
+}
+
+/* ---------------- boot ---------------- */
+window.closeSheet=closeSheet;
+$('#wipe').onclick=()=>{
+  sheet(`<h2>Erase everything?</h2>
+    <p>Deck, skills, gold, xp and any dive in progress. There is no undo.</p>
+    <div class="stack">
+      <button class="btn danger" id="wipe-yes">Erase it all</button>
+      <button class="btn" onclick="closeSheet()">Keep my progress</button>
+    </div>`);
+  $('#wipe-yes').onclick=async()=>{
+    await Store.wipe();
+    Object.assign(S, freshState());
+    closeSheet(); renderCamp(); toast('Wiped. Starting over.');
+  };
+};
+
+(async()=>{
+  layout();
+  Store.init();
+  const data = await Store.load();
+  const restored = applySave(data);
+  if(restored && S.inDive && S.floorState) { renderFloor(); toast(`Back on floor ${S.floor}.`); }
+  else renderCamp();
+})();
+</script>
+</body>
+</html>
