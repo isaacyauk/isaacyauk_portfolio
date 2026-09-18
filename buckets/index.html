@@ -21,6 +21,10 @@
     --honey-edge:#C3A55C;
     --accent:#2B6C76;
     --danger:#A2463B;
+    --good:#8FB98A;
+    --good-edge:#5C8659;
+    --good-soft:rgba(143,185,138,.18);
+    --spring:cubic-bezier(.34,1.32,.5,1);
     --font:"Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   }
   *{box-sizing:border-box}
@@ -34,67 +38,176 @@
   #inner.ease{transition:transform .35s cubic-bezier(.3,.7,.2,1)}
   #canvas.ease{transition:background-position .35s cubic-bezier(.3,.7,.2,1), background-size .35s cubic-bezier(.3,.7,.2,1)}
   .tools{display:flex;align-items:center;gap:2px;pointer-events:auto}
-  .zoom{border:0;background:transparent;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;padding:9px 10px;border-radius:10px;cursor:pointer;min-width:52px}
-  .zoom:active{background:var(--line)}
+  .zoom{border:0;background:transparent;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;padding:9px 10px;border-radius:10px;cursor:pointer;min-width:52px;transition:background .15s, transform .15s var(--spring)}
+  .zoom:active{background:var(--line);transform:scale(.94)}
   .zoom:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
   header{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;
     padding:calc(12px + env(safe-area-inset-top)) 16px 18px;pointer-events:none;
     background:linear-gradient(var(--canvas) 55%, rgba(229,232,227,0))}
-  .total{font-size:15px;color:var(--muted)}
-  .total b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums;margin-left:6px}
-  .icon-btn{pointer-events:auto;width:38px;height:38px;border-radius:12px;border:0;background:transparent;display:grid;place-items:center;cursor:pointer}
-  .icon-btn:active{background:var(--line)}
+  .total{font-size:15px;color:var(--muted);white-space:nowrap}
+  .total b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums;margin-left:6px;display:inline-block}
+  .icon-btn{pointer-events:auto;width:38px;height:38px;border-radius:12px;border:0;background:transparent;display:grid;place-items:center;cursor:pointer;
+    transition:background .15s, transform .18s var(--spring)}
+  .icon-btn:active{background:var(--line);transform:scale(.9)}
 
-  .bucket{position:absolute;left:0;top:0;padding:0;border:1px solid var(--line);background:var(--surface);
+  .bucket{position:absolute;left:0;top:0;padding:0;border:1px solid var(--line);background:var(--surface);z-index:3;
     border-radius:18px 18px 34px 34px;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;
     -webkit-touch-callout:none;cursor:grab;text-align:left;
-    transition:transform .18s ease, box-shadow .18s ease, left .35s cubic-bezier(.3,.7,.2,1), top .35s cubic-bezier(.3,.7,.2,1)}
+    transition:transform .22s var(--spring), box-shadow .18s ease, width .34s var(--spring),
+      left .35s cubic-bezier(.3,.7,.2,1), top .35s cubic-bezier(.3,.7,.2,1)}
   .bucket .fill{position:absolute;left:0;right:0;bottom:0;height:0;background:var(--fill);border-top:1.5px solid var(--fill-edge);
-    transition:height .8s cubic-bezier(.3,.7,.2,1)}
+    transition:height .8s cubic-bezier(.3,.9,.25,1)}
   .bucket.incoming .fill{background:var(--honey);border-top-color:var(--honey-edge)}
   .bucket .fill[style*="height: 0%"]{border-top-color:transparent}
   .bucket .label{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:13px 15px 16px}
-  .bucket .name{font-size:14px;font-weight:500;color:var(--ink);opacity:.78;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bucket .name{font-size:14px;font-weight:500;color:var(--ink);opacity:.78;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:32px}
   .bucket .bottom{display:flex;align-items:baseline;justify-content:space-between;gap:6px}
-  .bucket .amt{font-size:23px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .bucket .amt{font-size:23px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap;transform-origin:left bottom}
   .bucket.incoming .amt{font-size:30px}
   .bucket .share{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
   .bucket:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
   .bucket.source{box-shadow:0 0 0 1.5px var(--accent)}
   .bucket.target{transform:scale(1.04);box-shadow:0 0 0 2px var(--accent), 0 10px 24px -12px rgba(30,42,47,.4)}
-  .bucket.lifted{transform:scale(1.05);box-shadow:0 16px 30px -12px rgba(30,42,47,.4);z-index:6;cursor:grabbing;transition:transform .18s ease, box-shadow .18s ease}
+  .bucket.lifted{transform:scale(1.05) rotate(-.6deg);box-shadow:0 16px 30px -12px rgba(30,42,47,.4);z-index:6;cursor:grabbing;transition:transform .18s var(--spring), box-shadow .18s ease}
+
+  /* Transferred check — always visible, top-right */
+  .bucket .check{position:absolute;top:8px;right:8px;z-index:3;width:26px;height:26px;border-radius:50%;
+    display:grid;place-items:center;cursor:pointer;background:var(--good-soft);border:1px solid rgba(92,134,89,.35);
+    color:var(--good-edge);transition:transform .2s var(--spring), background .18s, opacity .2s, border-color .18s}
+  .bucket .check svg{width:14px;height:14px;display:block}
+  .bucket .check:hover{background:var(--good);border-color:var(--good-edge);color:#fff;transform:scale(1.12) rotate(-6deg)}
+  .bucket .check:active{transform:scale(.88)}
+  .bucket.empty .check{opacity:.28;cursor:default;pointer-events:none}
 
   /* Grip handle: only on devices with a mouse/trackpad */
   .bucket .grip{display:none}
   @media (hover:hover) and (pointer:fine){
     .bucket{cursor:pointer}
-    .bucket .name{padding-right:24px}
-    .bucket .grip{display:grid;place-items:center;position:absolute;top:7px;right:7px;z-index:2;width:28px;height:28px;
+    .bucket .name{padding-right:66px}
+    .bucket .grip{display:grid;place-items:center;position:absolute;top:7px;right:40px;z-index:2;width:28px;height:28px;
       border-radius:9px;cursor:grab;opacity:0;transition:opacity .15s, background .15s}
     .bucket:hover .grip,.bucket:focus-visible .grip,.bucket.lifted .grip{opacity:1}
     .bucket .grip:hover{background:var(--line)}
     .bucket.lifted,.bucket.lifted .grip{cursor:grabbing}
+    .bucket:not(.lifted):not(.target):not(.source):hover{transform:translateY(-3px);box-shadow:0 12px 22px -16px rgba(30,42,47,.5)}
     .touch-hint{display:none}
   }
   @media not all and (hover:hover) and (pointer:fine){ .mouse-hint{display:none} }
+
+  /* ---- cozy motion ---- */
+  @keyframes popIn{
+    0%{opacity:0;transform:scale(.55) translateY(14px) rotate(-4deg)}
+    50%{opacity:1;transform:scale(1.08) translateY(-4px) rotate(1.5deg)}
+    76%{transform:scale(.97) translateY(2px) rotate(-.8deg)}
+    100%{opacity:1;transform:scale(1) translateY(0) rotate(0)}
+  }
+  .bucket.born,.note.born{animation:popIn .62s var(--spring) both}
+  @keyframes poof{ to{opacity:0;transform:scale(.7) translateY(8px) rotate(3deg)} }
+  .bucket.poof,.note.poof{animation:poof .28s ease-in forwards;pointer-events:none}
+  /* Dropped on the can: tip in from wherever it was let go, rather than snapping home first. */
+  @keyframes intoCan{
+    0%{opacity:1;transform:translate(0,0) scale(1.05)}
+    26%{opacity:1;transform:translate(calc(var(--tx) * .24), calc(var(--ty) * .24 - 14px)) scale(.94) rotate(-4deg)}
+    100%{opacity:0;transform:translate(var(--tx), var(--ty)) scale(.1) rotate(12deg)}
+  }
+  .bucket.intoCan,.note.intoCan{animation:intoCan .43s cubic-bezier(.45,-0.1,.75,1) forwards;
+    pointer-events:none;transition:none}
+  @keyframes squish{
+    0%{transform:scale(1,1)} 28%{transform:scale(1.06,.92)} 58%{transform:scale(.97,1.04)} 100%{transform:scale(1,1)}
+  }
+  .bucket.celebrate{animation:squish .62s cubic-bezier(.3,.9,.3,1)}
+  @keyframes ring{ 0%{opacity:.75;transform:scale(1)} 100%{opacity:0;transform:scale(2.6)} }
+  .bucket.celebrate .check::after{content:"";position:absolute;inset:-1px;border-radius:50%;border:2px solid var(--good-edge);animation:ring .6s ease-out}
+  @keyframes bump{ 0%{transform:scale(1)} 38%{transform:scale(1.11) translateY(-2px)} 100%{transform:scale(1)} }
+  .bumped{animation:bump .46s var(--spring)}
+  @keyframes floatUp{
+    0%{opacity:0;transform:translate(-50%,4px) scale(.85)}
+    22%{opacity:1;transform:translate(-50%,-6px) scale(1.04)}
+    100%{opacity:0;transform:translate(-50%,-34px) scale(.96)}
+  }
+  .floaty{position:absolute;left:50%;top:38%;z-index:8;pointer-events:none;font-size:14px;font-weight:600;
+    font-variant-numeric:tabular-nums;color:var(--good-edge);white-space:nowrap;animation:floatUp 1.05s cubic-bezier(.25,.8,.3,1) forwards}
+  .floaty.out{color:var(--danger)}
 
   #noodle{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5;overflow:visible}
   #noodle path{fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round}
 
   #hint{position:absolute;left:24px;right:24px;text-align:center;font-size:13px;line-height:1.45;color:var(--muted);transition:opacity .3s}
 
-  #add{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:20;
-    display:flex;align-items:center;gap:8px;padding:13px 20px 13px 16px;border:0;border-radius:999px;background:var(--ink);color:var(--surface);
-    font-size:15px;font-weight:500;cursor:pointer;box-shadow:0 8px 20px -10px rgba(30,42,47,.6)}
-  #add:active{transform:translateX(-50%) scale(.97)}
-  #add:focus-visible,.btn:focus-visible,.chip:focus-visible,.icon-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  /* ---- notes: same card language as the buckets ---- */
+  .note{position:absolute;left:0;top:0;width:176px;z-index:4;padding:0 0 10px;
+    border:1px solid var(--line);border-radius:18px;background:var(--nc,#F6E7A8);color:#3A3626;
+    touch-action:none;cursor:grab;
+    transition:transform .22s var(--spring), box-shadow .18s ease,
+      left .35s cubic-bezier(.3,.7,.2,1), top .35s cubic-bezier(.3,.7,.2,1)}
+  /* While lifted, drop the left/top easing so the note tracks the pointer exactly — same as a bucket. */
+  .note.lifted{transform:scale(1.05);box-shadow:0 16px 30px -12px rgba(30,42,47,.4);z-index:9;cursor:grabbing;
+    transition:transform .18s var(--spring), box-shadow .18s ease}
+  .nhead{height:30px;display:flex;align-items:center;justify-content:flex-end;gap:2px;padding:6px 7px 0}
+  .ngrip,.nx{width:26px;height:26px;border:0;background:transparent;border-radius:9px;padding:0;cursor:pointer;
+    display:grid;place-items:center;color:#3A3626;opacity:0;transition:opacity .15s, background .15s, transform .18s var(--spring)}
+  .ngrip{cursor:grab}
+  .ngrip:hover,.nx:hover{background:rgba(58,54,38,.12)}
+  .nx:hover{transform:scale(1.12)}
+  .note.lifted .ngrip{cursor:grabbing}
+  .npal{display:flex;gap:5px;padding:2px 14px 0;opacity:0;transition:opacity .16s}
+  .swatch{width:13px;height:13px;border-radius:50%;border:1px solid rgba(58,54,38,.28);cursor:pointer;padding:0;
+    transition:transform .18s var(--spring)}
+  .swatch:hover{transform:scale(1.3)}
+  /* Until you tap into it the text is inert, so the whole card drags like a bucket
+     — otherwise the textarea eats every grab, especially when zoomed out. */
+  .ntext{display:block;width:100%;min-height:82px;border:0;background:transparent;resize:none;outline:none;overflow:hidden;
+    font:400 14px/1.5 var(--font);color:#3A3626;padding:0 14px 4px;letter-spacing:-.005em;
+    pointer-events:none;cursor:grab;user-select:none;-webkit-user-select:none}
+  .note.editing .ntext{pointer-events:auto;cursor:text;user-select:text;-webkit-user-select:text}
+  .note.editing{cursor:default;box-shadow:0 0 0 1.5px var(--accent)}
+  .ntext::placeholder{color:rgba(58,54,38,.38)}
+  @media (hover:hover) and (pointer:fine){
+    .note:not(.lifted):hover{transform:translateY(-3px);box-shadow:0 12px 22px -16px rgba(30,42,47,.5)}
+    .note:hover .ngrip,.note:hover .nx,.note:hover .npal,
+    .note:focus-within .ngrip,.note:focus-within .nx,.note:focus-within .npal{opacity:.85}
+  }
+  @media not all and (hover:hover) and (pointer:fine){
+    .ngrip{display:none}
+    .nx,.npal{opacity:.55}
+  }
+
+  #dock{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:20;
+    display:flex;align-items:center;gap:10px}
+  #add{display:flex;align-items:center;gap:8px;padding:13px 20px 13px 16px;border:0;border-radius:999px;background:var(--ink);color:var(--surface);
+    font-size:15px;font-weight:500;cursor:pointer;box-shadow:0 8px 20px -10px rgba(30,42,47,.6);
+    transition:transform .22s var(--spring), box-shadow .2s}
+  #add:hover{transform:translateY(-2px);box-shadow:0 12px 24px -10px rgba(30,42,47,.6)}
+  #add:active{transform:translateY(0) scale(.95)}
+  #add svg{transition:transform .35s var(--spring)}
+  #add:hover svg{transform:rotate(90deg)}
+  #noteBtn{width:48px;height:48px;border-radius:999px;border:1px solid var(--line);background:var(--surface);cursor:pointer;
+    display:grid;place-items:center;box-shadow:0 8px 18px -12px rgba(30,42,47,.5);
+    transition:transform .22s var(--spring), box-shadow .2s, background .2s}
+  #noteBtn:hover{transform:translateY(-2px) rotate(-5deg);background:#FBF3D9}
+  #noteBtn:active{transform:translateY(0) scale(.92)}
+  #trash{width:48px;height:48px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer;
+    display:grid;place-items:center;box-shadow:0 8px 18px -12px rgba(30,42,47,.5);
+    transition:transform .24s var(--spring), box-shadow .2s, background .2s, color .2s, border-color .2s}
+  #trash .lid{transform-origin:16px 5px;transition:transform .28s var(--spring)}
+  #trash:hover{transform:translateY(-2px);color:var(--danger);border-color:rgba(162,70,59,.35)}
+  #trash:hover .lid{transform:translateY(-2px) rotate(-14deg)}
+  #trash:active{transform:translateY(0) scale(.92)}
+  #trash.armed{background:var(--danger);border-color:var(--danger);color:#fff;transform:translateY(-4px) scale(1.18);
+    box-shadow:0 14px 26px -10px rgba(162,70,59,.75)}
+  #trash.armed .lid{transform:translateY(-3px) rotate(-26deg)}
+  @keyframes lidSlam{ 0%{transform:translateY(-3px) rotate(-26deg)} 45%{transform:translateY(1px) rotate(6deg)} 100%{transform:none} }
+  @keyframes canShake{ 0%,100%{transform:translateY(0) scale(1)} 25%{transform:translateY(1px) scale(1.1) rotate(-5deg)} 60%{transform:scale(.97) rotate(3deg)} }
+  #trash.chomp{animation:canShake .5s var(--spring)}
+  #trash.chomp .lid{animation:lidSlam .5s var(--spring)}
+  #add:focus-visible,#noteBtn:focus-visible,.btn:focus-visible,.chip:focus-visible,.icon-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
   #backdrop{position:fixed;inset:0;z-index:30;background:rgba(30,42,47,.28);opacity:0;pointer-events:none;transition:opacity .25s}
   #backdrop.open{opacity:1;pointer-events:auto}
   #sheet{position:fixed;left:50%;bottom:0;z-index:31;width:min(100%,480px);transform:translate(-50%,105%);
     background:var(--surface);border-radius:22px 22px 0 0;padding:10px 20px calc(20px + env(safe-area-inset-bottom));
-    transition:transform .32s cubic-bezier(.3,.7,.2,1);max-height:88vh;overflow-y:auto}
+    transition:transform .38s var(--spring);max-height:88vh;overflow-y:auto}
   #sheet.open{transform:translate(-50%,0)}
   .grab{width:36px;height:4px;border-radius:4px;background:var(--line);margin:0 auto 14px}
   #sheet h2{margin:0;font-size:19px;font-weight:600;letter-spacing:-.01em}
@@ -109,35 +222,43 @@
   .amount-field input{flex:1;min-width:0;border:0;background:transparent;outline:none;font:600 40px var(--font);letter-spacing:-.02em;
     color:var(--ink);font-variant-numeric:tabular-nums;padding:0}
   .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
-  .chip{padding:8px 13px;border-radius:999px;border:1px solid var(--line);background:transparent;font-size:14px;cursor:pointer}
-  .chip:active{background:var(--line)}
+  .chip{padding:8px 13px;border-radius:999px;border:1px solid var(--line);background:transparent;font-size:14px;cursor:pointer;
+    transition:transform .18s var(--spring), background .15s}
+  .chip:hover{transform:translateY(-1px)}
+  .chip:active{background:var(--line);transform:scale(.95)}
   .chip:disabled{opacity:.4}
   .err{min-height:18px;margin:10px 0 8px;font-size:13px;color:var(--danger)}
   .row{display:flex;gap:10px}
-  .btn{flex:1;height:50px;border-radius:14px;border:0;font-size:16px;font-weight:600;cursor:pointer}
+  .btn{flex:1;height:50px;border-radius:14px;border:0;font-size:16px;font-weight:600;cursor:pointer;
+    transition:transform .18s var(--spring), filter .15s}
+  .btn:active{transform:scale(.97)}
   .btn.primary{background:var(--accent);color:#fff}
   .btn.ghost{background:transparent;border:1px solid var(--line)}
+  .btn.good{background:transparent;border:1px solid rgba(92,134,89,.5);color:var(--good-edge)}
   .btn.danger{background:transparent;border:1px solid var(--line);color:var(--danger)}
-  .btn:disabled{opacity:.4;cursor:default}
-  .note{margin:10px 0 0;font-size:13px;color:var(--muted)}
+  .btn:disabled{opacity:.4;cursor:default;transform:none}
+  .note-line{margin:10px 0 0;font-size:13px;color:var(--muted)}
   .route{display:flex;align-items:center;gap:8px;margin-top:10px}
   .tag{padding:7px 12px;border-radius:10px;background:var(--canvas);font-size:14px;font-weight:500;max-width:40%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .route .icon-btn{width:34px;height:34px;border:1px solid var(--line)}
 
-  #toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom));z-index:25;transform:translate(-50%,12px);opacity:0;
+  #toast{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom));z-index:25;transform:translate(-50%,14px) scale(.96);opacity:0;
     display:flex;align-items:center;gap:16px;padding:10px 10px 10px 16px;border-radius:14px;background:var(--ink);color:var(--surface);
-    font-size:14px;pointer-events:none;transition:opacity .2s, transform .2s;white-space:nowrap;max-width:calc(100% - 32px)}
-  #toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+    font-size:14px;pointer-events:none;transition:opacity .22s, transform .32s var(--spring);white-space:nowrap;max-width:calc(100% - 32px)}
+  #toast.show{opacity:1;transform:translate(-50%,0) scale(1);pointer-events:auto}
   #toast span{overflow:hidden;text-overflow:ellipsis}
-  #toast button{border:0;background:rgba(255,255,255,.1);color:#A8D6DB;font-weight:600;padding:6px 12px;border-radius:9px;cursor:pointer}
+  #toast button{border:0;background:rgba(255,255,255,.1);color:#A8D6DB;font-weight:600;padding:6px 12px;border-radius:9px;cursor:pointer;
+    transition:transform .18s var(--spring), background .15s}
+  #toast button:hover{background:rgba(255,255,255,.18)}
+  #toast button:active{transform:scale(.94)}
 
-  @media (prefers-reduced-motion: reduce){ *{transition:none !important} }
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important;animation:none !important} }
 </style>
 </head>
 <body>
 
 <div id="canvas"><div id="inner">
-  <p id="hint">Drag from one bucket to another to move money.<br><span class="touch-hint">Hold a bucket to rearrange it. Pinch to zoom.</span><span class="mouse-hint">Drag the handle in a bucket's corner to rearrange it. Scroll to zoom.</span></p>
+  <p id="hint">Drag from one bucket to another to move money.<br><span class="touch-hint">Hold a bucket to rearrange it. Pinch to zoom.</span><span class="mouse-hint">Drag the handle in a bucket's corner to rearrange it. Middle-click to pan, scroll to zoom.</span></p>
   <svg id="noodle" aria-hidden="true"><path id="npath"/><circle id="nstart" r="4" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/><circle id="nend" r="5" fill="var(--accent)"/></svg>
 </div></div>
 
@@ -151,7 +272,21 @@
   </div>
 </header>
 
-<button id="add"><svg width="18" height="18" viewBox="0 0 18 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 3.5v11M3.5 9h11"/></svg>New bucket</button>
+<div id="dock">
+  <button id="noteBtn" aria-label="Add a sticky note" title="Add a sticky note">
+    <svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round">
+      <path d="M3.2 3.2h13.6v8.4l-5.2 5.2H3.2z"/><path d="M16.8 11.6h-5.2v5.2"/>
+    </svg>
+  </button>
+  <button id="add"><svg width="18" height="18" viewBox="0 0 18 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 3.5v11M3.5 9h11"/></svg>New bucket</button>
+  <button id="trash" aria-label="Discard funds" title="Drag funds here to discard them, or a bucket here to delete it">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <g class="lid"><path d="M3.4 5.2h13.2"/><path d="M7.8 5.2V3.6h4.4v1.6"/></g>
+      <path d="M5.2 5.2l.85 10.3a1.4 1.4 0 0 0 1.4 1.3h5.1a1.4 1.4 0 0 0 1.4-1.3l.85-10.3"/>
+      <path d="M8.4 8.4v5.2M11.6 8.4v5.2" class="bars"/>
+    </svg>
+  </button>
+</div>
 
 <div id="backdrop"></div>
 <div id="sheet" role="dialog" aria-modal="true"></div>
@@ -167,19 +302,43 @@ const parseCents = s => { const n = parseFloat(String(s).replace(/[^0-9.]/g,''))
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 const KEY = 'bucket-budget-v1';
-const BW = 148, BH = 124, GAP = 14, TOP = 72, IH = 112;
+const BW = 148, BW_MAX = 232, BH = 124, GAP = 14, TOP = 72, IH = 112;
+const NW = 176, NH = 150;
+const NOTE_COLORS = ['#F6E7A8','#CDE6CE','#F3D3C2','#CFDFEE','#E6D4E8'];
 const vw = () => document.documentElement.clientWidth;
 const incomingW = () => Math.min(vw() - 32, 340);
-const size = b => b.incoming ? {w: incomingW(), h: IH} : {w: BW, h: BH};
+// Let a bucket grow a little to fit its name, but never past BW_MAX —
+// past that the name just ellipses rather than the bucket eating the board.
+const mctx = document.createElement('canvas').getContext('2d');
+const finePointer = window.matchMedia('(hover:hover) and (pointer:fine)').matches;
+function bucketW(b){
+  mctx.font = '500 14px "Instrument Sans", ui-sans-serif, system-ui, -apple-system, sans-serif';
+  const reserved = 30 + (finePointer ? 66 : 32);   // side padding + room for the check (and grip)
+  const w = mctx.measureText(b.name || '').width + reserved + 6;   // a little slack so it never clips by a pixel
+  return Math.ceil(Math.min(BW_MAX, Math.max(BW, w)));
+}
+const size = b => b.incoming ? {w: incomingW(), h: IH} : {w: bucketW(b), h: BH};
 const byId = id => state.buckets.find(b => b.id === id);
 const incoming = () => state.buckets.find(b => b.incoming);
+const noteById = id => state.notes.find(n => n.id === id);
+const grandTotal = () => state.buckets.reduce((a, b) => a + b.cents, 0);
 
 let state;
 
 /* ---------- state ---------- */
 function defaults(){
-  const st = { buckets:[{id:'in', name:'Incoming', cents:0, incoming:true, x:(vw()-incomingW())/2, y:TOP}], hintDone:false, nextId:1 };
+  const st = { buckets:[{id:'in', name:'Incoming', cents:0, incoming:true, x:(vw()-incomingW())/2, y:TOP}],
+               notes:[], hintDone:false, nextId:1, nextNoteId:1 };
   ['Rent','Groceries','Savings','Fun'].forEach(n => addBucket(n, st));
+  return st;
+}
+// Older saves predate notes; top them up in place, same storage key.
+// Saves that picked up a Spent bucket drop it — that money had already left the budget.
+function migrate(st){
+  if (!Array.isArray(st.buckets) || !st.buckets.length) return defaults();
+  if (!Array.isArray(st.notes)) st.notes = [];
+  if (!st.nextNoteId) st.nextNoteId = st.notes.reduce((m, n) => Math.max(m, parseInt(String(n.id).slice(1)) || 0), 0) + 1;
+  st.buckets = st.buckets.filter(b => !b.spent);
   return st;
 }
 function freeSlot(st){
@@ -232,8 +391,43 @@ function flushSave(){
 document.addEventListener('visibilitychange', () => { if (document.hidden && state) flushSave(); });
 window.addEventListener('pagehide', () => state && flushSave());
 
+/* ---------- placing new things where you're looking ---------- */
+function boxes(){
+  return state.buckets.map(b => { const s = size(b); return {x:b.x, y:b.y, w:s.w, h:s.h}; })
+    .concat(state.notes.map(n => ({x:n.x, y:n.y, w:NW, h:n.h || NH})));
+}
+function spotNearCenter(w, h){
+  // World coordinates of the middle of the viewport, biased below the header.
+  const cx = (innerWidth/2 - view.tx) / view.s;
+  const cy = ((innerHeight/2 + 8) - view.ty) / view.s;
+  const x0 = cx - w/2, y0 = cy - h/2;
+  const bs = boxes();
+  const clear = (x, y) => !bs.some(b => x < b.x+b.w+10 && x+w+10 > b.x && y < b.y+b.h+10 && y+h+10 > b.y);
+  if (clear(x0, y0)) return {x:x0, y:y0};
+  // Occupied: step outward in small rings and take the nearest opening, so it still
+  // lands on screen rather than being flung to the far side of the board.
+  const step = 22;
+  const cands = [];
+  for (let i = -14; i <= 14; i++)
+    for (let j = -10; j <= 10; j++)
+      if (i || j) cands.push([i*step, j*step]);
+  cands.sort((a, b) => (a[0]*a[0] + a[1]*a[1]*1.6) - (b[0]*b[0] + b[1]*b[1]*1.6));
+  // Keep it fully on screen (clear of the header and the dock) when we can.
+  const onScreen = (x, y) => {
+    const sx = x*view.s + view.tx, sy = y*view.s + view.ty;
+    return sx > 10 && sy > 72 && sx + w*view.s < innerWidth - 10 && sy + h*view.s < innerHeight - 88;
+  };
+  for (const pass of [true, false])
+    for (const [dx, dy] of cands){
+      const x = x0 + dx, y = y0 + dy;
+      if (clear(x, y) && (!pass || onScreen(x, y))) return {x, y};
+    }
+  return {x:x0, y:y0};
+}
+
 /* ---------- render ---------- */
-const nodes = {};
+const nodes = {}, noteNodes = {};
+const born = new Set();
 function makeNode(b){
   const el = document.createElement('button');
   el.className = 'bucket' + (b.incoming ? ' incoming' : '');
@@ -242,6 +436,8 @@ function makeNode(b){
     + '<span class="grip" title="Drag to rearrange" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="var(--muted)">'
     + '<circle cx="3" cy="2.5" r="1.1"/><circle cx="9" cy="2.5" r="1.1"/><circle cx="3" cy="6" r="1.1"/><circle cx="9" cy="6" r="1.1"/>'
     + '<circle cx="3" cy="9.5" r="1.1"/><circle cx="9" cy="9.5" r="1.1"/></svg></span>'
+    + '<span class="check" role="button" title="Mark transferred — empties this bucket" aria-label="Mark transferred">'
+    + '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 7.4l3 3 6-6.4"/></svg></span>'
     + '<div class="label"><div class="name"></div><div class="bottom"><div class="amt"></div><div class="share"></div></div></div>';
   el.addEventListener('pointerdown', e => onDown(e, b.id));
   el.addEventListener('pointermove', onMove);
@@ -249,13 +445,21 @@ function makeNode(b){
   el.addEventListener('pointercancel', onCancel);
   el.addEventListener('contextmenu', e => e.preventDefault());
   el.addEventListener('click', () => { if (Date.now() < suppressClick) return; openBucket(b.id); });
+  const chk = el.querySelector('.check');
+  chk.addEventListener('pointerdown', e => e.stopPropagation());
+  chk.addEventListener('click', e => { e.stopPropagation(); markTransferred(b.id); });
   inner.insertBefore(el, $('#noodle'));
   nodes[b.id] = el;
+  if (born.has(b.id)){
+    born.delete(b.id);
+    el.classList.add('born');
+    el.addEventListener('animationend', () => el.classList.remove('born'), {once:true});
+  }
   return el;
 }
 function render(){
-  const total = state.buckets.reduce((a, b) => a + b.cents, 0);
-  $('#total').textContent = money(total);
+  const total = grandTotal();
+  setText($('#total'), money(total));
   const W = vw(); let maxY = 0;
   state.buckets.forEach(b => {
     const el = nodes[b.id] || makeNode(b);
@@ -265,18 +469,285 @@ function render(){
     const pct = total ? b.cents / total : 0;
     el.querySelector('.fill').style.height = (pct * 100) + '%';
     el.querySelector('.name').textContent = b.name;
-    el.querySelector('.amt').textContent = money(b.cents);
+    setText(el.querySelector('.amt'), money(b.cents));
     el.querySelector('.share').textContent = total ? Math.round(pct * 100) + '%' : '';
+    el.classList.toggle('empty', !b.cents);
     el.setAttribute('aria-label', `${b.name}, ${money(b.cents)}`);
     maxY = Math.max(maxY, b.y + s.h);
   });
   Object.keys(nodes).forEach(id => { if (!byId(id)) { nodes[id].remove(); delete nodes[id]; } });
+  renderNotes();
+  state.notes.forEach(n => maxY = Math.max(maxY, n.y + (n.h || NH)));
   inner.style.width = W + 'px';
   inner.style.height = Math.max(window.innerHeight, maxY + 140) + 'px';
   const hint = $('#hint');
   hint.style.top = (TOP + IH + 14) + 'px';
   hint.style.opacity = state.hintDone ? 0 : 1;
 }
+// Swap text and give the number a little bounce when it actually changed.
+function setText(el, txt){
+  if (el.textContent === txt) return;
+  el.textContent = txt;
+  el.classList.remove('bumped'); void el.offsetWidth; el.classList.add('bumped');
+}
+function floaty(el, text, out){
+  if (!el) return;
+  const f = document.createElement('span');
+  f.className = 'floaty' + (out ? ' out' : '');
+  f.textContent = text;
+  el.appendChild(f);
+  setTimeout(() => f.remove(), 1100);
+}
+
+/* ---------- transferred ---------- */
+function markTransferred(id){
+  const b = byId(id);
+  if (!b || !b.cents) return;
+  const amt = b.cents, name = b.name;
+  b.cents = 0;
+  state.hintDone = true;
+  const el = nodes[id];
+  if (el){
+    el.classList.remove('celebrate'); void el.offsetWidth; el.classList.add('celebrate');
+    el.addEventListener('animationend', () => el.classList.remove('celebrate'), {once:true});
+    floaty(el, '✓ ' + money(amt));
+  }
+  navigator.vibrate && navigator.vibrate(10);
+  render(); save();
+  toast(`${name} marked transferred — ${money(amt)} cleared`, () => {
+    const t = byId(id);
+    if (t){ t.cents += amt; render(); save(); }
+  });
+}
+
+/* ---------- notes ---------- */
+function addNote(){
+  const p = spotNearCenter(NW, NH);
+  const n = {id:'n' + (state.nextNoteId++), x:p.x, y:p.y, text:'', h:NH,
+             c:Math.floor(Math.random()*NOTE_COLORS.length)};
+  state.notes.push(n);
+  born.add(n.id);
+  render(); save();
+  const el = noteNodes[n.id];
+  if (el) el.querySelector('.ntext').focus();
+}
+function makeNoteNode(n){
+  const el = document.createElement('div');
+  el.className = 'note';
+  el.dataset.id = n.id;
+  el.innerHTML = '<div class="nhead">'
+    + '<span class="ngrip" title="Drag to move" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" opacity=".55">'
+    + '<circle cx="3" cy="2.5" r="1.1"/><circle cx="9" cy="2.5" r="1.1"/><circle cx="3" cy="6" r="1.1"/><circle cx="9" cy="6" r="1.1"/>'
+    + '<circle cx="3" cy="9.5" r="1.1"/><circle cx="9" cy="9.5" r="1.1"/></svg></span>'
+    + '<button class="nx" aria-label="Delete note"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7"/></svg></button></div>'
+    + '<textarea class="ntext" placeholder="Note…" aria-label="Note"></textarea>'
+    + '<div class="npal">'
+    + NOTE_COLORS.map((c, i) => `<button class="swatch" data-c="${i}" style="background:${c}" aria-label="Note color ${i+1}"></button>`).join('')
+    + '</div>';
+  const ta = el.querySelector('.ntext');
+  ta.addEventListener('input', () => {
+    const note = noteById(n.id); if (!note) return;
+    note.text = ta.value;
+    grow(ta, note);
+    save();
+  });
+  ta.addEventListener('focus', () => el.classList.add('editing'));
+  ta.addEventListener('blur', () => el.classList.remove('editing'));
+  // The whole card is a drag handle, like a bucket's body.
+  el.addEventListener('pointerdown', e => noteDown(e, n.id));
+  el.addEventListener('pointermove', noteMove);
+  el.addEventListener('pointerup', noteUp);
+  el.addEventListener('pointercancel', noteUp);
+  el.addEventListener('contextmenu', e => e.preventDefault());
+  el.querySelectorAll('.swatch').forEach(s => s.onclick = () => {
+    const note = noteById(n.id); if (!note) return;
+    note.c = +s.dataset.c; el.style.setProperty('--nc', NOTE_COLORS[note.c]); save();
+  });
+  el.querySelector('.nx').onclick = () => removeNote(n.id);
+  inner.insertBefore(el, $('#noodle'));
+  noteNodes[n.id] = el;
+  if (born.has(n.id)){
+    born.delete(n.id);
+    el.classList.add('born');
+    el.addEventListener('animationend', () => el.classList.remove('born'), {once:true});
+  }
+  return el;
+}
+function grow(ta, note){
+  ta.style.height = 'auto';
+  const h = Math.max(82, ta.scrollHeight);
+  ta.style.height = h + 'px';
+  note.h = h + 62;   // header + swatch row + padding
+}
+function renderNotes(){
+  state.notes.forEach(n => {
+    const el = noteNodes[n.id] || makeNoteNode(n);
+    // Don't fight a drag in progress — the pointer owns this note's position.
+    if (!nd || nd.id !== n.id){ el.style.left = n.x + 'px'; el.style.top = n.y + 'px'; }
+    el.style.setProperty('--nc', NOTE_COLORS[n.c] || NOTE_COLORS[0]);
+    const ta = el.querySelector('.ntext');
+    if (ta.value !== (n.text || '')) ta.value = n.text || '';
+    if (document.activeElement !== ta) grow(ta, n);
+  });
+  Object.keys(noteNodes).forEach(id => { if (!noteById(id)) { noteNodes[id].remove(); delete noteNodes[id]; } });
+}
+function removeNote(id, opts = {}){
+  const idx = state.notes.findIndex(n => n.id === id);
+  if (idx < 0) return;
+  const snapshot = {...state.notes[idx], ...(opts.restore || {})};
+  const el = noteNodes[id];
+  const drop = () => {
+    if (!noteById(id)) return;
+    state.notes.splice(state.notes.findIndex(n => n.id === id), 1);
+    render(); save();
+  };
+  let t = null;
+  if (el){
+    if (opts.intoCan) suckIntoCan(el); else el.classList.add('poof');
+    t = setTimeout(drop, opts.intoCan ? 430 : 240);
+  } else drop();
+  toast('Note deleted', () => {
+    clearTimeout(t);
+    const n = noteById(id);
+    if (n){                                  // undone before it finished falling
+      clearExit(el);
+      n.x = snapshot.x; n.y = snapshot.y;
+      render(); save();
+      return;
+    }
+    state.notes.splice(Math.min(idx, state.notes.length), 0, snapshot);
+    born.add(snapshot.id);
+    render(); save();
+  });
+}
+let nd = null;
+function noteDown(e, id){
+  if (e.button > 0 || g || nd || pinch) return;
+  if (e.target.closest('.ntext, .nx, .swatch')) return;
+  const el = noteNodes[id], n = noteById(id);
+  if (!el || !n) return;
+  e.preventDefault();
+  // Reorder BEFORE capturing: moving a node in the DOM releases its pointer capture,
+  // which is what used to strand a note mid-drag and let it snap around the board.
+  state.notes.push(state.notes.splice(state.notes.indexOf(n), 1)[0]);
+  if (el.nextSibling !== noodle) inner.insertBefore(el, noodle);
+  el.setPointerCapture(e.pointerId);
+  nd = {id, el, pid:e.pointerId, sx:e.clientX, sy:e.clientY, ox:n.x, oy:n.y, moved:false, trash:false};
+  el.classList.add('lifted');
+}
+function noteMove(e){
+  if (!nd || e.pointerId !== nd.pid) return;
+  const n = noteById(nd.id);
+  if (!n) return noteUp(e);
+  const dx = e.clientX - nd.sx, dy = e.clientY - nd.sy;
+  if (!nd.moved && Math.hypot(dx, dy) < 4) return;
+  nd.moved = true;
+  n.x = nd.ox + dx / view.s;
+  n.y = nd.oy + dy / view.s;
+  nd.el.style.left = n.x + 'px'; nd.el.style.top = n.y + 'px';
+  nd.trash = overTrash(e);
+  armTrash(nd.trash);
+}
+function noteUp(e){
+  if (!nd || (e && e.pointerId !== nd.pid)) return;
+  const {el, id, moved, trash:onCan, ox, oy} = nd;
+  el.classList.remove('lifted');
+  armTrash(false);
+  nd = null;
+  if (onCan){
+    chompTrash();
+    removeNote(id, {intoCan:true, restore:{x:ox, y:oy}});
+    return;
+  }
+  if (moved){ suppressClick = Date.now() + 300; render(); save(); }
+  else {
+    // A tap (no drag) drops you into the text; clicking away blurs it and the card drags again.
+    const ta = el.querySelector('.ntext');
+    el.classList.add('editing');
+    ta.focus();
+    ta.setSelectionRange(ta.value.length, ta.value.length);
+  }
+}
+// Safety net: if capture is ever lost, the drag still ends instead of sticking to the cursor.
+window.addEventListener('pointerup', e => nd && noteUp(e));
+window.addEventListener('pointercancel', e => nd && noteUp(e));
+
+/* ---------- the trashcan: a drop target for funds and for whole buckets ---------- */
+const trash = $('#trash');
+function overTrash(e){
+  const r = trash.getBoundingClientRect();
+  const pad = 14;   // a forgiving hit area, it's a small target
+  return e.clientX > r.left - pad && e.clientX < r.right + pad &&
+         e.clientY > r.top - pad && e.clientY < r.bottom + pad;
+}
+function armTrash(on){ trash.classList.toggle('armed', !!on); }
+function chompTrash(){
+  trash.classList.remove('armed', 'chomp'); void trash.offsetWidth; trash.classList.add('chomp');
+  trash.addEventListener('animationend', () => trash.classList.remove('chomp'), {once:true});
+  navigator.vibrate && navigator.vibrate(12);
+}
+function discard(id, c){
+  const b = byId(id);
+  if (!b || !c || c > b.cents) return;
+  b.cents -= c;
+  state.hintDone = true;
+  chompTrash();
+  render(); save();
+  floaty(nodes[id], '−' + money(c), true);
+  toast(`Discarded ${money(c)} from ${b.name}`, () => {
+    const t = byId(id);
+    if (t){ t.cents += c; render(); save(); }
+  });
+}
+function openDiscard(fromId){
+  const from = byId(fromId);
+  if (!from) return;
+  if (!from.cents){ toast(`${from.name} is empty`); return; }
+  openSheet(`
+    <h2>Discard funds</h2>
+    <p class="sub">Out of ${esc(from.name)} — ${money(from.cents)} available</p>
+    <p class="note-line">This money just leaves the budget. It isn't added to any other bucket.</p>
+    <label class="amount-field"><span>$</span><input id="amt" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="Amount"></label>
+    <div class="chips">
+      <button class="chip" data-f="0.25">25%</button><button class="chip" data-f="0.5">50%</button><button class="chip" data-f="1">All</button>
+    </div>
+    <p class="err" id="err"></p>
+    <div class="row">
+      <button class="btn ghost" id="cancel">Cancel</button>
+      <button class="btn danger" id="go" disabled>Discard</button>
+    </div>`);
+  const amt = $('#amt'), go = $('#go'), err = $('#err');
+  function refresh(){
+    const c = parseCents(amt.value), over = c > from.cents;
+    err.textContent = over ? `${from.name} only has ${money(from.cents)}` : '';
+    go.disabled = !c || over;
+    go.textContent = c && !over ? `Discard ${money(c)}` : 'Discard';
+  }
+  amt.addEventListener('input', refresh);
+  amt.addEventListener('keydown', e => { if (e.key === 'Enter' && !go.disabled) go.click(); });
+  sheet.querySelectorAll('[data-f]').forEach(c => c.onclick = () => {
+    const v = Math.floor(from.cents * parseFloat(c.dataset.f));
+    amt.value = (v / 100).toFixed(v % 100 ? 2 : 0); refresh();
+  });
+  $('#cancel').onclick = closeSheet;
+  go.onclick = () => { const c = parseCents(amt.value); closeSheet(); discard(fromId, c); };
+  refresh();
+  amt.focus();
+}
+// Tapping the can (no drag) asks which bucket to pull from.
+trash.onclick = () => {
+  if (Date.now() < suppressClick) return;
+  const funded = state.buckets.filter(b => b.cents);
+  if (!funded.length){ toast('Nothing to discard yet'); return; }
+  if (funded.length === 1) return openDiscard(funded[0].id);
+  openSheet(`
+    <h2>Discard funds</h2>
+    <p class="sub">Pick where the money comes out of.</p>
+    <p class="note-line">You can also drag a bucket straight onto the can — or drop a whole bucket or a note on it to delete it.</p>
+    <p class="section">From</p>
+    <div class="chips">${funded.map(b => `<button class="chip" data-src="${b.id}">${esc(b.name)} · ${money(b.cents)}</button>`).join('')}</div>`);
+  sheet.querySelectorAll('[data-src]').forEach(c => c.onclick = () => openDiscard(c.dataset.src));
+};
 
 /* ---------- drag: noodle to move money, hold to rearrange ---------- */
 let g = null, suppressClick = 0;
@@ -288,6 +759,7 @@ function center(b){ const s = size(b); return {x: b.x + s.w/2, y: b.y + s.h/2}; 
 
 function onDown(e, id){
   if (e.button > 0 || g || pinch) return;
+  if (e.target.closest('.check')) return;
   const el = nodes[id];
   el.setPointerCapture(e.pointerId);
   g = {id, el, pid:e.pointerId, sx:e.clientX, sy:e.clientY, mode:'pending', target:null};
@@ -312,6 +784,24 @@ function onMove(e){
     g.el.classList.add('source');
     noodle.style.display = '';
   }
+  if (g.mode !== 'pending'){
+    const b = byId(g.id);
+    // The can only lights up for something it can actually take.
+    g.trash = overTrash(e) && (g.mode === 'link' ? !!b.cents : !b.incoming);
+    armTrash(g.trash);
+  }
+  if (g.mode === 'link' && g.trash){
+    if (g.target && nodes[g.target]) nodes[g.target].classList.remove('target');
+    g.target = null;
+    const a = center(byId(g.id));
+    const r = trash.getBoundingClientRect();
+    const p = innerPt({clientX:r.left + r.width/2, clientY:r.top + r.height/2});
+    const k = Math.max(40, Math.abs(p.y - a.y) * 0.5) * (p.y >= a.y ? 1 : -1);
+    npath.setAttribute('d', `M${a.x},${a.y} C${a.x},${a.y + k} ${p.x},${p.y - k} ${p.x},${p.y}`);
+    nstart.setAttribute('cx', a.x); nstart.setAttribute('cy', a.y);
+    nend.setAttribute('cx', p.x); nend.setAttribute('cy', p.y);
+    return;
+  }
   if (g.mode === 'link'){
     const under = document.elementFromPoint(e.clientX, e.clientY);
     const tEl = under && under.closest('.bucket');
@@ -329,7 +819,7 @@ function onMove(e){
     nend.setAttribute('cx', p.x); nend.setAttribute('cy', p.y);
   }
   if (g.mode === 'lift'){
-    const b = byId(g.id), s = size(b);
+    const b = byId(g.id);
     b.x = g.ox + dx / view.s;
     b.y = g.oy + dy / view.s;
     g.el.style.left = b.x + 'px'; g.el.style.top = b.y + 'px';
@@ -338,13 +828,22 @@ function onMove(e){
 function finish(commit){
   if (!g) return;
   clearTimeout(g.timer);
-  const {mode, id, target, el} = g;
+  const {mode, id, target, el, trash:onCan, ox, oy} = g;
   el.classList.remove('lifted', 'source');
   if (target && nodes[target]) nodes[target].classList.remove('target');
   noodle.style.display = 'none';
+  armTrash(false);
   g = null;
   if (mode !== 'pending') suppressClick = Date.now() + 400;
+  if (commit && onCan && mode === 'lift'){
+    // Leave it where it was dropped and let it fall into the can. The spot it started
+    // from rides along in the snapshot, so undo still puts it back there.
+    chompTrash();
+    deleteBucket(id, {intoCan:true, restore:{x:ox, y:oy}});
+    return;
+  }
   if (mode === 'lift'){ render(); save(); }
+  if (commit && mode === 'link' && onCan) return openDiscard(id);
   if (commit && mode === 'link' && target) openTransfer(id, target);
 }
 function onUp(e){ if (g && e.pointerId === g.pid) finish(true); }
@@ -422,6 +921,7 @@ function doMove(fromId, toId, c){
   from.cents -= c; to.cents += c;
   state.hintDone = true;
   render(); save();
+  floaty(nodes[toId], '+' + money(c));
   toast(`Moved ${money(c)} to ${to.name}`, () => {
     const f = byId(fromId), t = byId(toId);
     if (f && t && t.cents >= c){ t.cents -= c; f.cents += c; render(); save(); }
@@ -436,30 +936,72 @@ function openBucket(id){
     <p class="sub">Balance ${money(b.cents)}</p>
     <p class="section">Move to</p>
     <div class="chips">${moveChips(id)}</div>
-    <div class="row" style="margin-top:26px">
+    <div class="row" style="margin-top:22px">
+      <button class="btn good" id="mark"${b.cents ? '' : ' disabled'}>Mark transferred</button>
+    </div>
+    <div class="row" style="margin-top:10px">
       <button class="btn danger" id="del">Delete</button>
       <button class="btn primary" id="done">Done</button>
     </div>
-    <p class="note">${b.cents ? 'Deleting sends its balance back to Incoming.' : ''}</p>`);
+    <p class="note-line">${b.cents ? 'Marking transferred empties this bucket without crediting anywhere. Deleting sends its balance back to Incoming.' : ''}</p>`);
   const nm = $('#nm');
   nm.value = b.name;
   nm.addEventListener('input', () => { b.name = nm.value.trim() || 'Untitled'; render(); save(); });
   nm.addEventListener('keydown', e => { if (e.key === 'Enter') closeSheet(); });
   wireMoveChips(id);
+  $('#mark').onclick = () => { closeSheet(); markTransferred(id); };
   $('#done').onclick = closeSheet;
-  $('#del').onclick = () => {
-    const idx = state.buckets.indexOf(b), snapshot = {...b};
-    incoming().cents += b.cents;
-    state.buckets.splice(idx, 1);
-    render(); save(); closeSheet();
-    toast(`Deleted ${snapshot.name}`, () => {
-      const inc = incoming();
-      if (inc.cents < snapshot.cents) return;
-      inc.cents -= snapshot.cents;
-      state.buckets.splice(idx, 0, snapshot);
-      render(); save();
-    });
+  $('#del').onclick = () => { closeSheet(); deleteBucket(id); };
+}
+
+// Tips a card into the trashcan from wherever it currently sits.
+// The translate lives inside #inner's scaled space, so convert the screen gap by view.s.
+function suckIntoCan(el){
+  const r = el.getBoundingClientRect(), t = trash.getBoundingClientRect();
+  el.style.setProperty('--tx', ((t.left + t.width/2) - (r.left + r.width/2)) / view.s + 'px');
+  el.style.setProperty('--ty', ((t.top + t.height/2) - (r.top + r.height/2)) / view.s + 'px');
+  el.classList.add('intoCan');
+}
+function clearExit(el){
+  if (!el) return;
+  el.classList.remove('poof', 'intoCan');
+  el.style.removeProperty('--tx'); el.style.removeProperty('--ty');
+}
+function deleteBucket(id, opts = {}){
+  const b = byId(id);
+  if (!b || b.incoming) return;
+  const idx = state.buckets.indexOf(b);
+  // opts.restore is where it sat before the drag, so undo puts it back there, not on the can.
+  const snapshot = {...b, ...(opts.restore || {})};
+  incoming().cents += b.cents;
+  const el = nodes[b.id];
+  const drop = () => {
+    const i = state.buckets.indexOf(b);
+    if (i < 0) return;
+    state.buckets.splice(i, 1);
+    render(); save();
   };
+  let t = null;
+  if (el){
+    if (opts.intoCan) suckIntoCan(el); else el.classList.add('poof');
+    t = setTimeout(drop, opts.intoCan ? 430 : 240);
+  } else drop();
+  save();
+  toast(`Deleted ${snapshot.name}`, () => {
+    clearTimeout(t);
+    const inc = incoming();
+    if (inc.cents < snapshot.cents) return;
+    inc.cents -= snapshot.cents;
+    if (state.buckets.indexOf(b) >= 0){   // undone before it finished falling
+      clearExit(el);
+      b.x = snapshot.x; b.y = snapshot.y;
+      render(); save();
+      return;
+    }
+    state.buckets.splice(idx, 0, snapshot);
+    born.add(snapshot.id);
+    render(); save();
+  });
 }
 
 function openIncoming(){
@@ -479,13 +1021,14 @@ function openIncoming(){
     const c = parseCents(amt.value);
     put.disabled = !c;
     take.disabled = !c || c > b.cents;
-    err.textContent = c > b.cents && b.cents ? `Incoming only has ${money(b.cents)} to take out` : '';
+    err.textContent = c > b.cents && b.cents ? `Incoming only has ${money(b.cents)}` : '';
   }
   amt.addEventListener('input', refresh);
   amt.addEventListener('keydown', e => { if (e.key === 'Enter' && !put.disabled) put.click(); });
   put.onclick = () => {
     const c = parseCents(amt.value); if (!c) return;
     b.cents += c; render(); save(); closeSheet();
+    floaty(nodes[b.id], '+' + money(c));
     toast(`Added ${money(c)} to Incoming`, () => { if (b.cents >= c){ b.cents -= c; render(); save(); } });
   };
   take.onclick = () => {
@@ -507,14 +1050,13 @@ function openNew(){
   nm.addEventListener('input', () => create.disabled = !nm.value.trim());
   nm.addEventListener('keydown', e => { if (e.key === 'Enter' && !create.disabled) create.click(); });
   create.onclick = () => {
-    const b = addBucket(nm.value.trim());
+    // Drop it right where you're looking, so the camera never has to chase it.
+    const name = nm.value.trim();
+    const p = spotNearCenter(bucketW({name}), BH);
+    const b = {id:'b' + (state.nextId++), name, cents:0, x:p.x, y:p.y};
+    state.buckets.push(b);
+    born.add(b.id);
     render(); save(); closeSheet();
-    const sx = b.x * view.s + view.tx, sy = b.y * view.s + view.ty;
-    if (sx < 0 || sy < 60 || sx + BW * view.s > innerWidth || sy + BH * view.s > innerHeight - 80){
-      view.tx = innerWidth / 2 - (b.x + BW / 2) * view.s;
-      view.ty = innerHeight / 2 - (b.y + BH / 2) * view.s;
-      applyView(true);
-    }
   };
   nm.focus();
 }
@@ -536,11 +1078,13 @@ function openMenu(){
   $('#reset').onclick = e => {
     if (!armed){ armed = true; e.target.textContent = 'Tap again to erase everything'; return; }
     Object.keys(nodes).forEach(id => { nodes[id].remove(); delete nodes[id]; });
+    Object.keys(noteNodes).forEach(id => { noteNodes[id].remove(); delete noteNodes[id]; });
     state = defaults(); Object.assign(view, {s:1, tx:0, ty:0}); applyView(true); render(); save(); closeSheet();
   };
 }
 
 $('#add').onclick = openNew;
+$('#noteBtn').onclick = addNote;
 $('#menu').onclick = openMenu;
 
 /* ---------- toast ---------- */
@@ -559,7 +1103,7 @@ $('#toastUndo').onclick = () => {
   $('#toast').classList.remove('show');
 };
 
-/* ---------- camera: pan, pinch, wheel ---------- */
+/* ---------- camera: pan, pinch, wheel, middle-drag ---------- */
 const view = {s:1, tx:0, ty:0};
 const MIN_S = 0.35, MAX_S = 2.5;
 const clampS = s => Math.min(MAX_S, Math.max(MIN_S, s));
@@ -588,8 +1132,23 @@ const pts = new Map();
 let pan = null, pinch = null;
 const mid = () => { const [a, b] = [...pts.values()]; return {x:(a.x+b.x)/2, y:(a.y+b.y)/2, d:Math.hypot(a.x-b.x, a.y-b.y) || 1}; };
 
+function startPan(e){
+  canvas.setPointerCapture(e.pointerId);
+  pan = {id:e.pointerId, sx:e.clientX, sy:e.clientY, tx:view.tx, ty:view.ty};
+  canvas.classList.add('panning');
+}
 // Capture phase: runs before a bucket's own pointerdown, so a second finger can take over
 canvas.addEventListener('pointerdown', e => {
+  // Middle mouse button pans from anywhere, buckets and notes included.
+  if (e.button === 1){
+    e.preventDefault();
+    if (g) finish(false);
+    if (nd){ nd.el.classList.remove('lifted'); nd = null; armTrash(false); }
+    pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    startPan(e);
+    suppressClick = Date.now() + 400;
+    return;
+  }
   if (e.button > 0) return;
   pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
   if (pts.size === 2){
@@ -597,10 +1156,8 @@ canvas.addEventListener('pointerdown', e => {
     if (pan){ pan = null; canvas.classList.remove('panning'); }
     const m = mid();
     pinch = {...m, s:view.s, tx:view.tx, ty:view.ty};
-  } else if (pts.size === 1 && !e.target.closest('.bucket')){
-    canvas.setPointerCapture(e.pointerId);
-    pan = {id:e.pointerId, sx:e.clientX, sy:e.clientY, tx:view.tx, ty:view.ty};
-    canvas.classList.add('panning');
+  } else if (pts.size === 1 && !e.target.closest('.bucket, .note')){
+    startPan(e);
   }
 }, true);
 
@@ -628,6 +1185,9 @@ function ptrEnd(e){
 }
 window.addEventListener('pointerup', ptrEnd);
 window.addEventListener('pointercancel', ptrEnd);
+// Keep the browser's middle-click autoscroll and paste out of the way
+window.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });
+window.addEventListener('auxclick', e => { if (e.button === 1) e.preventDefault(); });
 
 // Mouse wheel zooms; trackpad pinch arrives as ctrl+wheel in Chrome/Firefox/Edge
 canvas.addEventListener('wheel', e => {
@@ -647,9 +1207,12 @@ document.addEventListener('gestureend', e => { e.preventDefault(); gs = null; })
 $('#zoom').onclick = () => { Object.assign(view, {s:1, tx:0, ty:0}); applyView(true); };
 
 window.addEventListener('resize', () => state && render());
+// Name widths are measured, so re-measure once the webfont actually lands.
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => state && render());
 
 (async () => {
-  state = (await load()) || defaults();
+  const saved = await load();
+  state = saved ? migrate(saved) : defaults();
   if (state.view) Object.assign(view, state.view);
   applyView();
   render();
