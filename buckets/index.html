@@ -133,6 +133,25 @@
   #noodle{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5;overflow:visible}
   #noodle path{fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round}
 
+  /* alignment guides */
+  #guides{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:8;overflow:visible;display:none}
+  #guides line{stroke:var(--accent);stroke-width:1.5;vector-effect:non-scaling-stroke;opacity:.8;stroke-linecap:round}
+  #guides line.gap{stroke-dasharray:2 5;opacity:.65}
+  .bucket.snapped,.note.snapped{box-shadow:0 0 0 1.5px var(--accent), 0 16px 30px -12px rgba(30,42,47,.4)}
+
+  /* mobile align switch (desktop uses Ctrl) */
+  .snapsw{display:none;align-items:center;gap:7px;pointer-events:auto;border:0;background:transparent;cursor:pointer;
+    padding:8px 6px;border-radius:10px;font-size:13px;color:var(--muted);white-space:nowrap}
+  .snapsw .sw{width:34px;height:20px;border-radius:999px;background:var(--line);position:relative;
+    transition:background .22s var(--spring)}
+  .snapsw .knob{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--surface);
+    box-shadow:0 1px 3px rgba(30,42,47,.3);transition:transform .26s var(--spring)}
+  .snapsw[aria-checked="true"]{color:var(--accent)}
+  .snapsw[aria-checked="true"] .sw{background:var(--accent)}
+  .snapsw[aria-checked="true"] .knob{transform:translateX(14px)}
+  .snapsw:active .sw{transform:scale(.94)}
+  @media not all and (hover:hover) and (pointer:fine){ .snapsw{display:flex} }
+
   #hint{position:absolute;left:24px;right:24px;text-align:center;font-size:13px;line-height:1.45;color:var(--muted);transition:opacity .3s}
 
   /* ---- notes: same card language as the buckets ---- */
@@ -258,13 +277,17 @@
 <body>
 
 <div id="canvas"><div id="inner">
-  <p id="hint">Drag from one bucket to another to move money.<br><span class="touch-hint">Hold a bucket to rearrange it. Pinch to zoom.</span><span class="mouse-hint">Drag the handle in a bucket's corner to rearrange it. Middle-click to pan, scroll to zoom.</span></p>
+  <p id="hint">Drag from one bucket to another to move money.<br><span class="touch-hint">Hold a bucket to rearrange it. Pinch to zoom.</span><span class="mouse-hint">Drag the handle in a bucket's corner to rearrange it — hold Ctrl to line it up with the others. Middle-click to pan, scroll to zoom.</span></p>
   <svg id="noodle" aria-hidden="true"><path id="npath"/><circle id="nstart" r="4" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/><circle id="nend" r="5" fill="var(--accent)"/></svg>
+  <svg id="guides" aria-hidden="true"></svg>
 </div></div>
 
 <header>
   <div class="total">Total<b id="total">$0</b></div>
   <div class="tools">
+    <button class="snapsw" id="snapsw" role="switch" aria-checked="true" aria-label="Snap buckets into alignment">
+      <span class="sw"><span class="knob"></span></span>Align
+    </button>
     <button class="zoom" id="zoom" aria-label="Reset zoom">100%</button>
     <button class="icon-btn" id="menu" aria-label="Options">
       <svg width="20" height="20" viewBox="0 0 20 20" fill="var(--ink)"><circle cx="4" cy="10" r="1.6"/><circle cx="10" cy="10" r="1.6"/><circle cx="16" cy="10" r="1.6"/></svg>
@@ -328,7 +351,7 @@ let state;
 /* ---------- state ---------- */
 function defaults(){
   const st = { buckets:[{id:'in', name:'Incoming', cents:0, incoming:true, x:(vw()-incomingW())/2, y:TOP}],
-               notes:[], hintDone:false, nextId:1, nextNoteId:1 };
+               notes:[], hintDone:false, snap:true, nextId:1, nextNoteId:1 };
   ['Rent','Groceries','Savings','Fun'].forEach(n => addBucket(n, st));
   return st;
 }
@@ -338,6 +361,7 @@ function migrate(st){
   if (!Array.isArray(st.buckets) || !st.buckets.length) return defaults();
   if (!Array.isArray(st.notes)) st.notes = [];
   if (!st.nextNoteId) st.nextNoteId = st.notes.reduce((m, n) => Math.max(m, parseInt(String(n.id).slice(1)) || 0), 0) + 1;
+  if (st.snap === undefined) st.snap = true;
   st.buckets = st.buckets.filter(b => !b.spent);
   return st;
 }
@@ -639,11 +663,13 @@ function noteMove(e){
   if (!nd || e.pointerId !== nd.pid) return;
   const n = noteById(nd.id);
   if (!n) return noteUp(e);
+  readMods(e);
+  nd.last = {clientX:e.clientX, clientY:e.clientY, pointerId:e.pointerId};
   const dx = e.clientX - nd.sx, dy = e.clientY - nd.sy;
   if (!nd.moved && Math.hypot(dx, dy) < 4) return;
   nd.moved = true;
-  n.x = nd.ox + dx / view.s;
-  n.y = nd.oy + dy / view.s;
+  const p = placeDragged(nd, n.id, nd.ox + dx / view.s, nd.oy + dy / view.s, NW, n.h || NH);
+  n.x = p.x; n.y = p.y;
   nd.el.style.left = n.x + 'px'; nd.el.style.top = n.y + 'px';
   nd.trash = overTrash(e);
   armTrash(nd.trash);
@@ -651,7 +677,8 @@ function noteMove(e){
 function noteUp(e){
   if (!nd || (e && e.pointerId !== nd.pid)) return;
   const {el, id, moved, trash:onCan, ox, oy} = nd;
-  el.classList.remove('lifted');
+  el.classList.remove('lifted', 'snapped');
+  clearGuides();
   armTrash(false);
   nd = null;
   if (onCan){
@@ -671,6 +698,106 @@ function noteUp(e){
 // Safety net: if capture is ever lost, the drag still ends instead of sticking to the cursor.
 window.addEventListener('pointerup', e => nd && noteUp(e));
 window.addEventListener('pointercancel', e => nd && noteUp(e));
+
+/* ---------- alignment: hold Ctrl on a desktop, or the switch on touch ---------- */
+const SNAP_PX = 9;            // how close, in screen pixels, before it clicks into line
+let ctrlHeld = false;
+const readMods = e => { if (e && typeof e.ctrlKey === 'boolean') ctrlHeld = e.ctrlKey || e.metaKey; };
+const alignOn = () => ctrlHeld || (!finePointer && !!state.snap);
+const guides = $('#guides');
+
+function otherBoxes(selfId){
+  const out = [];
+  state.buckets.forEach(b => { if (b.id !== selfId){ const s = size(b); out.push({x:b.x, y:b.y, w:s.w, h:s.h}); } });
+  state.notes.forEach(n => { if (n.id !== selfId) out.push({x:n.x, y:n.y, w:NW, h:n.h || NH}); });
+  return out;
+}
+// Nearest alignment for each axis: shared edges, shared centres, or a tidy GAP beside a neighbour.
+function snapTo(selfId, x, y, w, h){
+  const tol = SNAP_PX / view.s;
+  const best = {x:null, y:null};
+  const consider = (axis, val, o, kind) => {
+    const d = Math.abs(val - (axis === 'x' ? x : y));
+    if (d > tol) return;
+    if (!best[axis] || d < best[axis].d) best[axis] = {v:val, d, o, kind};
+  };
+  otherBoxes(selfId).forEach(o => {
+    consider('x', o.x, o, 'left');
+    consider('x', o.x + o.w - w, o, 'right');
+    consider('x', o.x + (o.w - w)/2, o, 'center');
+    consider('x', o.x + o.w + GAP, o, 'after');
+    consider('x', o.x - w - GAP, o, 'before');
+    consider('y', o.y, o, 'top');
+    consider('y', o.y + o.h - h, o, 'bottom');
+    consider('y', o.y + (o.h - h)/2, o, 'middle');
+    consider('y', o.y + o.h + GAP, o, 'after');
+    consider('y', o.y - h - GAP, o, 'before');
+  });
+  return best;
+}
+function clearGuides(){ guides.style.display = 'none'; guides.textContent = ''; }
+function drawGuides(best, x, y, w, h){
+  if (!best.x && !best.y) return clearGuides();
+  let svg = '';
+  const line = (x1, y1, x2, y2, cls) =>
+    svg += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"${cls ? ' class="gap"' : ''}/>`;
+  // A gap marker spans both cards; barely-overlapping ones would otherwise draw nothing.
+  const span = (a1, a2, b1, b2) => {
+    let lo = Math.min(a1, b1) + 6, hi = Math.max(a2, b2) - 6;
+    if (hi - lo < 26){ const c = (lo + hi) / 2; lo = c - 13; hi = c + 13; }
+    return [lo, hi];
+  };
+  if (best.x){
+    const o = best.x.o, k = best.x.kind;
+    const a = Math.min(y, o.y) - 14, b = Math.max(y + h, o.y + o.h) + 14;
+    if (k === 'left') line(x, a, x, b);
+    else if (k === 'right') line(x + w, a, x + w, b);
+    else if (k === 'center') line(x + w/2, a, x + w/2, b);
+    else {   // sitting a clean gap beside it — mark the gap itself
+      const gx = k === 'after' ? o.x + o.w + GAP/2 : o.x - GAP/2;
+      const [s1, s2] = span(y, y + h, o.y, o.y + o.h);
+      line(gx, s1, gx, s2, 1);
+    }
+  }
+  if (best.y){
+    const o = best.y.o, k = best.y.kind;
+    const a = Math.min(x, o.x) - 14, b = Math.max(x + w, o.x + o.w) + 14;
+    if (k === 'top') line(a, y, b, y);
+    else if (k === 'bottom') line(a, y + h, b, y + h);
+    else if (k === 'middle') line(a, y + h/2, b, y + h/2);
+    else {
+      const gy = k === 'after' ? o.y + o.h + GAP/2 : o.y - GAP/2;
+      const [s1, s2] = span(x, x + w, o.x, o.x + o.w);
+      line(s1, gy, s2, gy, 1);
+    }
+  }
+  guides.innerHTML = svg;
+  guides.style.display = 'block';   // not '' — the stylesheet default is display:none
+}
+// Applies snapping to a proposed position and reports it back on the drag state.
+function placeDragged(drag, id, x, y, w, h){
+  if (!alignOn()){
+    if (drag.snaps){ drag.snaps = 0; drag.el.classList.remove('snapped'); clearGuides(); }
+    return {x, y};
+  }
+  const best = snapTo(id, x, y, w, h);
+  if (best.x) x = best.x.v;
+  if (best.y) y = best.y.v;
+  drawGuides(best, x, y, w, h);
+  const n = (best.x ? 1 : 0) + (best.y ? 1 : 0);
+  if (n > (drag.snaps || 0)) navigator.vibrate && navigator.vibrate(4);
+  drag.snaps = n;
+  drag.el.classList.toggle('snapped', n > 0);
+  return {x, y};
+}
+// Re-run the live drag when Ctrl goes down or up, so it snaps (or lets go) right away.
+function reapplySnap(){
+  if (g && g.mode === 'lift' && g.last) onMove(g.last);
+  else if (nd && nd.last) noteMove(nd.last);
+}
+window.addEventListener('keydown', e => { readMods(e); if (e.key === 'Control' || e.key === 'Meta') reapplySnap(); });
+window.addEventListener('keyup',   e => { readMods(e); if (e.key === 'Control' || e.key === 'Meta') reapplySnap(); });
+window.addEventListener('blur', () => { ctrlHeld = false; });
 
 /* ---------- the trashcan: a drop target for funds and for whole buckets ---------- */
 const trash = $('#trash');
@@ -777,6 +904,8 @@ function onDown(e, id){
 }
 function onMove(e){
   if (!g || e.pointerId !== g.pid) return;
+  readMods(e);
+  g.last = {clientX:e.clientX, clientY:e.clientY, pointerId:e.pointerId};
   const dx = e.clientX - g.sx, dy = e.clientY - g.sy;
   if (g.mode === 'pending' && Math.hypot(dx, dy) > 7){
     clearTimeout(g.timer);
@@ -819,9 +948,9 @@ function onMove(e){
     nend.setAttribute('cx', p.x); nend.setAttribute('cy', p.y);
   }
   if (g.mode === 'lift'){
-    const b = byId(g.id);
-    b.x = g.ox + dx / view.s;
-    b.y = g.oy + dy / view.s;
+    const b = byId(g.id), s = size(b);
+    const p = placeDragged(g, b.id, g.ox + dx / view.s, g.oy + dy / view.s, s.w, s.h);
+    b.x = p.x; b.y = p.y;
     g.el.style.left = b.x + 'px'; g.el.style.top = b.y + 'px';
   }
 }
@@ -829,7 +958,8 @@ function finish(commit){
   if (!g) return;
   clearTimeout(g.timer);
   const {mode, id, target, el, trash:onCan, ox, oy} = g;
-  el.classList.remove('lifted', 'source');
+  el.classList.remove('lifted', 'source', 'snapped');
+  clearGuides();
   if (target && nodes[target]) nodes[target].classList.remove('target');
   noodle.style.display = 'none';
   armTrash(false);
@@ -1085,6 +1215,12 @@ function openMenu(){
 
 $('#add').onclick = openNew;
 $('#noteBtn').onclick = addNote;
+$('#snapsw').onclick = () => {
+  state.snap = !state.snap;
+  $('#snapsw').setAttribute('aria-checked', state.snap ? 'true' : 'false');
+  save();
+  toast(state.snap ? 'Buckets snap into line as you drag' : 'Free placement');
+};
 $('#menu').onclick = openMenu;
 
 /* ---------- toast ---------- */
@@ -1213,6 +1349,7 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => stat
 (async () => {
   const saved = await load();
   state = saved ? migrate(saved) : defaults();
+  $('#snapsw').setAttribute('aria-checked', state.snap ? 'true' : 'false');
   if (state.view) Object.assign(view, state.view);
   applyView();
   render();
