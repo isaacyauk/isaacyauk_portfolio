@@ -1,0 +1,1232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Networks Final Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2F0EA; --surface:#FFFFFF; --surface-2:#F8F6F1; --ink:#1B1F24; --muted:#656B72;
+  --line:rgba(27,31,36,.12); --line-2:rgba(27,31,36,.2);
+  --good:#2C7A4B; --good-soft:rgba(44,122,75,.12); --bad:#B0402E; --bad-soft:rgba(176,64,46,.11);
+  --osi:#2A6C72; --ports:#9C6210; --proto:#6B4789; --accent:var(--osi);
+  --l7:#B4553E; --l6:#A8781F; --l5:#7F8126; --l4:#3A8258; --l3:#2A7680; --l2:#3E5FA0; --l1:#674C98;
+  --sans:"Schibsted Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --spring:cubic-bezier(.34,1.3,.5,1); --r:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141619; --surface:#1D2024; --surface-2:#181B1E; --ink:#ECEAE4; --muted:#9CA1A8;
+    --line:rgba(236,234,228,.1); --line-2:rgba(236,234,228,.2);
+    --good:#5DBA84; --good-soft:rgba(93,186,132,.14); --bad:#E3806B; --bad-soft:rgba(227,128,107,.13);
+    --osi:#62B4B9; --ports:#E0A548; --proto:#B592D8;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141619; --surface:#1D2024; --surface-2:#181B1E; --ink:#ECEAE4; --muted:#9CA1A8;
+  --line:rgba(236,234,228,.1); --line-2:rgba(236,234,228,.2);
+  --good:#5DBA84; --good-soft:rgba(93,186,132,.14); --bad:#E3806B; --bad-soft:rgba(227,128,107,.13);
+  --osi:#62B4B9; --ports:#E0A548; --proto:#B592D8;
+}
+body[data-sec="osi"]{--accent:var(--osi)}
+body[data-sec="ports"]{--accent:var(--ports)}
+body[data-sec="proto"]{--accent:var(--proto)}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--mono)}
+.muted{color:var(--muted)}
+
+/* ---------- top bar ---------- */
+.top{position:sticky;top:0;z-index:10;background:linear-gradient(var(--bg) 70%, transparent);padding:calc(10px + env(safe-area-inset-top)) 16px 14px}
+.top-in{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.top h1{font-size:15px;font-weight:600;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top h1 small{color:var(--muted);font-weight:500;margin-left:6px}
+.icon{width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;flex:none;transition:transform .18s var(--spring)}
+.icon:active{transform:scale(.9)}
+.icon svg{width:18px;height:18px}
+.icon[hidden]{display:none}
+
+main{max-width:760px;margin:0 auto;padding:0 16px calc(48px + env(safe-area-inset-bottom))}
+
+/* ---------- home ---------- */
+.hero{padding:8px 0 18px}
+.hero .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+.hero h2{font-size:clamp(28px,6vw,40px);line-height:1.08;margin:6px 0 10px;letter-spacing:-.02em}
+.hero p{margin:0;color:var(--muted);max-width:56ch}
+.rules{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.pill{font-size:12.5px;padding:4px 10px;border-radius:99px;border:1px solid var(--line-2);color:var(--muted);background:var(--surface-2)}
+.secs{display:grid;gap:12px;margin-top:10px}
+.sec-card{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;align-items:start;text-align:left;padding:18px;border-radius:18px;border:1px solid var(--line);background:var(--surface);transition:transform .2s var(--spring), box-shadow .2s}
+.sec-card:hover{transform:translateY(-2px);box-shadow:0 12px 26px -18px rgba(0,0,0,.45)}
+.sec-card:active{transform:scale(.985)}
+.sec-card .num{grid-row:span 3;font-family:var(--mono);font-weight:700;font-size:15px;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#fff;background:var(--c)}
+.sec-card h3{margin:0;font-size:19px;letter-spacing:-.01em}
+.sec-card p{margin:0;color:var(--muted);font-size:14.5px}
+.meter{display:flex;gap:14px;align-items:center;margin-top:10px;font-size:12.5px;color:var(--muted)}
+.bar{flex:1;height:6px;border-radius:99px;background:var(--line);overflow:hidden;min-width:60px}
+.bar i{display:block;height:100%;background:var(--c, var(--accent));border-radius:99px;transition:width .6s cubic-bezier(.3,.9,.25,1)}
+.foot{margin-top:26px;font-size:13px;color:var(--muted)}
+.foot button{background:none;border:0;color:var(--muted);text-decoration:underline;padding:0}
+
+/* ---------- section ---------- */
+.sec-head{padding:4px 0 14px}
+.sec-head .eyebrow{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.06em;text-transform:uppercase}
+.sec-head h2{margin:4px 0 0;font-size:28px;letter-spacing:-.02em;line-height:1.1}
+.sec-head p{margin:6px 0 0;color:var(--muted);font-size:14.5px}
+.tabs{display:flex;gap:4px;padding:4px;border-radius:13px;background:var(--surface-2);border:1px solid var(--line);overflow-x:auto;scrollbar-width:none;position:sticky;top:calc(60px + env(safe-area-inset-top));z-index:5}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:1 0 auto;border:0;background:transparent;padding:8px 12px;border-radius:10px;font-size:14px;font-weight:500;color:var(--muted);white-space:nowrap;transition:background .15s,color .15s}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 0 var(--line), 0 2px 8px -4px rgba(0,0,0,.25)}
+.pane{padding-top:16px;animation:rise .28s cubic-bezier(.3,.8,.3,1)}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.note{font-size:13.5px;color:var(--muted);margin:0 0 12px}
+h4{margin:22px 0 10px;font-size:13px;font-family:var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:500}
+h4:first-child{margin-top:0}
+
+/* buttons */
+.btn{border:1px solid var(--line-2);background:var(--surface);border-radius:12px;padding:10px 16px;font-weight:500;font-size:15px;transition:transform .16s var(--spring), background .15s}
+.btn:active{transform:scale(.95)}
+.btn.primary{background:var(--accent);border-color:transparent;color:#fff}
+:root[data-theme="dark"] .btn.primary{color:#111}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn.primary{color:#111}}
+.btn.good{background:var(--good-soft);border-color:transparent;color:var(--good)}
+.btn.bad{background:var(--bad-soft);border-color:transparent;color:var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row.end{justify-content:flex-end}
+.row.spread{justify-content:space-between}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:13px;padding:5px 11px;border-radius:99px;border:1px solid var(--line-2);background:var(--surface);color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:transparent;color:#fff}
+:root[data-theme="dark"] .chip[aria-pressed="true"]{color:#111}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .chip[aria-pressed="true"]{color:#111}}
+.tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line);margin:2px 4px 2px 0;white-space:nowrap}
+.tag.mono{font-size:11.5px}
+
+/* ---------- OSI stack reference ---------- */
+.layer{display:grid;grid-template-columns:44px 1fr;gap:12px;padding:14px 0;border-top:1px solid var(--line)}
+.layer:first-of-type{border-top:0;padding-top:0}
+.badge{width:44px;height:44px;border-radius:11px;background:var(--lc);color:#fff;display:grid;place-items:center;font-family:var(--mono);font-weight:700;font-size:18px}
+.layer h5{margin:0;font-size:17px;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline}
+.pdu{font-family:var(--mono);font-size:12px;padding:2px 8px;border-radius:6px;background:color-mix(in srgb, var(--lc) 14%, transparent);color:var(--lc);font-weight:700}
+.layer .one{margin:4px 0 6px;font-size:14.5px}
+.layer ul{margin:0 0 6px;padding-left:18px;font-size:14px;color:var(--muted)}
+.layer ul li{margin:2px 0}
+.encap{display:grid;gap:4px;font-family:var(--mono);font-size:12px}
+.encap .r{display:flex;align-items:stretch;gap:4px}
+.encap .lbl{width:88px;flex:none;color:var(--muted);display:flex;align-items:center}
+.encap .h{padding:7px 8px;border-radius:6px;color:#fff;white-space:nowrap}
+.encap .d{padding:7px 8px;border-radius:6px;background:var(--surface-2);border:1px dashed var(--line-2);flex:1;min-width:0}
+.encap .n{margin-left:auto;color:var(--ink);font-weight:700;display:flex;align-items:center;padding-left:6px}
+
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th{text-align:left;font-size:12px;font-weight:500;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;padding:0 8px 8px}
+td{padding:10px 8px;border-top:1px solid var(--line);vertical-align:top}
+td.port{font-family:var(--mono);font-weight:700;font-size:16px;color:var(--accent);white-space:nowrap}
+.tp{font-family:var(--mono);font-size:11.5px;font-weight:700;padding:2px 7px;border-radius:5px}
+.tp.TCP{background:rgba(62,95,160,.13);color:var(--l2)}
+.tp.UDP{background:rgba(180,85,62,.13);color:var(--l7)}
+.star{color:var(--accent);font-size:12px}
+.facts{margin:0;padding-left:18px;font-size:14.5px}
+.facts li{margin:5px 0}
+
+/* protocol details */
+details.proto{border-top:1px solid var(--line)}
+details.proto:first-of-type{border-top:0}
+details.proto summary{list-style:none;display:flex;gap:10px;align-items:baseline;padding:12px 0;cursor:pointer}
+details.proto summary::-webkit-details-marker{display:none}
+details.proto summary b{font-size:16px;color:var(--ink)}
+details.proto summary .tag{flex:none;max-width:45%;white-space:normal;text-align:right}
+details.proto summary .muted{font-size:13.5px;flex:1;min-width:0}
+details.proto summary .chev{transition:transform .2s;color:var(--muted);font-size:12px}
+details.proto[open] summary .chev{transform:rotate(90deg)}
+.proto-body{padding:0 0 14px}
+.proto-body .def{margin:0 0 8px;font-size:15px}
+.lay-group{font-family:var(--mono);font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:20px 0 2px}
+.lay-group:first-child{margin-top:0}
+
+/* ---------- flashcards ---------- */
+.deck-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.deck-bar .count{font-family:var(--mono);font-size:13px;color:var(--muted);margin-left:auto}
+.flip{perspective:1400px;cursor:pointer;user-select:none}
+.flip-in{position:relative;min-height:320px;transition:transform .55s cubic-bezier(.3,1.25,.45,1);transform-style:preserve-3d}
+.flip.on .flip-in{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:22px;display:flex;flex-direction:column;overflow:auto}
+.face.front{align-items:center;justify-content:center;text-align:center;gap:14px}
+.face.back{transform:rotateY(180deg)}
+.face .corner{position:absolute;top:14px;left:16px;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+.face .known{position:absolute;top:12px;right:14px;font-size:12px;color:var(--good)}
+.big-n{font-family:var(--mono);font-weight:700;font-size:84px;line-height:1;color:var(--lc, var(--accent))}
+.big-t{font-weight:700;font-size:clamp(32px,8vw,48px);letter-spacing:-.02em;line-height:1.1}
+.big-p{font-family:var(--mono);font-weight:700;font-size:72px;line-height:1;color:var(--accent)}
+.hint{color:var(--muted);font-size:14px;max-width:34ch}
+.fq{font-size:20px;font-weight:600;max-width:30ch;line-height:1.3}
+.back h5{margin:0 0 2px;font-size:22px;letter-spacing:-.01em}
+.back .sub{color:var(--muted);font-size:14px;margin-bottom:10px}
+.back ul{margin:6px 0;padding-left:18px;font-size:14.5px}
+.back li{margin:3px 0}
+.back p{margin:6px 0;font-size:15px}
+.ans{font-size:22px;font-weight:700;letter-spacing:-.01em}
+.card-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.card-actions .btn{padding:13px}
+.nav-mini{display:flex;justify-content:space-between;margin-top:10px}
+.nav-mini button{background:none;border:0;color:var(--muted);font-size:14px;padding:6px 2px}
+
+/* ---------- quiz ---------- */
+.prog{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:14px}
+.prog i{display:block;height:100%;background:var(--accent);transition:width .4s cubic-bezier(.3,.9,.25,1)}
+.qmeta{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-bottom:8px}
+.qtext{font-size:19px;font-weight:600;line-height:1.35;margin:0 0 16px}
+.qtext em{font-style:normal;color:var(--accent)}
+.opts{display:grid;gap:8px}
+.opt{text-align:left;padding:13px 15px;border-radius:12px;border:1px solid var(--line-2);background:var(--surface);font-size:15.5px;display:flex;gap:12px;align-items:flex-start;transition:transform .15s var(--spring), background .15s, border-color .15s}
+.opt:not(:disabled):hover{border-color:var(--accent)}
+.opt:not(:disabled):active{transform:scale(.985)}
+.opt .k{font-family:var(--mono);font-size:12px;color:var(--muted);border:1px solid var(--line-2);border-radius:6px;padding:1px 6px;flex:none;margin-top:2px}
+.opt.right{background:var(--good-soft);border-color:var(--good);color:var(--ink)}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad)}
+.opt:disabled{cursor:default}
+.opt.dim{opacity:.5}
+.fb{margin-top:14px;padding:12px 14px;border-radius:12px;font-size:14.5px;animation:rise .25s ease}
+.fb.ok{background:var(--good-soft)}
+.fb.no{background:var(--bad-soft)}
+.fb b{display:block;margin-bottom:2px}
+.result{text-align:center;padding:26px 16px}
+.result .score{font-family:var(--mono);font-size:56px;font-weight:700;color:var(--accent);line-height:1}
+.result p{color:var(--muted)}
+.missed{text-align:left;margin-top:14px}
+.missed li{margin:8px 0;font-size:14.5px}
+.missed li span{color:var(--good);font-weight:600}
+
+/* ---------- stack drill ---------- */
+.stack{display:grid;gap:6px}
+.slot{display:grid;grid-template-columns:40px 1fr;gap:10px;align-items:center;padding:6px;border-radius:12px;border:1.5px dashed var(--line-2);min-height:52px;background:transparent;text-align:left;transition:background .2s, border-color .2s, transform .2s var(--spring)}
+.slot .badge{width:38px;height:38px;font-size:15px;background:var(--line);color:var(--muted);border-radius:9px}
+.slot.filled{border-style:solid;border-color:transparent;background:color-mix(in srgb, var(--lc) 12%, var(--surface))}
+.slot.filled .badge{background:var(--lc);color:#fff}
+.slot.filled .nm{font-weight:600;font-size:16px}
+.slot.next{border-color:var(--accent)}
+.slot.hit{background:var(--good-soft);transform:scale(1.02)}
+.slot.miss{background:var(--bad-soft)}
+.slot.reveal{box-shadow:0 0 0 2px var(--good)}
+.pool{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.tile{padding:10px 14px;border-radius:11px;border:1px solid var(--line-2);background:var(--surface);font-weight:500;transition:transform .15s var(--spring)}
+.tile:active{transform:scale(.93)}
+.shake{animation:shake .35s}
+@keyframes shake{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+.prompt{padding:14px 16px;border-radius:14px;background:var(--surface);border:1px solid var(--line);margin-bottom:12px;font-size:17px;font-weight:600;min-height:56px}
+.prompt small{display:block;font-family:var(--mono);font-size:11.5px;font-weight:500;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:3px}
+
+/* ---------- write-it sheet ---------- */
+.sheet-row{display:grid;grid-template-columns:40px 1fr;gap:10px;padding:12px 0;border-top:1px solid var(--line)}
+.sheet-row:first-child{border-top:0}
+.sheet-row .badge{width:38px;height:38px;font-size:15px}
+.sheet-row input,.sheet-row textarea{width:100%;border:1px solid var(--line-2);background:var(--surface-2);border-radius:10px;padding:9px 11px;font-size:15px}
+.sheet-row textarea{margin-top:6px;min-height:64px;resize:vertical;font-size:14.5px}
+.sheet-row input.ok{border-color:var(--good);background:var(--good-soft)}
+.sheet-row input.no{border-color:var(--bad);background:var(--bad-soft)}
+.keypts{margin-top:8px;display:grid;gap:4px}
+.keypts label{display:flex;gap:8px;align-items:flex-start;font-size:14px;padding:4px 6px;border-radius:8px}
+.keypts input{width:auto;margin-top:4px;accent-color:var(--good)}
+.keypts .corr{font-size:13.5px;color:var(--bad);font-weight:600}
+.tally{position:sticky;bottom:calc(12px + env(safe-area-inset-bottom));margin-top:14px;padding:12px 14px;border-radius:14px;background:var(--ink);color:var(--bg);display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px}
+.tally b{font-family:var(--mono)}
+
+/* ---------- rapid fire / sort ---------- */
+.rf{text-align:center;padding:24px 16px}
+.rf .big-p,.rf .big-t{margin:8px 0 18px}
+.rf-q{font-size:26px;font-weight:700;margin:10px 0 18px;letter-spacing:-.01em}
+.rf input{width:100%;max-width:340px;text-align:center;font-size:20px;padding:12px;border-radius:12px;border:1.5px solid var(--line-2);background:var(--surface-2);font-family:var(--mono)}
+.rf input.ok{border-color:var(--good);background:var(--good-soft)}
+.rf input.no{border-color:var(--bad);background:var(--bad-soft)}
+.rf .fbline{min-height:48px;margin-top:12px;font-size:15px}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:420px;margin:0 auto}
+.duo .btn,.quad .btn{padding:16px;font-size:17px;font-weight:600}
+.quad{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:480px;margin:0 auto}
+.btn.flash-ok{background:var(--good);color:#fff;border-color:transparent}
+.btn.flash-no{background:var(--bad);color:#fff;border-color:transparent}
+.streak{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+
+@media (min-width:640px){
+  .flip-in{min-height:360px}
+  .secs{gap:14px}
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body data-sec="">
+<header class="top">
+  <div class="top-in">
+    <button class="icon" id="backBtn" aria-label="Back to sections" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <h1 id="topTitle">CSCI 466 <small>Final review</small></h1>
+    <button class="icon" id="themeBtn" aria-label="Toggle dark mode">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+  </div>
+</header>
+<main id="app"></main>
+
+<script>
+/* =====================================================================
+   DATA — pulled from Pearsall's CSCI 466 (Fall 2025) slides.
+   Scope is limited to the three final-exam questions:
+   I. OSI layers + responsibilities, II. TCP/UDP port services, III. protocols.
+   ===================================================================== */
+
+const LAYERS = [
+  { n:7, name:"Application", pdu:"Message",
+    one:"Provides the protocols for sending and receiving data between services / applications.",
+    resp:[
+      "Interacts directly with applications like web browsers and email",
+      "Provides the protocols and services apps use to send and receive data",
+      "Where the network application creates the message"
+    ],
+    protos:["HTTP","HTTPS","DNS","SMTP","FTP","SSH"], qp:["HTTP","DNS","SMTP","FTP"], extra:"Runs on hosts (end systems)" },
+  { n:6, name:"Presentation", pdu:"Message",
+    one:"Encoding, compressing, and encrypting data so the application can interpret it.",
+    resp:[
+      "Translation / text encoding (e.g., ASCII) so apps can interpret the data",
+      "Encryption and decryption",
+      "Compression",
+      "Bit/byte order and file syntax"
+    ],
+    protos:["ASCII","encryption","compression"], qp:[], extra:"" },
+  { n:5, name:"Session", pdu:"Message",
+    one:"Authentication; manages, monitors, and synchronizes “sessions” between endpoints.",
+    resp:[
+      "“Conversation manager”: opens, manages, monitors and synchronizes sessions between endpoints",
+      "Sets checkpoints during the data flow",
+      "Authentication and authorization"
+    ],
+    protos:[], qp:[], extra:"" },
+  { n:4, name:"Transport", pdu:"Segment",
+    one:"Host-to-host (end-to-end) reliable data transfer; dictates the flow of data.",
+    resp:[
+      "End-to-end communication between processes on two hosts",
+      "Splits data into segments and multiplexes/demultiplexes them using port numbers",
+      "Reliable, in-order delivery with error checking (checksums)",
+      "Controls the rate of data: flow control and congestion control"
+    ],
+    protos:["TCP","UDP","QUIC"], qp:["TCP","UDP"], extra:"Addressing: port numbers" },
+  { n:3, name:"Network", pdu:"Datagram",
+    one:"Forwarding and routing of data; logical (IP) addressing.",
+    resp:[
+      "Moves datagrams from one host to another across networks",
+      "Logical addressing with IP addresses",
+      "Routing: determines the path from source to destination",
+      "Forwarding: moves a packet from a router’s input to the correct output"
+    ],
+    protos:["IP","ICMP","OSPF","BGP","DHCP","NAT"], qp:["IP","OSPF","BGP"], extra:"Device: routers · Addressing: IP addresses" },
+  { n:2, name:"Data Link", pdu:"Frame",
+    one:"Handles the formatting and physical (MAC) addressing of data before transmitting.",
+    resp:[
+      "Framing: packs bits into frames (MAC header + CRC trailer)",
+      "Physical addressing with MAC addresses between nodes on the same link",
+      "Link access: decides who may transmit (multiple access, e.g., CSMA)",
+      "Error detection (parity, CRC) and reliable delivery between adjacent nodes"
+    ],
+    protos:["Ethernet","WiFi (802.11)","ARP"], qp:["Ethernet","ARP","WiFi (802.11)"], extra:"Device: switches, NICs · Addressing: MAC addresses" },
+  { n:1, name:"Physical", pdu:"Bits",
+    one:"Transmits raw bits as physical signals over some medium.",
+    resp:[
+      "Turns bits into physical signals (electrical, light, radio)",
+      "The transmission medium: twisted-pair copper, coax, fiber optic, wireless"
+    ],
+    protos:["copper","fiber","radio"], qp:[], extra:"" }
+];
+const LAYER_BY_N = Object.fromEntries(LAYERS.map(l => [l.n, l]));
+const NAME_ALIASES = {
+  7:["application","app","applicationlayer"], 6:["presentation","presentationlayer"], 5:["session","sessionlayer"],
+  4:["transport","transportlayer"], 3:["network","networklayer","internet"], 2:["datalink","link","datalinklayer","linklayer"],
+  1:["physical","phys","physicallayer"]
+};
+
+const OSI_STATIC = [
+  { q:"Going <b>down</b> the stack, what is the order of the data units?", a:"Message → Segment → Datagram → Frame → Bits",
+    opts:["Message → Datagram → Segment → Frame → Bits","Segment → Message → Frame → Datagram → Bits","Message → Segment → Frame → Datagram → Bits"],
+    exp:"Transport adds a TCP/UDP header (segment), Network adds an IP header (datagram), Data Link adds a MAC header + CRC (frame), Physical sends bits." },
+  { q:"Which header turns a segment into a datagram?", a:"IP header (Network layer)", opts:["TCP header (Transport)","MAC header (Data Link)","HTTP header (Application)"], exp:"Datagram = data + TCP header + IP header." },
+  { q:"A <b>switch</b> operates at which layer?", a:"Data Link", opts:["Network","Physical","Transport"], exp:"Switches forward frames using MAC addresses (Layer 2)." },
+  { q:"A <b>router</b> operates at which layer?", a:"Network", opts:["Data Link","Transport","Session"], exp:"Routers forward datagrams using IP addresses (Layer 3)." },
+  { q:"<b>MAC addresses</b> are used at which layer?", a:"Data Link", opts:["Network","Physical","Transport"], exp:"MAC = physical addressing, Layer 2." },
+  { q:"<b>IP addresses</b> (logical addressing) are used at which layer?", a:"Network", opts:["Data Link","Transport","Application"], exp:"Logical addressing is the Network layer’s job." },
+  { q:"<b>Port numbers</b> are used at which layer?", a:"Transport", opts:["Network","Session","Application"], exp:"Ports let the transport layer multiplex/demultiplex to the right socket." },
+  { q:"The textbook’s 5-layer model folds which two OSI layers into Application?", a:"Presentation and Session", opts:["Transport and Network","Data Link and Physical","Session and Transport"], exp:"7-layer: App, Presentation, Session, Transport, Network, Data Link, Physical. 5-layer drops Presentation and Session." },
+  { q:"Which layers all use <b>message</b> as their unit of data?", a:"Application, Presentation, Session", opts:["Transport, Network, Data Link","Application and Transport","Only Application"], exp:"Messages until Transport chops them into segments." },
+  { q:"Which layer is the “conversation manager”?", a:"Session", opts:["Transport","Presentation","Application"], exp:"Session manages, monitors and synchronizes sessions between endpoints." },
+  { q:"ASCII text encoding is handled by which layer?", a:"Presentation", opts:["Application","Session","Physical"], exp:"Presentation = encoding, compression, encryption." },
+  { q:"Which layer determines the path a packet takes to its destination?", a:"Network", opts:["Transport","Data Link","Physical"], exp:"Routing is a Network layer responsibility." },
+  { q:"Which layer guarantees reliable, in-order delivery between two hosts?", a:"Transport", opts:["Network","Data Link","Session"], exp:"TCP at the Transport layer." },
+  { q:"Fiber optic cable, twisted-pair copper, and radio are concerns of which layer?", a:"Physical", opts:["Data Link","Network","Presentation"], exp:"Physical = bits into signals over a medium." }
+];
+
+const PORTS = [
+  { p:"20",  svc:"FTP (data)",        full:"File Transfer Protocol — data connection",     t:"TCP", core:true,  ans:["ftp","ftpdata","ftpdataconnection"] },
+  { p:"21",  svc:"FTP (control)",     full:"File Transfer Protocol — control connection",  t:"TCP", core:true,  ans:["ftp","ftpcontrol","ftpcontrolconnection"] },
+  { p:"22",  svc:"SSH",               full:"Secure Shell — encrypted remote login",       t:"TCP", core:true,  ans:["ssh","secureshell"] },
+  { p:"25",  svc:"SMTP",              full:"Simple Mail Transfer Protocol — server-to-server mail", t:"TCP", core:true, ans:["smtp","simplemailtransferprotocol"] },
+  { p:"53",  svc:"DNS",               full:"Domain Name System — hostname ↔ IP lookups",   t:"UDP", core:true,  ans:["dns","domainnamesystem"] },
+  { p:"67",  svc:"DHCP (server)",     full:"Dynamic Host Configuration Protocol — server side", t:"UDP", core:true, ans:["dhcp","dhcpserver"] },
+  { p:"68",  svc:"DHCP (client)",     full:"Dynamic Host Configuration Protocol — client side", t:"UDP", core:true, ans:["dhcp","dhcpclient"] },
+  { p:"80",  svc:"HTTP",              full:"HyperText Transfer Protocol — the web",        t:"TCP", core:true,  ans:["http","web","hypertexttransferprotocol"] },
+  { p:"443", svc:"HTTPS",             full:"HTTP secured with TLS",                        t:"TCP", core:true,  ans:["https","httpstls","httpsecure","tls","ssl"] },
+  { p:"587", svc:"SMTP (submission)", full:"SMTP — mail submission (alternate)",           t:"TCP", core:false, ans:["smtp","smtpsubmission"] },
+  { p:"465", svc:"SMTP (over TLS)",   full:"SMTP — over TLS (alternate)",                  t:"TCP", core:false, ans:["smtp","smtps","smtptls","smtpovertls"] }
+];
+
+const PORT_FACTS = [
+  { q:"How big is a port number?", a:"16 bits (0–65535)", opts:["8 bits (0–255)","32 bits","48 bits"], exp:"Source and destination port fields are each 16 bits." },
+  { q:"A brand-new application you write should be given a port number…", a:"greater than 1024", opts:["below 1024","exactly 80","between 1 and 100"], exp:"Low ports are reserved for well-known services." },
+  { q:"Who registers port numbers?", a:"IANA (operated by ICANN)", opts:["The IETF","Your ISP","The OS vendor"], exp:"Internet Assigned Numbers Authority, operated by ICANN." },
+  { q:"When a client requests a web page, its <b>source</b> port is usually…", a:"a random high “ephemeral” port (e.g., 62710)", opts:["80","443","the same as the destination port"], exp:"The destination is 80/443; the client’s side gets a temporary high port." },
+  { q:"A <b>UDP</b> socket is identified by…", a:"a 2-tuple: dest IP, dest port", opts:["a 4-tuple: src IP, src port, dest IP, dest port","the dest port only","MAC address + port"], exp:"UDP demultiplexes only on destination IP and port." },
+  { q:"A <b>TCP</b> socket is identified by…", a:"a 4-tuple: src IP, src port, dest IP, dest port", opts:["a 2-tuple: dest IP, dest port","the dest port only","MAC address + port"], exp:"The 4-tuple is what lets one server port hold many connections." },
+  { q:"How can one web server on port 80 hold many TCP connections at once?", a:"Each connection’s 4-tuple differs (different source IP/port)", opts:["It opens a new port for each client","UDP handles the extra clients","HTTP merges them into one connection"], exp:"Same dest IP and port, different source info → different sockets." },
+  { q:"Size of the UDP header?", a:"8 bytes", opts:["20 bytes","20–60 bytes","4 bytes"], exp:"Four 16-bit fields: source port, dest port, length, checksum." },
+  { q:"Size of the TCP header?", a:"20–60 bytes", opts:["8 bytes","Exactly 40 bytes","64 bytes"], exp:"20 bytes minimum, up to 60 with options." },
+  { q:"Gathering data from sockets, adding headers, and passing segments to the network layer is called…", a:"Multiplexing", opts:["Demultiplexing","Forwarding","Framing"], exp:"Mux = sender side. Demux = delivering to the right socket on the receiver." },
+  { q:"Delivering a received segment to the correct socket is called…", a:"Demultiplexing", opts:["Multiplexing","Routing","Framing"], exp:"Demux uses the port numbers in the header." },
+  { q:"A TCP segment arrives for a port nothing is listening on. What goes back?", a:"RST", opts:["FIN","SYN-ACK","NAK"], exp:"RST = reset, sent for an invalid port." },
+  { q:"Which transport does HTTP/3 use?", a:"UDP (via QUIC)", opts:["TCP","TCP with TLS 1.0","It runs directly on IP"], exp:"QUIC is built on UDP." },
+  { q:"Why does DNS use UDP?", a:"Skipping the handshake is faster; reliability is left to the application", opts:["UDP is more reliable than TCP","Port 53 only exists for UDP","Firewalls block TCP"], exp:"Tiny query/response — no need for a connection." },
+  { q:"What makes FTP’s ports unusual?", a:"Two TCP connections: control on 21, data on 20", opts:["It uses UDP 20/21","Control and data share port 21","It picks a random port each time"], exp:"Control is sent “out-of-band” on its own connection." },
+  { q:"Which ports does DHCP use?", a:"UDP 67 (server) and 68 (client)", opts:["TCP 67 and 68","UDP 53","TCP 20 and 21"], exp:"DHCP is UDP — the client has no IP yet, so it broadcasts." },
+  { q:"Which six ports did the slides say you “should probably remember”?", a:"HTTP 80, HTTPS 443, DNS 53, SSH 22, FTP 20/21, SMTP 25", opts:["HTTP 80, HTTPS 8080, DNS 53, SSH 23, FTP 21, SMTP 110","HTTP 8080, HTTPS 443, DNS 67, SSH 22, FTP 20/21, SMTP 25","HTTP 80, HTTPS 443, DNS 53, SSH 21, FTP 22, SMTP 25"], exp:"From the Transport Layer lecture." }
+];
+
+const TU_ITEMS = [
+  { t:"HTTP", a:"TCP" }, { t:"HTTPS", a:"TCP" }, { t:"SSH", a:"TCP" }, { t:"FTP", a:"TCP" }, { t:"SMTP", a:"TCP" },
+  { t:"DNS", a:"UDP" }, { t:"DHCP", a:"UDP" }, { t:"HTTP/3 (QUIC)", a:"UDP" },
+  { t:"Three-way handshake", a:"TCP" }, { t:"Connectionless", a:"UDP" }, { t:"Connection-oriented", a:"TCP" },
+  { t:"Reliable, in-order delivery", a:"TCP" }, { t:"8-byte header", a:"UDP" }, { t:"20–60 byte header", a:"TCP" },
+  { t:"Flow + congestion control", a:"TCP" }, { t:"No congestion control", a:"UDP" },
+  { t:"Socket = 4-tuple", a:"TCP" }, { t:"Socket = 2-tuple", a:"UDP" }, { t:"Lowest overhead, fastest", a:"UDP" }
+];
+
+const PROTOS = [
+  { id:"http", name:"HTTP", full:"HyperText Transfer Protocol", layer:"Application", port:"TCP 80", sort:true,
+    def:"Dictates the transmitting of hypermedia documents (HTML and other web objects) — “the language of the web.”",
+    facts:["Stateless: keeps no info about the sender–receiver session; every request is treated as brand new",
+      "Methods: GET, HEAD, POST, PUT, DELETE",
+      "Status codes: 1xx info · 2xx success (200 OK) · 3xx redirect (301 Moved) · 4xx client error (404) · 5xx server error (500)",
+      "1.0 is non-persistent (new TCP connection per object); 1.1+ is persistent (one connection for all objects)",
+      "Cookies identify users on top of a stateless protocol",
+      "Conditional GET (If-modified-since) lets a cache get “304 Not Modified” instead of the whole object",
+      "Version 3 runs over UDP (QUIC)"] },
+  { id:"https", name:"HTTPS", full:"HTTP Secure", layer:"Application", port:"TCP 443", sort:true,
+    def:"The secure implementation of the web protocol — adds encryption and authentication.",
+    facts:["Web traffic wrapped in TLS","Listens on port 443"] },
+  { id:"dns", name:"DNS", full:"Domain Name System", layer:"Application", port:"UDP 53", sort:true,
+    def:"A distributed, hierarchical database of mappings between hostnames and IP addresses.",
+    facts:["Hierarchy: Root → TLD (.com, .edu) → Authoritative; the Local server (run by the ISP) is a proxy that caches",
+      "Records: A (IPv4) · AAAA (IPv6) · NS (authoritative name server) · CNAME (alias → canonical name) · MX (mail server)",
+      "TTL decides when a cached record gets removed",
+      "Recursive: the local server does the whole lookup for you. Iterative: each server refers you to the next",
+      "“Non-authoritative answer” = the reply came from a cache",
+      "Services: hostname → IP translation, host aliasing, mail-server aliasing, load distribution",
+      "Runs over UDP — no handshake; reliability handled at the application layer"] },
+  { id:"smtp", name:"SMTP", full:"Simple Mail Transfer Protocol", layer:"Application", port:"TCP 25 (also 587, 465)", sort:true,
+    def:"Sends e-mail from one mail server to another.",
+    facts:["For sending/transferring only — not for retrieving mail","Moves messages asynchronously between mail servers","Extended by MIME for attachments, formatting, and non-ASCII characters"] },
+  { id:"pop3", name:"POP3", full:"Post Office Protocol v3", layer:"Application", port:"", sort:true,
+    def:"Retrieves e-mail from a mail server and deletes it from the server afterward.",
+    facts:["Download-and-delete: mail ends up on one device"] },
+  { id:"imap", name:"IMAP", full:"Internet Message Access Protocol", layer:"Application", port:"", sort:true,
+    def:"Retrieves e-mail but keeps copies on the server so multiple devices stay in sync.",
+    facts:["Mail stays on the server; every device sees the same inbox"] },
+  { id:"mime", name:"MIME", full:"Multipurpose Internet Mail Extensions", layer:"Application", port:"", sort:false,
+    def:"Extends e-mail so it can carry attachments, formatting, and non-ASCII characters.",
+    facts:["Rides on top of the server-to-server mail protocol"] },
+  { id:"ftp", name:"FTP", full:"File Transfer Protocol", layer:"Application", port:"TCP 21 control · TCP 20 data", sort:true,
+    def:"Transfers files between a client and a server over two separate TCP connections.",
+    facts:["Control info is sent “out-of-band” on its own connection, separate from the data","Stateful: the server tracks per-client state (authentication, current directory)"] },
+  { id:"ssh", name:"SSH", full:"Secure Shell", layer:"Application", port:"TCP 22", sort:true,
+    def:"Encrypted remote login and command shell on another machine.",
+    facts:["One of the ports the slides say to remember: 22"] },
+  { id:"bittorrent", name:"BitTorrent", full:"P2P file distribution", layer:"Application", port:"", sort:true,
+    def:"Peer-to-peer file distribution: files are split into chunks that peers trade with each other.",
+    facts:["Parts: tracker (tracks peers), torrent (the group sharing a file), peers","Rarest-first: request the chunks the fewest peers have","Tit-for-tat: send to the top 4 peers sending to you, re-evaluated every 10 s","Optimistically unchokes a random peer every 30 s","Unstructured P2P"] },
+  { id:"dash", name:"DASH", full:"Dynamic Adaptive Streaming over HTTP", layer:"Application", port:"", sort:true,
+    def:"Video is encoded at several quality levels and the client picks each chunk’s quality based on its current bandwidth.",
+    facts:["Usually served from a CDN — a geographically distributed group of cache servers"] },
+  { id:"tcp", name:"TCP", full:"Transmission Control Protocol", layer:"Transport", port:"", sort:true,
+    def:"Reliable, connection-oriented transport: in-order byte stream with error checking, flow control, and congestion control.",
+    facts:["Three-way handshake: SYN → SYN-ACK → ACK","FIN closes a connection; RST is sent when a segment hits a port with no listener",
+      "Sequence and ACK numbers count bytes; ACKs are cumulative","Three duplicate ACKs → fast retransmit (loss detected before a timeout)",
+      "Flow control: the receiver advertises rwnd so the sender can’t overflow its buffer",
+      "Congestion control: cwnd grows exponentially in slow start up to ssthresh, then linearly in congestion avoidance; cut back on loss",
+      "Socket is a 4-tuple (src IP, src port, dst IP, dst port)","Header is 20–60 bytes","Full-duplex"] },
+  { id:"udp", name:"UDP", full:"User Datagram Protocol", layer:"Transport", port:"", sort:true,
+    def:"Unreliable, connectionless transport with minimal overhead — no handshake and no congestion control.",
+    facts:["8-byte header: source port, dest port, length, checksum (16 bits each)","Socket is a 2-tuple (dest IP, dest port)","Used by DNS, DHCP, and HTTP/3 (via QUIC)","Only basic error checking (checksum)"] },
+  { id:"quic", name:"QUIC", full:"QUIC", layer:"Transport", port:"over UDP", sort:true,
+    def:"Newer transport built on UDP: faster connection setup, better multiplexing, runs in user space, supports connection migration.",
+    facts:["Carries HTTP/3"] },
+  { id:"ip", name:"IP", full:"Internet Protocol", layer:"Network", port:"", sort:true,
+    def:"Moves datagrams host-to-host across networks using logical (IP) addresses.",
+    facts:["IPv4: 32-bit, dotted decimal (e.g., 193.32.216.9), ~4 billion addresses","IPv6: 128-bit, hexadecimal (e.g., 3ffe:1900:fe21:4545::) — needed because IPv4 ran out",
+      "IPv4 header is 20 bytes","Tunneling: IPv6 datagrams wrapped in IPv4 to cross IPv4-only routers","ICANN manages global address allocation","CIDR a.b.c.d/x: the first x bits are the network (subnet) part"] },
+  { id:"icmp", name:"ICMP", full:"Internet Control Message Protocol", layer:"Network", port:"", sort:true,
+    def:"Network-layer error reporting and diagnostics, carried inside IP datagrams.",
+    facts:["Echo request / echo reply = ping","Reports unreachable host / network / port / protocol","TTL-expired messages (what traceroute relies on)"] },
+  { id:"dhcp", name:"DHCP", full:"Dynamic Host Configuration Protocol", layer:"Network", port:"UDP 67 server · 68 client", sort:true,
+    def:"Plug-and-play client–server protocol that lets a host obtain an IP address automatically.",
+    facts:["DORA: Discover → Offer → Request → Acknowledge","Discover is a broadcast — the host has no IP yet","Can hand out temporary or permanent addresses"],
+    note:"The course groups DHCP with the Network layer (its job is IP addressing), even though it runs over UDP." },
+  { id:"nat", name:"NAT", full:"Network Address Translation", layer:"Network", port:"", sort:true,
+    def:"Translates private IP addresses to a public one (and back) at the gateway router.",
+    facts:["Three Rs: Replace the outgoing source IP/port, Remember the mapping in the NAT table, Replace the incoming destination",
+      "Lets many devices share one public IP","Private ranges (10.x.x.x, 172.16–31.x.x, 192.168.x.x) only work inside the local network"] },
+  { id:"ospf", name:"OSPF", full:"Open Shortest Path First", layer:"Network", port:"", sort:true,
+    def:"Intra-AS link-state routing: every router builds a full map of the AS and runs Dijkstra’s algorithm.",
+    facts:["Link-state = global knowledge of the topology","Admins set the link costs (all costs 1 → minimum hop count)","Works inside one Autonomous System (routers under the same administrative control)"] },
+  { id:"rip", name:"RIP", full:"Routing Information Protocol", layer:"Network", port:"", sort:true,
+    def:"Legacy intra-AS distance-vector routing (Bellman-Ford): routers only know the cost to their neighbors.",
+    facts:["Dx(y) = minᵥ { c(x,v) + Dᵥ(y) }","Decentralized, iterative, asynchronous"] },
+  { id:"bgp", name:"BGP", full:"Border Gateway Protocol", layer:"Network", port:"", sort:true,
+    def:"Inter-AS routing — “the glue that holds the Internet together.”",
+    facts:["eBGP runs between ASes; iBGP spreads reachability inside an AS","Messages: OPEN, UPDATE, KEEPALIVE, NOTIFICATION","Attributes: AS-PATH (ASes the ad passed through) and NEXT-HOP","Policy-based: import policy decides whether to accept and re-advertise a route"] },
+  { id:"ipsec", name:"IPsec", full:"IP Security", layer:"Network", port:"", sort:true,
+    def:"Network-layer security: integrity, origin authentication, and confidentiality for datagrams.",
+    facts:["Uses AH (Authentication Header) or ESP (Encapsulating Security Payload)","Transport mode encrypts only the payload; tunnel mode encrypts the whole datagram and adds a new IP header","Uses Security Associations (SAs) — one-directional state","What most VPNs are built on"] },
+  { id:"tls", name:"TLS / SSL", full:"Transport Layer Security", layer:"Between Application & Transport", port:"over TCP (HTTPS 443)", sort:false,
+    def:"Provides communication security over a TCP connection — what makes HTTPS secure.",
+    facts:["Mixes asymmetric crypto (key exchange), symmetric crypto (bulk data), and hashing (HMAC)","Handshake: negotiate algorithms → verify server certificate → pre-master secret → master secret → session keys","Certificates come from Certification Authorities (DigiCert, Let’s Encrypt)"] },
+  { id:"arp", name:"ARP", full:"Address Resolution Protocol", layer:"Data Link", port:"", sort:true,
+    def:"Maps an IP address to a MAC address on the same subnet.",
+    facts:["The query is broadcast to FF-FF-FF-FF-FF-FF; the reply is unicast","Results live in an ARP table as soft state (they time out unless refreshed)","Plug-and-play — no manual configuration","ARP cache poisoning is a man-in-the-middle attack"] },
+  { id:"ethernet", name:"Ethernet", full:"Wired LAN link protocol", layer:"Data Link", port:"", sort:true,
+    def:"The dominant wired LAN link-layer technology; delivers frames between MAC addresses.",
+    facts:["Frame: Preamble (8 B) · Dest MAC (6) · Src MAC (6) · Type (2) · Data · CRC (4)","MAC addresses are 48-bit hex (1A-2F-BB-76-09-AD), burned into the NIC","CRC error → the frame is dropped","Switches self-learn which MAC is on which port"] },
+  { id:"wifi", name:"802.11 (WiFi)", full:"Wireless LAN", layer:"Data Link", port:"", sort:true,
+    def:"The wireless LAN standard family.",
+    facts:["Multiple access: CSMA/CA (collision avoidance, not detection)","The receiver ACKs every frame because of the hidden terminal problem","RTS/CTS: sender reserves the channel and other stations defer","Base-station and ad hoc modes"] },
+  { id:"bluetooth", name:"Bluetooth", full:"Personal area network", layer:"Data Link", port:"", sort:true,
+    def:"Short-range personal area network (under 10 m) in the 2.4 GHz band, up to 3 Mbps.",
+    facts:["Ad hoc; a master controller polls the client devices"] }
+];
+const PROTO_BY_ID = Object.fromEntries(PROTOS.map(p => [p.id, p]));
+const SORT_LAYERS = ["Application","Transport","Network","Data Link"];
+
+const PROTO_STATIC = [
+  { q:"DHCP’s four steps, in order:", a:"Discover → Offer → Request → Acknowledge", opts:["Discover → Request → Offer → Acknowledge","Offer → Discover → Request → Acknowledge","Request → Offer → Discover → Acknowledge"], exp:"DORA." },
+  { q:"TCP’s three-way handshake, in order:", a:"SYN → SYN-ACK → ACK", opts:["SYN → ACK → SYN-ACK","ACK → SYN → FIN","SYN → FIN → ACK"], exp:"Client SYN, server SYN-ACK, client ACK." },
+  { q:"DNS hierarchy from the top down:", a:"Root → TLD → Authoritative", opts:["TLD → Root → Authoritative","Authoritative → TLD → Root","Local → Authoritative → Root"], exp:"Root servers know the TLD servers, which know the authoritative servers." },
+  { q:"Which DNS record holds an <b>IPv4</b> address?", a:"A", opts:["AAAA","MX","CNAME"], exp:"AAAA is IPv6." },
+  { q:"Which DNS record holds an <b>IPv6</b> address?", a:"AAAA", opts:["A","NS","MX"], exp:"Four A’s for the longer address." },
+  { q:"Which DNS record names a domain’s <b>mail server</b>?", a:"MX", opts:["NS","CNAME","A"], exp:"MX = mail exchange." },
+  { q:"Which DNS record maps an <b>alias</b> to its canonical name?", a:"CNAME", opts:["NS","MX","AAAA"], exp:"Canonical NAME." },
+  { q:"Which DNS record points to the <b>authoritative name server</b>?", a:"NS", opts:["A","CNAME","MX"], exp:"NS = name server." },
+  { q:"An HTTP <b>404</b> is a…", a:"4xx client error", opts:["5xx server error","3xx redirection","2xx success"], exp:"404 Not Found." },
+  { q:"An HTTP <b>301</b> is a…", a:"3xx redirection", opts:["4xx client error","2xx success","5xx server error"], exp:"301 Moved Permanently." },
+  { q:"An HTTP <b>500</b> is a…", a:"5xx server error", opts:["4xx client error","3xx redirection","1xx informational"], exp:"500 Internal Server Error." },
+  { q:"Which HTTP version introduced persistent connections?", a:"HTTP 1.1", opts:["HTTP 1.0","HTTP 0.9","None — HTTP is always non-persistent"], exp:"1.0 opened a new TCP connection per object." },
+  { q:"A cache gets “304 Not Modified” back from a…", a:"conditional GET (If-modified-since)", opts:["HEAD request","POST request","DNS lookup"], exp:"The server only sends the object if it changed." },
+  { q:"Which mail protocol keeps messages on the server so devices stay in sync?", a:"IMAP", opts:["POP3","SMTP","MIME"], exp:"POP3 downloads and deletes." },
+  { q:"Which mail protocol deletes mail from the server after downloading it?", a:"POP3", opts:["IMAP","SMTP","MIME"], exp:"IMAP keeps copies on the server." },
+  { q:"Which protocol pushes mail between mail servers?", a:"SMTP", opts:["IMAP","POP3","FTP"], exp:"SMTP sends; POP3/IMAP retrieve." },
+  { q:"The BGP message that advertises new paths or withdraws old ones:", a:"UPDATE", opts:["OPEN","KEEPALIVE","NOTIFICATION"], exp:"OPEN starts a session, KEEPALIVE maintains it, NOTIFICATION reports errors." },
+  { q:"OSPF computes shortest paths with…", a:"Dijkstra’s algorithm", opts:["Bellman-Ford","Breadth-first search","Prim’s algorithm"], exp:"OSPF is link-state." },
+  { q:"Distance-vector routing is based on…", a:"Bellman-Ford", opts:["Dijkstra’s algorithm","Prim’s algorithm","Floyd-Warshall"], exp:"Dx(y) = min over neighbors v of c(x,v) + Dv(y)." },
+  { q:"Routing <b>inside</b> an AS vs <b>between</b> ASes:", a:"OSPF inside, BGP between", opts:["BGP inside, OSPF between","RIP between, OSPF inside","BGP for both"], exp:"Intra-AS vs inter-AS." },
+  { q:"What triggers TCP fast retransmit?", a:"Three duplicate ACKs", opts:["A single NAK","A FIN segment","The first SYN"], exp:"Retransmits before the timer runs out." },
+  { q:"During slow start, cwnd grows…", a:"exponentially (up to ssthresh)", opts:["linearly","not at all","by halving"], exp:"Then congestion avoidance grows it linearly." },
+  { q:"During congestion avoidance, cwnd grows…", a:"linearly", opts:["exponentially","not at all","by doubling each ACK"], exp:"Additive increase." },
+  { q:"TCP flow control uses which value advertised by the receiver?", a:"rwnd (receive window)", opts:["cwnd","ssthresh","TTL"], exp:"The sender keeps unACKed data ≤ rwnd." },
+  { q:"NAT’s “three Rs”:", a:"Replace, Remember, Replace", opts:["Request, Reply, Release","Route, Resolve, Relay","Read, Rewrite, Return"], exp:"Replace outgoing source, remember the mapping, replace incoming destination." },
+  { q:"ARP queries are sent to which MAC address?", a:"FF-FF-FF-FF-FF-FF (broadcast)", opts:["00-00-00-00-00-00","The router’s MAC","The DNS server’s MAC"], exp:"Everyone on the subnet hears it; only the owner replies." },
+  { q:"Which protocol maps an IP address to a MAC address?", a:"ARP", opts:["DHCP","DNS","NAT"], exp:"DNS maps names → IPs; ARP maps IPs → MACs." },
+  { q:"FTP sends its control information…", a:"out-of-band, on a separate connection", opts:["in-band, mixed with the data","over UDP","inside HTTP headers"], exp:"Control on 21, data on 20." },
+  { q:"The IPsec mode that encrypts the whole datagram and adds a new IP header:", a:"Tunnel mode", opts:["Transport mode","AH-only mode","Session mode"], exp:"Transport mode only encrypts the payload." },
+  { q:"WiFi’s multiple access method:", a:"CSMA/CA", opts:["CSMA/CD","Token passing","Slotted ALOHA"], exp:"Avoidance — wireless can’t reliably detect collisions." },
+  { q:"What is RTS/CTS for?", a:"Reserving the channel so other stations defer", opts:["Encrypting WiFi frames","Assigning IP addresses","Resolving MAC addresses"], exp:"Request-to-send / clear-to-send." },
+  { q:"BitTorrent requests which chunks first?", a:"Rarest first", opts:["In order","Largest first","Whatever the tracker says"], exp:"Keeps rare chunks from disappearing." },
+  { q:"<b>ping</b> uses which protocol?", a:"ICMP", opts:["UDP","ARP","TCP"], exp:"Echo request / echo reply." },
+  { q:"Which protocol secures a TCP connection and makes HTTPS possible?", a:"TLS", opts:["IPsec","SSH","PGP"], exp:"TLS sits between the application and transport layers." }
+];
+
+/* =====================================================================
+   UTIL + STATE
+   ===================================================================== */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const el = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+const shuffle = (a) => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const pick = (a) => a[Math.random() * a.length | 0];
+const norm = (s) => String(s).toLowerCase().replace(/[^a-z0-9]/g, "");
+
+const KEY = "csci466-review-v1";
+let S = { known:{}, best:{}, theme:null };
+try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+
+const SECTIONS = {
+  osi:   { num:"I",   title:"The OSI Model", color:"var(--osi)",
+           blurb:"Name every layer and list its important responsibilities.",
+           tabs:[["review","Review"],["cards","Cards"],["quiz","Quiz"],["stack","Stack"],["write","Write it"]] },
+  ports: { num:"II",  title:"TCP/UDP Port Services", color:"var(--ports)",
+           blurb:"Which service lives on which port, and over which transport.",
+           tabs:[["review","Review"],["cards","Cards"],["quiz","Quiz"],["rapid","Rapid fire"]] },
+  proto: { num:"III", title:"Protocols", color:"var(--proto)",
+           blurb:"What each protocol does, where it lives, and the facts that get asked.",
+           tabs:[["review","Review"],["cards","Cards"],["quiz","Quiz"],["sort","Layer sort"]] }
+};
+
+/* theme */
+function applyTheme() {
+  if (S.theme) document.documentElement.setAttribute("data-theme", S.theme);
+  else document.documentElement.removeAttribute("data-theme");
+}
+applyTheme();
+$("#themeBtn").addEventListener("click", () => {
+  const cur = S.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  S.theme = cur === "dark" ? "light" : "dark"; save(); applyTheme();
+});
+
+/* =====================================================================
+   HTML builders shared by review + cards
+   ===================================================================== */
+const tagList = (arr, mono) => arr.map(x => `<span class="tag${mono ? " mono" : ""}">${esc(x)}</span>`).join("");
+
+function layerBlock(L) {
+  return `<div class="layer" style="--lc:var(--l${L.n})">
+    <div class="badge">${L.n}</div>
+    <div>
+      <h5>${L.name} <span class="pdu">${L.pdu}</span></h5>
+      <p class="one">${L.one}</p>
+      <ul>${L.resp.map(r => `<li>${r}</li>`).join("")}</ul>
+      ${L.protos.length ? `<div>${tagList(L.protos)}</div>` : ""}
+      ${L.extra ? `<div class="muted" style="font-size:13px;margin-top:4px">${L.extra}</div>` : ""}
+    </div></div>`;
+}
+
+const ENCAP = `<div class="encap">
+  <div class="r"><span class="lbl">Application</span><span class="d">data</span><span class="n">Message</span></div>
+  <div class="r"><span class="lbl">Transport</span><span class="h" style="background:var(--l4)">TCP</span><span class="d">data</span><span class="n">Segment</span></div>
+  <div class="r"><span class="lbl">Network</span><span class="h" style="background:var(--l3)">IP</span><span class="h" style="background:var(--l4)">TCP</span><span class="d">data</span><span class="n">Datagram</span></div>
+  <div class="r"><span class="lbl">Data Link</span><span class="h" style="background:var(--l2)">MAC</span><span class="h" style="background:var(--l3)">IP</span><span class="h" style="background:var(--l4)">TCP</span><span class="d">data</span><span class="h" style="background:var(--l2)">CRC</span><span class="n">Frame</span></div>
+  <div class="r"><span class="lbl">Physical</span><span class="d" style="letter-spacing:.12em">0110100101…</span><span class="n">Bits</span></div>
+</div>`;
+
+function protoBody(p) {
+  return `<p class="def">${p.def}</p>
+    <div style="margin-bottom:6px"><span class="tag">${esc(p.layer)}</span>${p.port ? `<span class="tag mono">${esc(p.port)}</span>` : ""}</div>
+    <ul class="facts">${p.facts.map(f => `<li>${f}</li>`).join("")}</ul>
+    ${p.note ? `<p class="muted" style="font-size:13px;margin:8px 0 0">${p.note}</p>` : ""}`;
+}
+
+/* =====================================================================
+   ROUTER
+   ===================================================================== */
+function parseHash() {
+  const [sec, tab] = location.hash.replace(/^#\/?/, "").split("/");
+  if (SECTIONS[sec]) return { sec, tab: SECTIONS[sec].tabs.some(t => t[0] === tab) ? tab : "review" };
+  return { sec:null };
+}
+function go(sec, tab) { location.hash = sec ? `#/${sec}/${tab || "review"}` : "#/"; }
+window.addEventListener("hashchange", render);
+$("#backBtn").addEventListener("click", () => go(null));
+
+let cleanup = null;
+function render() {
+  if (cleanup) { cleanup(); cleanup = null; }
+  const { sec, tab } = parseHash();
+  const app = $("#app");
+  app.innerHTML = "";
+  document.body.dataset.sec = sec || "";
+  $("#backBtn").hidden = !sec;
+  $("#topTitle").innerHTML = sec ? `${SECTIONS[sec].num} · ${SECTIONS[sec].title}` : `CSCI 466 <small>Final review</small>`;
+  window.scrollTo(0, 0);
+  if (!sec) return renderHome(app);
+  renderSection(app, sec, tab);
+}
+
+/* =====================================================================
+   HOME
+   ===================================================================== */
+function sectionProgress(sec) {
+  const cards = cardsFor(sec);
+  const known = cards.filter(c => S.known[c.id]).length;
+  return { known, total: cards.length, best: S.best[sec] };
+}
+function renderHome(app) {
+  app.appendChild(el(`<section class="hero">
+    <div class="eyebrow">CSCI 466 · Networks · Final exam</div>
+    <h2>Three questions.<br>No notes.</h2>
+    <p>Each section below matches one question on the final. Everything here is pulled from the lecture slides and trimmed to what you need memorized.</p>
+    <div class="rules"><span class="pill">In person</span><span class="pill">30% of grade</span><span class="pill">No cheat sheet</span></div>
+  </section>`));
+  const wrap = el(`<div class="secs"></div>`);
+  Object.entries(SECTIONS).forEach(([k, s]) => {
+    const p = sectionProgress(k);
+    const pct = Math.round(p.known / p.total * 100);
+    const b = el(`<button class="sec-card" style="--c:${s.color}">
+      <span class="num">${s.num}</span>
+      <h3>${s.title}</h3>
+      <p>${s.blurb}</p>
+      <div class="meter"><span>${p.known}/${p.total} cards</span><span class="bar"><i style="width:${pct}%"></i></span><span>${p.best != null ? "best quiz " + p.best + "/10" : "no quiz yet"}</span></div>
+    </button>`);
+    b.addEventListener("click", () => go(k));
+    wrap.appendChild(b);
+  });
+  app.appendChild(wrap);
+  const foot = el(`<p class="foot">Progress is saved in this browser. <button type="button">Reset progress</button></p>`);
+  $("button", foot).addEventListener("click", () => {
+    if (!confirm("Clear all saved progress?")) return;
+    S.known = {}; S.best = {}; save(); render();
+  });
+  app.appendChild(foot);
+}
+
+/* =====================================================================
+   SECTION SHELL
+   ===================================================================== */
+function renderSection(app, sec, tab) {
+  const s = SECTIONS[sec];
+  app.appendChild(el(`<div class="sec-head"><div class="eyebrow">Exam question ${s.num}</div><h2>${s.title}</h2><p>${s.blurb}</p></div>`));
+  const tabs = el(`<div class="tabs" role="tablist"></div>`);
+  s.tabs.forEach(([k, label]) => {
+    const b = el(`<button class="tab" role="tab" aria-selected="${k === tab}">${label}</button>`);
+    b.addEventListener("click", () => go(sec, k));
+    tabs.appendChild(b);
+  });
+  app.appendChild(tabs);
+  const pane = el(`<div class="pane"></div>`);
+  app.appendChild(pane);
+  const sel = $(".tab[aria-selected='true']", tabs);
+  if (sel) sel.scrollIntoView({ inline:"center", block:"nearest" });
+
+  if (tab === "review") return renderReview(pane, sec);
+  if (tab === "cards") return renderCards(pane, sec);
+  if (tab === "quiz") return renderQuiz(pane, sec);
+  if (tab === "stack") return renderStack(pane);
+  if (tab === "write") return renderWrite(pane);
+  if (tab === "rapid") return renderRapid(pane);
+  if (tab === "sort") return renderSort(pane);
+}
+
+/* =====================================================================
+   REVIEW
+   ===================================================================== */
+function renderReview(pane, sec) {
+  if (sec === "osi") {
+    pane.appendChild(el(`<div class="panel"><h4>The stack · top to bottom</h4>${LAYERS.map(layerBlock).join("")}</div>`));
+    pane.appendChild(el(`<div class="panel" style="margin-top:12px"><h4>Encapsulation</h4><p class="note">Each layer going down wraps the one above with its own header.</p>${ENCAP}</div>`));
+    pane.appendChild(el(`<div class="panel" style="margin-top:12px"><h4>Memory hooks</h4>
+      <p style="margin:0 0 6px"><b>7 → 1:</b> <b>A</b>ll <b>P</b>eople <b>S</b>eem <b>T</b>o <b>N</b>eed <b>D</b>ata <b>P</b>rocessing</p>
+      <p style="margin:0 0 6px"><b>1 → 7:</b> <b>P</b>lease <b>D</b>o <b>N</b>ot <b>T</b>hrow <b>S</b>ausage <b>P</b>izza <b>A</b>way</p>
+      <p class="muted" style="margin:0;font-size:14px">Top three layers all use “message.” Then Segment (4), Datagram (3), Frame (2), Bits (1). The textbook’s 5-layer model drops Presentation and Session, but the class uses all 7.</p></div>`));
+    return;
+  }
+  if (sec === "ports") {
+    const rows = PORTS.map(p => `<tr><td class="port">${p.p}</td><td><b>${esc(p.svc)}</b> ${p.core ? "" : '<span class="muted" style="font-size:12px">(alt)</span>'}<div class="muted" style="font-size:13px">${esc(p.full)}</div></td><td><span class="tp ${p.t}">${p.t}</span></td></tr>`).join("");
+    pane.appendChild(el(`<div class="panel"><h4>Ports to know</h4>
+      <p class="note">HTTP, HTTPS, DNS, SSH, FTP and SMTP are the ones the slides say you “should probably remember.” DHCP comes up in the DORA and “Bob visits google.com” walkthroughs.</p>
+      <table><thead><tr><th>Port</th><th>Service</th><th>Over</th></tr></thead><tbody>${rows}</tbody></table></div>`));
+    pane.appendChild(el(`<div class="panel" style="margin-top:12px"><h4>TCP vs UDP</h4>
+      <table><thead><tr><th></th><th>TCP</th><th>UDP</th></tr></thead><tbody>
+      <tr><td class="muted">Connection</td><td>Connection-oriented (3-way handshake)</td><td>Connectionless</td></tr>
+      <tr><td class="muted">Reliability</td><td>Reliable, in-order</td><td>Unreliable, basic checksum only</td></tr>
+      <tr><td class="muted">Control</td><td>Flow + congestion control</td><td>None — fastest</td></tr>
+      <tr><td class="muted">Header</td><td>20–60 bytes</td><td>8 bytes</td></tr>
+      <tr><td class="muted">Socket</td><td>4-tuple (src IP, src port, dst IP, dst port)</td><td>2-tuple (dst IP, dst port)</td></tr>
+      <tr><td class="muted">Used by</td><td>HTTP, HTTPS, SSH, FTP, SMTP</td><td>DNS, DHCP, HTTP/3 (QUIC)</td></tr>
+      </tbody></table></div>`));
+    pane.appendChild(el(`<div class="panel" style="margin-top:12px"><h4>Port facts</h4><ul class="facts">
+      <li>Port numbers are <b>16 bits</b> (0–65535). Registered by <b>IANA</b> (run by ICANN).</li>
+      <li>A new application should get a port <b>greater than 1024</b>. The low ones are well-known services.</li>
+      <li>The client’s source port is a random high <b>ephemeral</b> port (e.g., 62710 → 80).</li>
+      <li><b>Multiplexing:</b> gather data from sockets, add headers, pass segments to the network layer. <b>Demultiplexing:</b> deliver a received segment to the right socket.</li>
+      <li>TCP replies with <b>RST</b> when a segment arrives for a port nothing is listening on.</li>
+      <li>FTP uses <b>two</b> TCP connections: control on 21 (“out-of-band”), data on 20.</li>
+      </ul></div>`));
+    return;
+  }
+  // protocols
+  const groups = [...SORT_LAYERS, "Between Application & Transport"];
+  const panel = el(`<div class="panel"></div>`);
+  groups.forEach(g => {
+    const list = PROTOS.filter(p => p.layer === g);
+    if (!list.length) return;
+    panel.appendChild(el(`<div class="lay-group">${g}</div>`));
+    list.forEach(p => {
+      panel.appendChild(el(`<details class="proto"><summary><span class="muted"><b>${esc(p.name)}</b>&ensp;${esc(p.full)}</span>${p.port ? `<span class="tag mono">${esc(p.port)}</span>` : ""}<span class="chev">▶</span></summary><div class="proto-body">${protoBody(p)}</div></details>`));
+    });
+  });
+  pane.appendChild(el(`<p class="note">Tap a protocol to expand it. Layers follow how the course groups them (e.g., DHCP and NAT under Network).</p>`));
+  pane.appendChild(panel);
+}
+
+/* =====================================================================
+   FLASHCARDS
+   ===================================================================== */
+function cardsFor(sec) {
+  if (sec === "osi") {
+    const c = LAYERS.map(L => ({
+      id:"osi-" + L.n, tag:"Layer",
+      front:`<div class="big-n" style="--lc:var(--l${L.n})">${L.n}</div><div class="hint">Name the layer, its unit of data, and its responsibilities.</div>`,
+      back:`<div style="--lc:var(--l${L.n})"><h5>${L.n} · ${L.name} <span class="pdu">${L.pdu}</span></h5><div class="sub">${L.one}</div><ul>${L.resp.map(r => `<li>${r}</li>`).join("")}</ul>${L.protos.length ? `<div>${tagList(L.protos)}</div>` : ""}</div>`
+    }));
+    c.push({ id:"osi-encap", tag:"Encapsulation", front:`<div class="fq">Going down the stack, what does each layer add, and what is the result called?</div>`, back:`<h5>Encapsulation</h5><div class="sub">Header added at each layer</div>${ENCAP}` });
+    c.push({ id:"osi-order", tag:"Order", front:`<div class="fq">All seven layers, top to bottom?</div>`, back:`<h5>7 → 1</h5><p>Application · Presentation · Session · Transport · Network · Data Link · Physical</p><p class="muted">All People Seem To Need Data Processing</p>` });
+    return c;
+  }
+  if (sec === "ports") {
+    const c = PORTS.map(p => ({
+      id:"port-" + p.p, tag:"Port",
+      front:`<div class="big-p">${p.p}</div><div class="hint">Which service, and TCP or UDP?</div>`,
+      back:`<div class="ans">${esc(p.svc)}</div><div class="sub">${esc(p.full)}</div><p><span class="tp ${p.t}">${p.t}</span></p>`
+    }));
+    PORT_FACTS.forEach((f, i) => c.push({ id:"pf-" + i, tag:"Fact", front:`<div class="fq">${f.q}</div>`, back:`<div class="ans" style="font-size:19px">${f.a}</div><p class="muted">${f.exp}</p>` }));
+    return c;
+  }
+  return PROTOS.map(p => ({
+    id:"proto-" + p.id, tag:"Protocol",
+    front:`<div class="big-t">${esc(p.name)}</div><div class="hint">What does it do, what layer, and what are the key facts?</div>`,
+    back:`<h5>${esc(p.name)}</h5><div class="sub">${esc(p.full)}</div>${protoBody(p)}`
+  }));
+}
+
+function renderCards(pane, sec) {
+  const all = cardsFor(sec);
+  let onlyUnknown = false, order = all.map((_, i) => i), i = 0;
+  const bar = el(`<div class="deck-bar">
+    <button class="chip" data-a="unk" aria-pressed="false">Unknown only</button>
+    <button class="chip" data-a="shuf">Shuffle</button>
+    <span class="count"></span></div>`);
+  const card = el(`<div class="flip" tabindex="0" role="button" aria-label="Flip card"><div class="flip-in"><div class="face front"></div><div class="face back"></div></div></div>`);
+  const acts = el(`<div class="card-actions"><button class="btn bad" data-a="again">Again</button><button class="btn good" data-a="got">Got it</button></div>`);
+  const nav = el(`<div class="nav-mini"><button data-a="prev">← Prev</button><button data-a="next">Next →</button></div>`);
+  const empty = el(`<div class="panel result" hidden><div class="score">✓</div><p>Every card here is marked known.</p><button class="btn" data-a="resetdeck">Unmark all in this section</button></div>`);
+  pane.append(bar, card, acts, nav, empty);
+
+  const list = () => order.filter(k => !onlyUnknown || !S.known[all[k].id]);
+  function show() {
+    const L = list();
+    const none = L.length === 0;
+    empty.hidden = !none; card.hidden = acts.hidden = nav.hidden = none;
+    const known = all.filter(c => S.known[c.id]).length;
+    $(".count", bar).textContent = none ? `${known}/${all.length} known` : `${i + 1} / ${L.length} · ${known} known`;
+    if (none) return;
+    if (i >= L.length) i = 0;
+    const c = all[L[i]];
+    card.classList.remove("on");
+    $(".front", card).innerHTML = `<span class="corner">${c.tag}</span>${S.known[c.id] ? '<span class="known">✓ known</span>' : ""}${c.front}`;
+    $(".back", card).innerHTML = `<span class="corner">${c.tag}</span><div class="back" style="margin-top:14px">${c.back}</div>`;
+    fit();
+  }
+  function fit() {
+    const inner = $(".flip-in", card);
+    inner.style.minHeight = "";
+    const h = Math.max(inner.offsetHeight, ...$$(".face", card).map(f => f.scrollHeight));
+    inner.style.minHeight = h + "px";
+  }
+  addEventListener("resize", fit);
+  const flip = () => card.classList.toggle("on");
+  card.addEventListener("click", flip);
+  const step = (d) => { const n = list().length; if (!n) return; i = (i + d + n) % n; show(); };
+  function mark(v) {
+    const L = list(); if (!L.length) return;
+    const c = all[L[i]];
+    if (v) S.known[c.id] = true; else delete S.known[c.id];
+    save();
+    if (v && onlyUnknown) show(); else step(1);
+  }
+  bar.addEventListener("click", e => {
+    const a = e.target.dataset.a;
+    if (a === "unk") { onlyUnknown = !onlyUnknown; e.target.setAttribute("aria-pressed", onlyUnknown); i = 0; show(); }
+    if (a === "shuf") { order = shuffle(order); i = 0; show(); }
+  });
+  acts.addEventListener("click", e => { const a = e.target.dataset.a; if (a === "got") mark(true); if (a === "again") mark(false); });
+  nav.addEventListener("click", e => { const a = e.target.dataset.a; if (a === "prev") step(-1); if (a === "next") step(1); });
+  empty.addEventListener("click", e => { if (e.target.dataset.a === "resetdeck") { all.forEach(c => delete S.known[c.id]); save(); show(); } });
+  const key = (e) => {
+    if (e.target.matches("input,textarea,button")) return;
+    if (e.key === " " || e.key === "Enter") { e.preventDefault(); flip(); }
+    else if (e.key === "ArrowRight") step(1);
+    else if (e.key === "ArrowLeft") step(-1);
+    else if (e.key === "1") mark(false);
+    else if (e.key === "2") mark(true);
+  };
+  document.addEventListener("keydown", key);
+  cleanup = () => { document.removeEventListener("keydown", key); removeEventListener("resize", fit); };
+  show();
+}
+
+/* =====================================================================
+   QUIZ (multiple choice, generated from the data)
+   ===================================================================== */
+function mc(q, a, pool, exp) {
+  const d = shuffle([...new Set(pool.filter(x => x !== a))]).slice(0, 3);
+  return { q, a, opts: shuffle([a, ...d]), exp };
+}
+function quizPool(sec) {
+  const G = [];
+  if (sec === "osi") {
+    const names = LAYERS.map(l => l.name);
+    const nums = LAYERS.map(l => String(l.n));
+    const pdus = ["Message","Segment","Datagram","Frame","Bits"];
+    LAYERS.forEach(L => {
+      L.resp.forEach(r => G.push(() => mc(`Which layer is responsible for: <em>${r}</em>?`, L.name, names, `Layer ${L.n}, ${L.name}: ${L.one}`)));
+      G.push(() => mc(`What is the unit of data at the <b>${L.name}</b> layer?`, L.pdu, pdus, `${L.name} → ${L.pdu}.`));
+      G.push(() => mc(`Layer <b>${L.n}</b> of the OSI model is…`, L.name, names, `7 → 1: Application, Presentation, Session, Transport, Network, Data Link, Physical.`));
+      G.push(() => mc(`The <b>${L.name}</b> layer is layer number…`, String(L.n), nums, `All People Seem To Need Data Processing (7 → 1).`));
+      L.qp.forEach(p => G.push(() => mc(`<b>${p}</b> belongs to which layer?`, L.name, names, `${p} is a ${L.name} layer protocol.`)));
+    });
+    OSI_STATIC.forEach(s => G.push(() => mc(s.q, s.a, s.opts, s.exp)));
+  } else if (sec === "ports") {
+    const core = PORTS.filter(p => p.core);
+    const svcs = PORTS.map(p => p.svc), nums = PORTS.map(p => p.p);
+    core.forEach(p => {
+      G.push(() => mc(`Port <b class="mono">${p.p}</b> is used by…`, p.svc, svcs, `${p.p} → ${p.full} (${p.t}).`));
+      G.push(() => mc(`<b>${p.svc}</b> uses which port?`, p.p, nums, `${p.svc} → ${p.p}/${p.t}.`));
+    });
+    ["HTTP","HTTPS","SSH","SMTP","FTP (control)","DNS","DHCP (server)"].forEach(sv => {
+      const p = PORTS.find(x => x.svc === sv);
+      G.push(() => ({ q:`<b>${sv.replace(" (control)","").replace(" (server)","")}</b> normally runs over…`, a:p.t, opts:["TCP","UDP"], exp:p.t === "UDP" ? `${sv} uses UDP — no handshake needed.` : `${sv} needs reliable delivery, so TCP.` }));
+    });
+    PORT_FACTS.forEach(f => G.push(() => mc(f.q, f.a, f.opts, f.exp)));
+  } else {
+    const names = PROTOS.map(p => p.name);
+    PROTOS.forEach(p => {
+      const same = PROTOS.filter(x => x.layer === p.layer && x.id !== p.id).map(x => x.name);
+      const pool = same.length >= 3 ? same : names;
+      G.push(() => mc(`Which protocol: <em>${p.def}</em>`, p.name, pool, `${p.name} — ${p.full}.`));
+      p.facts.forEach(f => {
+        if (f.includes(p.name.split(" ")[0])) return;
+        G.push(() => mc(`Which protocol fits: <em>${f}</em>`, p.name, pool, `${p.name} — ${p.full}.`));
+      });
+      if (p.sort) G.push(() => mc(`<b>${p.name}</b> belongs to which layer?`, p.layer, SORT_LAYERS, p.note || `${p.name} is ${p.layer} layer.`));
+    });
+    PROTO_STATIC.forEach(s => G.push(() => mc(s.q, s.a, s.opts, s.exp)));
+  }
+  return G;
+}
+
+function renderQuiz(pane, sec) {
+  const N = 10;
+  let qs, i, score, missed, locked;
+  function start() {
+    const seen = new Set(); qs = [];
+    for (const g of shuffle(quizPool(sec))) {
+      const q = g(); if (seen.has(q.q)) continue;
+      seen.add(q.q); qs.push(q); if (qs.length === N) break;
+    }
+    i = 0; score = 0; missed = []; draw();
+  }
+  function draw() {
+    locked = false;
+    const q = qs[i];
+    pane.innerHTML = "";
+    pane.appendChild(el(`<div class="prog"><i style="width:${i / N * 100}%"></i></div>`));
+    pane.appendChild(el(`<div class="qmeta"><span>Question ${i + 1} of ${N}</span><span>${score} correct</span></div>`));
+    pane.appendChild(el(`<p class="qtext">${q.q}</p>`));
+    const opts = el(`<div class="opts"></div>`);
+    q.opts.forEach((o, k) => {
+      const b = el(`<button class="opt"><span class="k">${k + 1}</span><span>${o}</span></button>`);
+      b.addEventListener("click", () => answer(k));
+      opts.appendChild(b);
+    });
+    pane.appendChild(opts);
+  }
+  function answer(k) {
+    if (locked) return; locked = true;
+    const q = qs[i], chosen = q.opts[k], ok = chosen === q.a;
+    if (ok) score++; else missed.push(q);
+    $$(".opt", pane).forEach((b, j) => {
+      b.disabled = true;
+      if (q.opts[j] === q.a) b.classList.add("right");
+      else if (j === k) b.classList.add("wrong");
+      else b.classList.add("dim");
+    });
+    $(".qmeta span:last-child", pane).textContent = `${score} correct`;
+    pane.appendChild(el(`<div class="fb ${ok ? "ok" : "no"}"><b>${ok ? "Correct" : "Not quite — " + q.a}</b>${q.exp || ""}</div>`));
+    const nx = el(`<div class="row end" style="margin-top:12px"><button class="btn primary">${i + 1 === N ? "See results" : "Next"} →</button></div>`);
+    $("button", nx).addEventListener("click", next);
+    pane.appendChild(nx);
+    $("button", nx).focus({ preventScroll:true });
+  }
+  function next() { i++; if (i < N) draw(); else finish(); }
+  function finish() {
+    const prev = S.best[sec];
+    if (prev == null || score > prev) { S.best[sec] = score; save(); }
+    pane.innerHTML = "";
+    const r = el(`<div class="panel result">
+      <div class="score">${score}/${N}</div>
+      <p>${score === N ? "Clean sweep." : score >= 8 ? "Solid. Review the misses below." : "Worth another pass through the cards."}${prev != null ? ` Best: ${Math.max(prev, score)}/${N}.` : ""}</p>
+      <div class="row" style="justify-content:center"><button class="btn primary" data-a="again">New quiz</button><button class="btn" data-a="cards">Go to cards</button></div>
+      ${missed.length ? `<ol class="missed">${missed.map(m => `<li>${m.q}<br><span>${m.a}</span></li>`).join("")}</ol>` : ""}
+    </div>`);
+    r.addEventListener("click", e => { if (e.target.dataset.a === "again") start(); if (e.target.dataset.a === "cards") go(sec, "cards"); });
+    pane.appendChild(r);
+  }
+  const key = (e) => {
+    if (!qs || e.target.matches("input,textarea")) return;
+    const n = parseInt(e.key, 10);
+    if (!locked && n >= 1 && n <= (qs[i]?.opts.length || 0)) answer(n - 1);
+  };
+  document.addEventListener("keydown", key);
+  cleanup = () => document.removeEventListener("keydown", key);
+  start();
+}
+
+/* =====================================================================
+   OSI — STACK DRILL (build the stack, then tap the right layer)
+   ===================================================================== */
+function renderStack(pane) {
+  let placed, pool, mistakes, phase, prompts, pi, pscore, busy;
+  function start() { placed = 0; pool = shuffle(LAYERS); mistakes = 0; phase = 1; busy = false; draw(); }
+  function buildPrompts() {
+    const P = [];
+    LAYERS.forEach(L => P.push({ kind:"Responsibility", text:pick(L.resp), ok:[L.n] }));
+    [["Segment",[4]],["Datagram",[3]],["Frame",[2]],["Bits",[1]],["Message",[5,6,7]]].forEach(([u, ok]) => P.push({ kind:"Unit of data", text:u, ok }));
+    P.push({ kind:"Addressing", text:"Uses MAC addresses", ok:[2] }, { kind:"Addressing", text:"Uses IP addresses", ok:[3] }, { kind:"Addressing", text:"Uses port numbers", ok:[4] });
+    P.push({ kind:"Device", text:"Routers operate here", ok:[3] }, { kind:"Device", text:"Switches operate here", ok:[2] });
+    LAYERS.forEach(L => L.qp.forEach(p => P.push({ kind:"Protocol", text:p, ok:[L.n] })));
+    return shuffle(P).slice(0, 12);
+  }
+  function draw() {
+    pane.innerHTML = "";
+    if (phase === 1) {
+      pane.appendChild(el(`<p class="note">Round 1 — build the stack from the top. Tap the layer that goes in the highlighted slot. <span class="streak">${mistakes ? mistakes + " miss" + (mistakes > 1 ? "es" : "") : ""}</span></p>`));
+    } else if (phase === 2) {
+      const pr = prompts[pi];
+      pane.appendChild(el(`<p class="note">Round 2 — tap the layer that matches. ${pi + 1} of ${prompts.length} · ${pscore} right</p>`));
+      pane.appendChild(el(`<div class="prompt"><small>${pr.kind}</small>${pr.text}</div>`));
+    }
+    const stack = el(`<div class="stack"></div>`);
+    LAYERS.forEach((L, idx) => {
+      const filled = phase > 1 || idx < placed;
+      const s = el(`<button class="slot ${filled ? "filled" : ""} ${phase === 1 && idx === placed ? "next" : ""}" style="--lc:var(--l${L.n})" data-n="${L.n}" ${phase === 1 ? "tabindex='-1'" : ""}>
+        <span class="badge">${L.n}</span><span class="nm">${filled ? L.name + ` <span class="pdu">${L.pdu}</span>` : ""}</span></button>`);
+      if (phase === 2) s.addEventListener("click", () => tapLayer(L.n, s));
+      stack.appendChild(s);
+    });
+    pane.appendChild(stack);
+    if (phase === 1) {
+      const pl = el(`<div class="pool"></div>`);
+      pool.forEach(L => {
+        const t = el(`<button class="tile">${L.name}</button>`);
+        t.addEventListener("click", () => {
+          if (L.n === LAYERS[placed].n) { placed++; pool = pool.filter(x => x !== L); if (placed === 7) { phase = 1.5; } draw(); }
+          else { mistakes++; t.classList.remove("shake"); void t.offsetWidth; t.classList.add("shake"); $(".streak", pane).textContent = mistakes + " miss" + (mistakes > 1 ? "es" : ""); }
+        });
+        pl.appendChild(t);
+      });
+      pane.appendChild(pl);
+    }
+    if (phase === 1.5) {
+      const c = el(`<div class="panel" style="margin-top:14px;text-align:center"><p style="margin:0 0 10px"><b>Stack built</b> ${mistakes ? `with ${mistakes} miss${mistakes > 1 ? "es" : ""}` : "with no misses"}.</p><button class="btn primary">Round 2: match responsibilities →</button></div>`);
+      $("button", c).addEventListener("click", () => { phase = 2; prompts = buildPrompts(); pi = 0; pscore = 0; draw(); });
+      pane.appendChild(c);
+    }
+    if (phase === 3) {
+      const c = el(`<div class="panel result" style="margin-top:14px"><div class="score">${pscore}/${prompts.length}</div><p>Round 1: ${mistakes} miss${mistakes === 1 ? "" : "es"} building the stack.</p><button class="btn primary">Run it again</button></div>`);
+      $("button", c).addEventListener("click", start);
+      pane.appendChild(c);
+    }
+  }
+  function tapLayer(n, slot) {
+    if (busy) return; busy = true;
+    const pr = prompts[pi], ok = pr.ok.includes(n);
+    if (ok) { pscore++; slot.classList.add("hit"); }
+    else {
+      slot.classList.add("miss");
+      $$(".slot", pane).forEach(s => { if (pr.ok.includes(+s.dataset.n)) s.classList.add("reveal"); });
+    }
+    setTimeout(() => { busy = false; pi++; if (pi >= prompts.length) phase = 3; draw(); }, ok ? 550 : 1500);
+  }
+  start();
+}
+
+/* =====================================================================
+   OSI — WRITE IT (exam simulation, self-graded)
+   ===================================================================== */
+function renderWrite(pane) {
+  let checked = false;
+  pane.innerHTML = "";
+  pane.appendChild(el(`<p class="note">Exam simulation. Name each layer and jot its responsibilities from memory, then check. Names are auto-graded; tick the key points you actually covered.</p>`));
+  const panel = el(`<div class="panel"></div>`);
+  LAYERS.forEach(L => {
+    panel.appendChild(el(`<div class="sheet-row" style="--lc:var(--l${L.n})" data-n="${L.n}">
+      <div class="badge">${L.n}</div>
+      <div><input type="text" placeholder="Layer ${L.n} name" autocomplete="off" autocapitalize="words" spellcheck="false" aria-label="Layer ${L.n} name">
+      <textarea placeholder="Responsibilities, unit of data…" aria-label="Layer ${L.n} responsibilities"></textarea>
+      <div class="keypts" hidden></div></div></div>`));
+  });
+  pane.appendChild(panel);
+  const tally = el(`<div class="tally"><span>Names <b class="tn">–/7</b> · Points <b class="tp2">–</b></span><button class="btn primary">Check answers</button></div>`);
+  pane.appendChild(tally);
+  const btn = $("button", tally);
+
+  function recount() {
+    const names = $$(".sheet-row input[type=text].ok", panel).length;
+    const boxes = $$(".keypts input", panel), got = boxes.filter(b => b.checked).length;
+    $(".tn", tally).textContent = `${names}/7`;
+    $(".tp2", tally).textContent = `${got}/${boxes.length}`;
+  }
+  btn.addEventListener("click", () => {
+    if (checked) { renderWrite(pane); return; }
+    checked = true;
+    $$(".sheet-row", panel).forEach(row => {
+      const n = +row.dataset.n, L = LAYER_BY_N[n];
+      const inp = $("input", row), ok = NAME_ALIASES[n].includes(norm(inp.value));
+      inp.classList.add(ok ? "ok" : "no"); inp.readOnly = true;
+      $("textarea", row).readOnly = true;
+      const kp = $(".keypts", row);
+      kp.hidden = false;
+      kp.innerHTML = (ok ? "" : `<div class="corr">→ ${L.name}</div>`) +
+        [...L.resp, `Unit of data: ${L.pdu}`].map(r => `<label><input type="checkbox"><span>${r}</span></label>`).join("");
+    });
+    btn.textContent = "Start over";
+    panel.addEventListener("change", recount);
+    recount();
+  });
+}
+
+/* =====================================================================
+   PORTS — RAPID FIRE
+   ===================================================================== */
+function renderRapid(pane) {
+  let mode = "p2s", queue, i, score, state;
+  const LEN = 12;
+  const core = PORTS.filter(p => p.core);
+  function start() {
+    if (mode === "tu") queue = shuffle(TU_ITEMS).slice(0, LEN);
+    else queue = shuffle([...core, ...shuffle(core)]).slice(0, LEN);
+    i = 0; score = 0; draw();
+  }
+  function head() {
+    const h = el(`<div class="chips" style="justify-content:center;margin-bottom:6px">
+      <button class="chip" data-m="p2s" aria-pressed="${mode === "p2s"}">Port → service</button>
+      <button class="chip" data-m="s2p" aria-pressed="${mode === "s2p"}">Service → port</button>
+      <button class="chip" data-m="tu" aria-pressed="${mode === "tu"}">TCP or UDP?</button></div>`);
+    h.addEventListener("click", e => { const m = e.target.dataset.m; if (m && m !== mode) { mode = m; start(); } });
+    return h;
+  }
+  function draw() {
+    state = "ask";
+    pane.innerHTML = "";
+    pane.appendChild(head());
+    pane.appendChild(el(`<div class="prog" style="margin-top:12px"><i style="width:${i / LEN * 100}%"></i></div>`));
+    if (i >= LEN) {
+      const r = el(`<div class="panel result"><div class="score">${score}/${LEN}</div><p>${score === LEN ? "Perfect round." : "Run it again until it’s automatic."}</p><button class="btn primary">Another round</button></div>`);
+      $("button", r).addEventListener("click", start);
+      pane.appendChild(r);
+      return;
+    }
+    const it = queue[i];
+    const box = el(`<div class="panel rf"></div>`);
+    box.appendChild(el(`<div class="qmeta"><span>${i + 1} / ${LEN}</span><span>${score} right</span></div>`));
+    if (mode === "tu") {
+      box.appendChild(el(`<div class="rf-q">${esc(it.t)}</div>`));
+      const duo = el(`<div class="duo"><button class="btn" data-v="TCP">TCP</button><button class="btn" data-v="UDP">UDP</button></div>`);
+      duo.addEventListener("click", e => { const v = e.target.dataset.v; if (v && state === "ask") judge(v === it.a, it.a, e.target); });
+      box.appendChild(duo);
+      box.appendChild(el(`<div class="fbline muted">Keys: T or U</div>`));
+    } else {
+      if (mode === "p2s") box.appendChild(el(`<div class="big-p">${it.p}</div>`));
+      else box.appendChild(el(`<div class="rf-q">${esc(it.svc)}</div>`));
+      const inp = el(`<input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" ${mode === "s2p" ? 'inputmode="numeric"' : ""} placeholder="${mode === "p2s" ? "service" : "port"}" aria-label="Your answer">`);
+      box.appendChild(inp);
+      box.appendChild(el(`<div class="fbline muted">Enter to submit</div>`));
+      inp.addEventListener("keydown", e => {
+        if (e.key !== "Enter") return;
+        e.preventDefault();
+        if (state === "ask") {
+          const v = norm(inp.value); if (!v) return;
+          const ok = mode === "p2s" ? (it.ans.includes(v) || v === norm(it.svc)) : v === it.p;
+          const answer = mode === "p2s" ? `${it.svc} · ${it.t}` : `${it.p} · ${it.t}`;
+          judge(ok, answer, inp);
+        } else if (state === "wait") advance();
+      });
+      setTimeout(() => inp.focus(), 30);
+    }
+    pane.appendChild(box);
+  }
+  function judge(ok, answer, target) {
+    state = ok ? "done" : "wait";
+    if (ok) score++;
+    const fb = $(".fbline", pane);
+    if (target.tagName === "INPUT") { target.classList.add(ok ? "ok" : "no"); }
+    else target.classList.add(ok ? "flash-ok" : "flash-no");
+    $(".qmeta span:last-child", pane).textContent = `${score} right`;
+    if (ok) { fb.innerHTML = `<b style="color:var(--good)">✓ ${esc(answer)}</b>`; setTimeout(advance, 650); }
+    else {
+      fb.innerHTML = `<b style="color:var(--bad)">✗ ${esc(answer)}</b><br><button class="btn" style="margin-top:8px">Next →</button>`;
+      $("button", fb).addEventListener("click", advance);
+    }
+  }
+  function advance() { if (state === "ask") return; i++; draw(); }
+  const key = (e) => {
+    if (mode !== "tu" || e.target.matches("input,textarea")) return;
+    const k = e.key.toLowerCase();
+    if (state === "ask" && (k === "t" || k === "u")) { const b = $(`.duo [data-v="${k === "t" ? "TCP" : "UDP"}"]`, pane); b && b.click(); }
+    else if (state === "wait" && k === "enter") advance();
+  };
+  document.addEventListener("keydown", key);
+  cleanup = () => document.removeEventListener("keydown", key);
+  start();
+}
+
+/* =====================================================================
+   PROTOCOLS — LAYER SORT
+   ===================================================================== */
+function renderSort(pane) {
+  let queue, i, score, state, missed;
+  function start() { queue = shuffle(PROTOS.filter(p => p.sort)); i = 0; score = 0; missed = []; draw(); }
+  function draw() {
+    state = "ask";
+    pane.innerHTML = "";
+    pane.appendChild(el(`<div class="prog"><i style="width:${i / queue.length * 100}%"></i></div>`));
+    if (i >= queue.length) {
+      const r = el(`<div class="panel result"><div class="score">${score}/${queue.length}</div><p>Sorted by the course’s layer grouping.</p><button class="btn primary">Sort again</button>
+        ${missed.length ? `<ol class="missed">${missed.map(p => `<li><b>${esc(p.name)}</b> → <span>${p.layer}</span></li>`).join("")}</ol>` : ""}</div>`);
+      $("button", r).addEventListener("click", start);
+      pane.appendChild(r);
+      return;
+    }
+    const p = queue[i];
+    const box = el(`<div class="panel rf">
+      <div class="qmeta"><span>${i + 1} / ${queue.length}</span><span>${score} right</span></div>
+      <div class="big-t">${esc(p.name)}</div><div class="muted" style="margin:-8px 0 18px">${esc(p.full)}</div>
+      <div class="quad">${SORT_LAYERS.map((l, k) => `<button class="btn" data-l="${l}">${l}</button>`).join("")}</div>
+      <div class="fbline"></div></div>`);
+    $(".quad", box).addEventListener("click", e => {
+      const l = e.target.dataset.l; if (!l || state !== "ask") return;
+      state = "wait";
+      const ok = l === p.layer;
+      if (ok) score++; else missed.push(p);
+      e.target.classList.add(ok ? "flash-ok" : "flash-no");
+      if (!ok) $(`.quad [data-l="${p.layer}"]`, box).classList.add("flash-ok");
+      const fb = $(".fbline", box);
+      fb.innerHTML = `<p style="margin:0 0 8px;font-size:14.5px">${p.def}</p>${p.note ? `<p class="muted" style="margin:0 0 8px;font-size:13px">${p.note}</p>` : ""}<button class="btn primary">Next →</button>`;
+      $("button", fb).addEventListener("click", () => { i++; draw(); });
+      $("button", fb).focus({ preventScroll:true });
+    });
+    pane.appendChild(box);
+  }
+  start();
+}
+
+render();
+</script>
+</body>
+</html>

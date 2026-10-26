@@ -24,6 +24,9 @@
     --good:#8FB98A;
     --good-edge:#5C8659;
     --good-soft:rgba(143,185,138,.18);
+    --short:#B4793F;
+    --back:#394247;
+    --back-line:rgba(255,255,255,.10);
     --spring:cubic-bezier(.34,1.32,.5,1);
     --font:"Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   }
@@ -45,8 +48,12 @@
   header{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;
     padding:calc(12px + env(safe-area-inset-top)) 16px 18px;pointer-events:none;
     background:linear-gradient(var(--canvas) 55%, rgba(229,232,227,0))}
+  .totals{display:flex;align-items:baseline;gap:12px;min-width:0}
   .total{font-size:15px;color:var(--muted);white-space:nowrap}
   .total b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums;margin-left:6px;display:inline-block}
+  #needTot{font-size:13px;color:var(--short);font-variant-numeric:tabular-nums;white-space:nowrap;
+    opacity:0;transform:translateY(-3px);transition:opacity .3s, transform .3s var(--spring)}
+  #needTot.show{opacity:1;transform:translateY(0)}
   .icon-btn{pointer-events:auto;width:38px;height:38px;border-radius:12px;border:0;background:transparent;display:grid;place-items:center;cursor:pointer;
     transition:background .15s, transform .18s var(--spring)}
   .icon-btn:active{background:var(--line);transform:scale(.9)}
@@ -65,7 +72,35 @@
   .bucket .bottom{display:flex;align-items:baseline;justify-content:space-between;gap:6px}
   .bucket .amt{font-size:23px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap;transform-origin:left bottom}
   .bucket.incoming .amt{font-size:30px}
-  .bucket .share{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .bucket .share{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden}
+  .bucket.short .share{color:var(--short)}
+  .bucket.funded .share{color:var(--good-edge);font-weight:500}
+  .bucket.funded:not(.incoming) .fill{background:var(--good);border-top-color:var(--good-edge)}
+
+  /* face-down: parked for this pay cycle, nothing can move in or out */
+  @keyframes flipCard{
+    0%{transform:perspective(680px) rotateY(0) scale(1)}
+    50%{transform:perspective(680px) rotateY(90deg) scale(1.04)}
+    100%{transform:perspective(680px) rotateY(0) scale(1)}
+  }
+  .bucket.flipping{animation:flipCard .44s cubic-bezier(.45,.05,.55,.95);z-index:6}
+  .bucket.flipped{background:var(--back);border-color:var(--back-line);
+    background-image:repeating-linear-gradient(135deg, rgba(255,255,255,.028) 0 7px, transparent 7px 14px)}
+  .bucket.flipped .fill{display:none}
+  .bucket.flipped .name{color:#CAD3D5;opacity:.9}
+  .bucket.flipped .amt{color:#8D9A9E}
+  .bucket.flipped .share{color:#6F7C80}
+  .bucket.flipped .check{display:none}
+  .bucket.flipped .lock{display:grid}
+  .bucket.flipped:not(.lifted):hover{transform:none;box-shadow:none}
+  .bucket .lock{display:none;position:absolute;top:9px;right:9px;z-index:3;width:24px;height:24px;
+    place-items:center;color:#8D9A9E;pointer-events:none}
+  @media (hover:hover) and (pointer:fine){
+    .bucket.flipped .grip{color:#8D9A9E}
+    .bucket.flipped .grip svg{fill:#8D9A9E}
+    .bucket.flipped .grip:hover{background:rgba(255,255,255,.1)}
+    .bucket.flipped .name{padding-right:66px}
+  }
   .bucket:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
   .bucket.source{box-shadow:0 0 0 1.5px var(--accent)}
   .bucket.target{transform:scale(1.04);box-shadow:0 0 0 2px var(--accent), 0 10px 24px -12px rgba(30,42,47,.4)}
@@ -240,6 +275,13 @@
   .amount-field span{font-size:30px;font-weight:500;color:var(--muted)}
   .amount-field input{flex:1;min-width:0;border:0;background:transparent;outline:none;font:600 40px var(--font);letter-spacing:-.02em;
     color:var(--ink);font-variant-numeric:tabular-nums;padding:0}
+  .amount-field.small{margin-top:12px}
+  .amount-field.small span{font-size:22px}
+  .amount-field.small input{font-size:28px}
+  .meter{height:6px;border-radius:999px;background:var(--line);margin-top:14px;overflow:hidden}
+  .meter span{display:block;height:100%;width:0;border-radius:999px;background:var(--fill-edge);
+    transition:width .45s cubic-bezier(.3,.9,.25,1), background .3s}
+  .meter.full span{background:var(--good-edge)}
   .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
   .chip{padding:8px 13px;border-radius:999px;border:1px solid var(--line);background:transparent;font-size:14px;cursor:pointer;
     transition:transform .18s var(--spring), background .15s}
@@ -277,13 +319,16 @@
 <body>
 
 <div id="canvas"><div id="inner">
-  <p id="hint">Drag from one bucket to another to move money.<br><span class="touch-hint">Hold a bucket to rearrange it. Pinch to zoom.</span><span class="mouse-hint">Drag the handle in a bucket's corner to rearrange it — hold Ctrl to line it up with the others. Middle-click to pan, scroll to zoom.</span></p>
+  <p id="hint">Drag from one bucket to another to move money. Double-tap a bucket to park it.<br><span class="touch-hint">Hold a bucket to rearrange it. Pinch to zoom.</span><span class="mouse-hint">Drag the handle in a bucket's corner to rearrange it — hold Ctrl to line it up with the others. Middle-click to pan, scroll to zoom.</span></p>
   <svg id="noodle" aria-hidden="true"><path id="npath"/><circle id="nstart" r="4" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/><circle id="nend" r="5" fill="var(--accent)"/></svg>
   <svg id="guides" aria-hidden="true"></svg>
 </div></div>
 
 <header>
-  <div class="total">Total<b id="total">$0</b></div>
+  <div class="totals">
+    <div class="total">Total<b id="total">$0</b></div>
+    <div id="needTot"></div>
+  </div>
   <div class="tools">
     <button class="snapsw" id="snapsw" role="switch" aria-checked="true" aria-label="Snap buckets into alignment">
       <span class="sw"><span class="knob"></span></span>Align
@@ -334,17 +379,31 @@ const incomingW = () => Math.min(vw() - 32, 340);
 // past that the name just ellipses rather than the bucket eating the board.
 const mctx = document.createElement('canvas').getContext('2d');
 const finePointer = window.matchMedia('(hover:hover) and (pointer:fine)').matches;
+const FONT = '"Instrument Sans", ui-sans-serif, system-ui, -apple-system, sans-serif';
+const textW = (s, weight, px) => { mctx.font = `${weight} ${px}px ${FONT}`; return mctx.measureText(s || '').width; };
 function bucketW(b){
-  mctx.font = '500 14px "Instrument Sans", ui-sans-serif, system-ui, -apple-system, sans-serif';
   const reserved = 30 + (finePointer ? 66 : 32);   // side padding + room for the check (and grip)
-  const w = mctx.measureText(b.name || '').width + reserved + 6;   // a little slack so it never clips by a pixel
-  return Math.ceil(Math.min(BW_MAX, Math.max(BW, w)));
+  const nameW = textW(b.name, 500, 14) + reserved + 6;   // slack so it never clips by a pixel
+  // The bottom row has to fit too, or a target like "$1,250 to go" gets cut off.
+  const rowW = textW(money(b.cents || 0), 600, 23) + textW(goalLabel(b) || '100%', 500, 12) + 30 + 10;
+  return Math.ceil(Math.min(BW_MAX, Math.max(BW, nameW, rowW)));
 }
 const size = b => b.incoming ? {w: incomingW(), h: IH} : {w: bucketW(b), h: BH};
 const byId = id => state.buckets.find(b => b.id === id);
 const incoming = () => state.buckets.find(b => b.incoming);
 const noteById = id => state.notes.find(n => n.id === id);
 const grandTotal = () => state.buckets.reduce((a, b) => a + b.cents, 0);
+// A bucket's target is what still has to land in it before it counts as covered.
+const shortfall = b => b.goal ? Math.max(0, b.goal - b.cents) : 0;
+const totalNeeded = () => state.buckets.reduce((a, b) => a + shortfall(b), 0);
+const isFunded = b => !!b.goal && b.cents >= b.goal;
+// Face-down buckets are parked: no money in or out until they're flipped back.
+const locked = b => !!(b && b.flipped);
+function goalLabel(b){
+  if (!b.goal) return '';
+  const left = shortfall(b);
+  return left ? money(left) + ' to go' : 'covered';
+}
 
 let state;
 
@@ -462,13 +521,31 @@ function makeNode(b){
     + '<circle cx="3" cy="9.5" r="1.1"/><circle cx="9" cy="9.5" r="1.1"/></svg></span>'
     + '<span class="check" role="button" title="Mark transferred — empties this bucket" aria-label="Mark transferred">'
     + '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 7.4l3 3 6-6.4"/></svg></span>'
+    + '<span class="lock" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'
+    + '<rect x="2.6" y="6.2" width="8.8" height="5.6" rx="1.6"/><path d="M4.8 6.2V4.6a2.2 2.2 0 0 1 4.4 0v1.6"/></svg></span>'
     + '<div class="label"><div class="name"></div><div class="bottom"><div class="amt"></div><div class="share"></div></div></div>';
   el.addEventListener('pointerdown', e => onDown(e, b.id));
   el.addEventListener('pointermove', onMove);
   el.addEventListener('pointerup', onUp);
   el.addEventListener('pointercancel', onCancel);
   el.addEventListener('contextmenu', e => e.preventDefault());
-  el.addEventListener('click', () => { if (Date.now() < suppressClick) return; openBucket(b.id); });
+  el.addEventListener('dblclick', e => e.preventDefault());
+  // One tap opens the bucket, two flips it. The single-tap action waits a beat so a
+  // quick double never flashes the sheet; a slower double closes it again on the way.
+  let tapT = null, lastTap = 0;
+  el.addEventListener('click', () => {
+    if (Date.now() < suppressClick) return;
+    const now = Date.now();
+    if (now - lastTap < 500){
+      clearTimeout(tapT); lastTap = 0;
+      if (sheet.classList.contains('open')) closeSheet();
+      toggleFlip(b.id);
+      return;
+    }
+    lastTap = now;
+    clearTimeout(tapT);
+    tapT = setTimeout(() => { lastTap = 0; openBucket(b.id); }, 250);
+  });
   const chk = el.querySelector('.check');
   chk.addEventListener('pointerdown', e => e.stopPropagation());
   chk.addEventListener('click', e => { e.stopPropagation(); markTransferred(b.id); });
@@ -484,19 +561,28 @@ function makeNode(b){
 function render(){
   const total = grandTotal();
   setText($('#total'), money(total));
+  const need = totalNeeded();
+  const nt = $('#needTot');
+  nt.textContent = need ? 'Still needed ' + money(need) : '';
+  nt.classList.toggle('show', !!need);
   const W = vw(); let maxY = 0;
   state.buckets.forEach(b => {
     const el = nodes[b.id] || makeNode(b);
     const s = size(b);
     el.style.width = s.w + 'px'; el.style.height = s.h + 'px';
     el.style.left = b.x + 'px'; el.style.top = b.y + 'px';
-    const pct = total ? b.cents / total : 0;
+    // With a target the fill reads as progress toward it; without one it's share of the total.
+    const pct = b.goal ? Math.min(1, b.cents / b.goal) : (total ? b.cents / total : 0);
     el.querySelector('.fill').style.height = (pct * 100) + '%';
     el.querySelector('.name').textContent = b.name;
     setText(el.querySelector('.amt'), money(b.cents));
-    el.querySelector('.share').textContent = total ? Math.round(pct * 100) + '%' : '';
+    el.querySelector('.share').textContent = b.goal ? goalLabel(b) : (total ? Math.round(pct * 100) + '%' : '');
     el.classList.toggle('empty', !b.cents);
-    el.setAttribute('aria-label', `${b.name}, ${money(b.cents)}`);
+    el.classList.toggle('flipped', locked(b));
+    el.classList.toggle('funded', isFunded(b));
+    el.classList.toggle('short', !!shortfall(b));
+    el.setAttribute('aria-label',
+      `${b.name}, ${money(b.cents)}${b.goal ? ' of ' + money(b.goal) : ''}${locked(b) ? ', parked' : ''}`);
     maxY = Math.max(maxY, b.y + s.h);
   });
   Object.keys(nodes).forEach(id => { if (!byId(id)) { nodes[id].remove(); delete nodes[id]; } });
@@ -523,10 +609,25 @@ function floaty(el, text, out){
   setTimeout(() => f.remove(), 1100);
 }
 
+/* ---------- parking a bucket face-down ---------- */
+function toggleFlip(id){
+  const b = byId(id), el = nodes[id];
+  if (!b) return;
+  b.flipped = !b.flipped;
+  if (el){
+    el.classList.remove('flipping'); void el.offsetWidth; el.classList.add('flipping');
+    el.addEventListener('animationend', () => el.classList.remove('flipping'), {once:true});
+    setTimeout(() => render(), 180);   // swap the face at the midpoint of the turn
+  } else render();
+  navigator.vibrate && navigator.vibrate(6);
+  save();
+  toast(b.flipped ? `${b.name} parked — nothing moves in or out` : `${b.name} is back in play`);
+}
+
 /* ---------- transferred ---------- */
 function markTransferred(id){
   const b = byId(id);
-  if (!b || !b.cents) return;
+  if (!b || !b.cents || locked(b)) return;
   const amt = b.cents, name = b.name;
   b.cents = 0;
   state.hintDone = true;
@@ -815,7 +916,7 @@ function chompTrash(){
 }
 function discard(id, c){
   const b = byId(id);
-  if (!b || !c || c > b.cents) return;
+  if (!b || !c || c > b.cents || locked(b)) return;
   b.cents -= c;
   state.hintDone = true;
   chompTrash();
@@ -829,6 +930,7 @@ function discard(id, c){
 function openDiscard(fromId){
   const from = byId(fromId);
   if (!from) return;
+  if (locked(from)){ toast(`${from.name} is parked — flip it back first`); return; }
   if (!from.cents){ toast(`${from.name} is empty`); return; }
   openSheet(`
     <h2>Discard funds</h2>
@@ -864,7 +966,7 @@ function openDiscard(fromId){
 // Tapping the can (no drag) asks which bucket to pull from.
 trash.onclick = () => {
   if (Date.now() < suppressClick) return;
-  const funded = state.buckets.filter(b => b.cents);
+  const funded = state.buckets.filter(b => b.cents && !locked(b));
   if (!funded.length){ toast('Nothing to discard yet'); return; }
   if (funded.length === 1) return openDiscard(funded[0].id);
   openSheet(`
@@ -889,7 +991,8 @@ function onDown(e, id){
   if (e.target.closest('.check')) return;
   const el = nodes[id];
   el.setPointerCapture(e.pointerId);
-  g = {id, el, pid:e.pointerId, sx:e.clientX, sy:e.clientY, mode:'pending', target:null};
+  // A parked bucket can still be shuffled around the board; it just can't move money.
+  g = {id, el, pid:e.pointerId, sx:e.clientX, sy:e.clientY, mode:'pending', target:null, noLink:locked(byId(id))};
   const lift = () => {
     if (!g || g.mode !== 'pending') return;
     const b = byId(id);
@@ -909,14 +1012,20 @@ function onMove(e){
   const dx = e.clientX - g.sx, dy = e.clientY - g.sy;
   if (g.mode === 'pending' && Math.hypot(dx, dy) > 7){
     clearTimeout(g.timer);
-    g.mode = 'link';
-    g.el.classList.add('source');
-    noodle.style.display = '';
+    if (g.noLink){                 // parked: drag straight into a move, never a money noodle
+      const b = byId(g.id);
+      g.mode = 'lift'; g.ox = b.x; g.oy = b.y;
+      g.el.classList.add('lifted');
+    } else {
+      g.mode = 'link';
+      g.el.classList.add('source');
+      noodle.style.display = '';
+    }
   }
   if (g.mode !== 'pending'){
     const b = byId(g.id);
     // The can only lights up for something it can actually take.
-    g.trash = overTrash(e) && (g.mode === 'link' ? !!b.cents : !b.incoming);
+    g.trash = overTrash(e) && !locked(b) && (g.mode === 'link' ? !!b.cents : !b.incoming);
     armTrash(g.trash);
   }
   if (g.mode === 'link' && g.trash){
@@ -934,7 +1043,7 @@ function onMove(e){
   if (g.mode === 'link'){
     const under = document.elementFromPoint(e.clientX, e.clientY);
     const tEl = under && under.closest('.bucket');
-    const tId = tEl && tEl.dataset.id !== g.id ? tEl.dataset.id : null;
+    const tId = tEl && tEl.dataset.id !== g.id && !locked(byId(tEl.dataset.id)) ? tEl.dataset.id : null;
     if (tId !== g.target){
       if (g.target && nodes[g.target]) nodes[g.target].classList.remove('target');
       g.target = tId;
@@ -993,8 +1102,8 @@ backdrop.addEventListener('click', closeSheet);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
 
 function moveChips(fromId){
-  return state.buckets.filter(b => b.id !== fromId)
-    .map(b => `<button class="chip" data-to="${b.id}">${esc(b.name)}</button>`).join('');
+  return state.buckets.filter(b => b.id !== fromId && !locked(b))
+    .map(b => `<button class="chip" data-to="${b.id}">${esc(b.name)}${b.goal && shortfall(b) ? ` · needs ${money(shortfall(b))}` : ''}</button>`).join('');
 }
 function wireMoveChips(fromId){
   sheet.querySelectorAll('[data-to]').forEach(c => c.onclick = () => openTransfer(fromId, c.dataset.to));
@@ -1002,6 +1111,7 @@ function wireMoveChips(fromId){
 
 function openTransfer(fromId, toId){
   let from = byId(fromId), to = byId(toId);
+  if (locked(from) || locked(to)) return toast(`${locked(from) ? from.name : to.name} is parked — flip it back first`);
   openSheet(`
     <h2>Move money</h2>
     <div class="route">
@@ -1015,14 +1125,20 @@ function openTransfer(fromId, toId){
     <label class="amount-field"><span>$</span><input id="amt" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="Amount"></label>
     <div class="chips">
       <button class="chip" data-f="0.25">25%</button><button class="chip" data-f="0.5">50%</button><button class="chip" data-f="1">All</button>
+      <button class="chip" id="fill" hidden></button>
     </div>
     <p class="err" id="err"></p>
     <button class="btn primary" id="go" disabled>Move</button>`);
-  const amt = $('#amt'), go = $('#go'), err = $('#err');
+  const amt = $('#amt'), go = $('#go'), err = $('#err'), fill = $('#fill');
   function refresh(){
     $('#tFrom').textContent = from.name; $('#tTo').textContent = to.name;
     $('#avail').textContent = from.cents ? `${from.name} has ${money(from.cents)}` : `${from.name} is empty`;
     sheet.querySelectorAll('[data-f]').forEach(c => c.disabled = !from.cents);
+    // "Cover it" drops in exactly what the destination is short, capped by what's on hand.
+    const want = Math.min(shortfall(to), from.cents);
+    fill.hidden = !want;
+    fill.textContent = want ? `Cover ${money(want)}` : '';
+    fill.onclick = () => { amt.value = (want / 100).toFixed(want % 100 ? 2 : 0); refresh(); };
     const c = parseCents(amt.value);
     const over = c > from.cents;
     err.textContent = over ? `${from.name} only has ${money(from.cents)}` : '';
@@ -1060,28 +1176,51 @@ function doMove(fromId, toId, c){
 
 function openBucket(id){
   const b = byId(id);
+  if (locked(b)) return;              // parked: double-tap is the only way in
   if (b.incoming) return openIncoming();
   openSheet(`
     <input class="name-input" id="nm" aria-label="Bucket name" maxlength="28">
-    <p class="sub">Balance ${money(b.cents)}</p>
+    <p class="sub" id="bal"></p>
+    <p class="section">Needs each cycle</p>
+    <label class="amount-field small"><span>$</span><input id="goal" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="Target amount"></label>
+    <div class="meter" id="meter"><span></span></div>
+    <p class="note-line" id="goalNote"></p>
     <p class="section">Move to</p>
     <div class="chips">${moveChips(id)}</div>
     <div class="row" style="margin-top:22px">
       <button class="btn good" id="mark"${b.cents ? '' : ' disabled'}>Mark transferred</button>
+      <button class="btn ghost" id="park">Park it</button>
     </div>
     <div class="row" style="margin-top:10px">
       <button class="btn danger" id="del">Delete</button>
       <button class="btn primary" id="done">Done</button>
     </div>
     <p class="note-line">${b.cents ? 'Marking transferred empties this bucket without crediting anywhere. Deleting sends its balance back to Incoming.' : ''}</p>`);
-  const nm = $('#nm');
+  const nm = $('#nm'), goal = $('#goal');
   nm.value = b.name;
+  goal.value = b.goal ? (b.goal / 100).toFixed(b.goal % 100 ? 2 : 0) : '';
+  function refresh(){
+    $('#bal').textContent = b.goal
+      ? `${money(b.cents)} of ${money(b.goal)}${shortfall(b) ? ` — ${money(shortfall(b))} short` : ' — covered'}`
+      : `Balance ${money(b.cents)}`;
+    const pct = b.goal ? Math.min(1, b.cents / b.goal) * 100 : 0;
+    $('#meter').style.display = b.goal ? '' : 'none';
+    $('#meter').firstElementChild.style.width = pct + '%';
+    $('#meter').classList.toggle('full', isFunded(b));
+    $('#goalNote').textContent = b.goal
+      ? (shortfall(b) ? `Still ${money(shortfall(b))} to put in before this one is covered.` : 'Fully covered for this cycle.')
+      : 'Set what this bucket needs, and the board tracks the shortfall for you.';
+  }
   nm.addEventListener('input', () => { b.name = nm.value.trim() || 'Untitled'; render(); save(); });
   nm.addEventListener('keydown', e => { if (e.key === 'Enter') closeSheet(); });
+  goal.addEventListener('input', () => { b.goal = parseCents(goal.value) || 0; refresh(); render(); save(); });
+  goal.addEventListener('keydown', e => { if (e.key === 'Enter') closeSheet(); });
   wireMoveChips(id);
   $('#mark').onclick = () => { closeSheet(); markTransferred(id); };
+  $('#park').onclick = () => { closeSheet(); toggleFlip(id); };
   $('#done').onclick = closeSheet;
   $('#del').onclick = () => { closeSheet(); deleteBucket(id); };
+  refresh();
 }
 
 // Tips a card into the trashcan from wherever it currently sits.
@@ -1099,7 +1238,7 @@ function clearExit(el){
 }
 function deleteBucket(id, opts = {}){
   const b = byId(id);
-  if (!b || b.incoming) return;
+  if (!b || b.incoming || locked(b)) return;
   const idx = state.buckets.indexOf(b);
   // opts.restore is where it sat before the drag, so undo puts it back there, not on the can.
   const snapshot = {...b, ...(opts.restore || {})};
@@ -1138,7 +1277,7 @@ function openIncoming(){
   const b = incoming();
   openSheet(`
     <h2>Incoming</h2>
-    <p class="sub">Balance ${money(b.cents)}</p>
+    <p class="sub">Balance ${money(b.cents)}${totalNeeded() ? ` — ${money(totalNeeded())} still needed across your buckets` : ''}</p>
     <label class="amount-field"><span>$</span><input id="amt" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="Amount"></label>
     <p class="err" id="err"></p>
     <div class="row">
@@ -1174,16 +1313,19 @@ function openNew(){
   openSheet(`
     <h2>New bucket</h2>
     <input class="name-input" id="nm" placeholder="Name it, like Car or Travel" maxlength="28" style="margin-top:16px;font-weight:500">
+    <p class="section">Needs each cycle — optional</p>
+    <label class="amount-field small"><span>$</span><input id="goal" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="Target amount"></label>
     <p class="err"></p>
     <button class="btn primary" id="create" disabled>Create bucket</button>`);
-  const nm = $('#nm'), create = $('#create');
+  const nm = $('#nm'), create = $('#create'), goal = $('#goal');
   nm.addEventListener('input', () => create.disabled = !nm.value.trim());
   nm.addEventListener('keydown', e => { if (e.key === 'Enter' && !create.disabled) create.click(); });
+  goal.addEventListener('keydown', e => { if (e.key === 'Enter' && !create.disabled) create.click(); });
   create.onclick = () => {
     // Drop it right where you're looking, so the camera never has to chase it.
-    const name = nm.value.trim();
-    const p = spotNearCenter(bucketW({name}), BH);
-    const b = {id:'b' + (state.nextId++), name, cents:0, x:p.x, y:p.y};
+    const name = nm.value.trim(), want = parseCents(goal.value) || 0;
+    const p = spotNearCenter(bucketW({name, cents:0, goal:want}), BH);
+    const b = {id:'b' + (state.nextId++), name, cents:0, goal:want, x:p.x, y:p.y};
     state.buckets.push(b);
     born.add(b.id);
     render(); save(); closeSheet();
@@ -1195,15 +1337,22 @@ function openMenu(){
   let armed = false;
   openSheet(`
     <h2>Budget</h2>
-    <p class="sub">Everything saves as you go.</p>
+    <p class="sub">${totalNeeded() ? `${money(totalNeeded())} still needed across your buckets.` : 'Everything saves as you go.'}</p>
     <div style="margin-top:20px;display:grid;gap:10px">
       <button class="btn ghost" id="empty">Send all balances to Incoming</button>
+      ${state.buckets.some(locked) ? '<button class="btn ghost" id="unpark">Flip every parked bucket back</button>' : ''}
       <button class="btn danger" id="reset">Start over</button>
     </div>`);
   $('#empty').onclick = () => {
     const inc = incoming();
-    state.buckets.forEach(b => { if (!b.incoming){ inc.cents += b.cents; b.cents = 0; } });
+    // Parked buckets sit this one out — that's the point of parking them.
+    state.buckets.forEach(b => { if (!b.incoming && !locked(b)){ inc.cents += b.cents; b.cents = 0; } });
     render(); save(); closeSheet();
+  };
+  if ($('#unpark')) $('#unpark').onclick = () => {
+    state.buckets.forEach(b => { if (b.flipped){ b.flipped = false; const el = nodes[b.id]; if (el){ el.classList.add('flipping'); el.addEventListener('animationend', () => el.classList.remove('flipping'), {once:true}); } } });
+    setTimeout(render, 180);
+    save(); closeSheet();
   };
   $('#reset').onclick = e => {
     if (!armed){ armed = true; e.target.textContent = 'Tap again to erase everything'; return; }

@@ -101,6 +101,44 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .shoprow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid rgba(255,255,255,.07)}
 .shoprow:first-of-type{border-top:0}
 .shoprow p{margin:0;flex:1;font-size:13px;color:#c3cec5}
+/* ---------- camp overworld ----------
+   The stage keeps a fixed 360x560 shape; buildings are placed in % of it so art you
+   drop in via CAMP_ASSETS lines up at any screen size. */
+.world{flex:1;min-height:0;position:relative;display:grid;place-items:center;overflow:hidden;
+  background:#3f6a3b;container-type:size;padding-bottom:var(--safe-b)}
+.stage{position:relative;width:min(100cqw,calc(100cqh*360/560));aspect-ratio:360/560}
+.world-bg{position:absolute;inset:0}
+.world-bg svg,.world-bg img{width:100%;height:100%;display:block}
+.bld{position:absolute;display:flex;flex-direction:column;align-items:center;gap:3px;padding:0;
+  transition:transform .1s ease}
+.bld .art{width:100%;display:block;filter:drop-shadow(0 4px 3px rgba(0,0,0,.45));transition:filter .15s}
+.bld .art svg,.bld .art img{width:100%;height:auto;display:block}
+.bld:hover .art,.bld:focus-visible .art{filter:drop-shadow(0 0 7px rgba(229,192,124,.9)) drop-shadow(0 4px 3px rgba(0,0,0,.45))}
+.bld:active{transform:translateY(2px) scale(.98)}
+.bld:focus-visible{outline:none}
+.bld.dim .art{filter:grayscale(.55) brightness(.82) drop-shadow(0 4px 3px rgba(0,0,0,.45))}
+.plate{background:rgba(20,16,10,.84);border:1px solid rgba(201,151,63,.55);border-radius:3px;
+  padding:3px 7px;text-align:center;line-height:1.15;white-space:nowrap}
+.plate b{display:block;font-family:Bitter,serif;font-size:12px;color:var(--stock)}
+.plate small{display:block;font-size:10px;color:#c9bfa8}
+.bld.go .plate{border-color:#e5c07c;background:rgba(84,54,16,.92)}
+.camp-line{position:absolute;left:8px;right:8px;bottom:8px;padding:5px 9px;border-radius:3px;
+  background:rgba(20,16,10,.78);border:1px solid rgba(201,151,63,.3);font-size:11px;color:#c9bfa8;
+  line-height:1.3;pointer-events:none}
+.stat.pr{display:inline-flex;gap:3px;vertical-align:middle;margin-right:5px}
+.stat.pr svg{width:13px;height:13px}
+.stat.pr b{font-size:inherit}
+/* tooltips: anything with data-tip explains itself on hover or tap */
+[data-tip]{cursor:help}
+.kw{border-bottom:1px dotted currentColor;cursor:help}
+#tip{position:absolute;z-index:40;max-width:210px;padding:6px 9px;border-radius:4px;pointer-events:none;
+  background:#17120b;border:1px solid rgba(229,192,124,.7);color:var(--stock);font:12px/1.3 Inter,sans-serif;
+  box-shadow:0 4px 12px rgba(0,0,0,.6);opacity:0;transition:opacity .12s}
+#tip.on{opacity:1}
+.estr,.ewk{white-space:nowrap}
+.ewk{color:#c9a6ff}
+.estr{color:#f0c96b}
+.estr svg{width:11px;height:11px;vertical-align:-1px}
 .price{font-family:Bitter,serif;color:var(--brass);white-space:nowrap}
 .decklist{display:flex;flex-wrap:wrap;gap:6px}
 .chip{
@@ -182,6 +220,37 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .shield svg{position:absolute;inset:0;width:100%;height:100%}
 .shield span{position:relative}
 
+
+/* first person: no avatar, just the bars you are looking down at. Block is a steel
+   plate laid over the health bar, and strikes fly in and fizzle against its edge. */
+.field::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(125% 95% at 50% 42%,transparent 58%,rgba(0,0,0,.5))}
+.pbar.big{height:20px;position:relative;margin-top:4px;border-radius:3px}
+.pbar.big>i{position:absolute;left:0;top:0;bottom:0;transition:width .35s ease}
+.blockbar{position:absolute;left:0;top:0;bottom:0;width:0;transition:width .45s cubic-bezier(.3,.8,.3,1);
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.1) 0 2px,transparent 2px 5px),
+             linear-gradient(#d3dcda 0,#93a09d 45%,#5f6c6a 55%,#a1aeab 100%);
+  border-right:2px solid #eef5f3;box-shadow:2px 0 8px rgba(150,230,210,.5)}
+.blockbar.gain{animation:blockgain .5s ease-out}
+@keyframes blockgain{0%{filter:brightness(1.9)}100%{filter:none}}
+.blocknum{position:absolute;left:6px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:3px;
+  font-family:Bitter,serif;font-size:12px;font-weight:700;color:#10201c;text-shadow:0 1px 0 rgba(255,255,255,.5);pointer-events:none}
+.blocknum svg{width:13px;height:13px}
+.blocknum:empty{display:none}
+.pbar.clang{animation:clang .28s}
+@keyframes clang{20%{transform:translateX(-4px) scaleY(1.12)}60%{transform:translateX(3px)}}
+.bolt{position:absolute;z-index:18;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,#fff3c8 0,#f08a3c 45%,rgba(200,50,30,0) 72%);
+  box-shadow:0 0 14px 5px rgba(240,120,50,.7);transition:transform .36s cubic-bezier(.55,0,.9,.55)}
+.spark{position:absolute;z-index:18;width:4px;height:4px;margin:-2px 0 0 -2px;border-radius:50%;pointer-events:none;
+  background:#ffe9a8;box-shadow:0 0 6px 2px rgba(255,200,110,.9);animation:sparkfly .5s ease-out forwards}
+@keyframes sparkfly{to{transform:translate(var(--dx),var(--dy)) scale(.2);opacity:0}}
+.enemy.lunge .art{animation:lunge .34s ease-in}
+@keyframes lunge{50%{transform:translateY(16px) scale(1.12)}}
+#hurt{position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none;z-index:4;opacity:0}
+#hurt.on{animation:hurtflash .55s ease-out}
+@keyframes hurtflash{0%{opacity:1;box-shadow:inset 0 0 90px 18px rgba(210,40,30,.75)}100%{opacity:0}}
+
 /* dice tray */
 .tray{
   display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:8px 12px;
@@ -194,6 +263,11 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   min-width:58px;padding:5px 8px;display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:1px;line-height:1;
 }
+.rollbtn{position:relative;overflow:hidden}
+.rollbtn::before{content:"";position:absolute;left:0;right:0;bottom:0;height:var(--fill,0%);
+  background:rgba(201,151,63,.5);transition:height .9s ease}
+.rollbtn>*{position:relative}
+.rollbtn.ready::before{background:rgba(229,192,124,.35)}
 .rollbtn b{font-family:Bitter,serif;font-size:14px}
 .rollbtn small{font-size:9px;opacity:.75;letter-spacing:.02em}
 .rollbtn.hot{background:linear-gradient(#c9973f,#9c6f24);border-color:#e5c07c;color:#1a1408}
@@ -213,6 +287,10 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   position:absolute;left:4px;bottom:4px;padding:1px 6px;border-radius:2px;
   background:#3b3227;color:var(--brass);font-family:Bitter,serif;font-size:11px;
 }
+.pricetag{display:flex;align-items:center;gap:4px;white-space:nowrap}
+.pricetag .stat.pr{margin:0}
+.pricetag + .wheretag{bottom:auto;top:28px}
+#uplist .pick{padding-bottom:26px}
 .pick.tooexpensive{filter:grayscale(.6) brightness(.75)}
 .pick .count{
   position:absolute;top:4px;right:4px;padding:1px 5px;border-radius:2px;
@@ -270,7 +348,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
 /* hand */
 .hand{
-  height:190px;position:relative;flex:none;
+  height:208px;position:relative;flex:none;
   display:flex;justify-content:center;align-items:flex-end;
   padding-bottom:calc(6px + var(--safe-b));
 }
@@ -313,12 +391,22 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   color:var(--ink);font-family:Bitter,serif;font-size:11px;
 }
 .playhint{
-  position:absolute;bottom:2px;left:50%;transform:translateX(-50%);
+  position:absolute;top:30px;left:50%;transform:translateX(-50%);z-index:12;
   font-size:11px;color:var(--brass);letter-spacing:.04em;
   max-width:92%;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-.piles{position:absolute;bottom:calc(8px + var(--safe-b));width:100%;display:flex;justify-content:space-between;padding:0 10px;pointer-events:none}
-.pile{font-size:11px;color:#8b978c;font-variant-numeric:tabular-nums}
+/* The counters sit above the fan, not under it: a full hand covers the whole
+   bottom edge of a phone, and the draw and discard counts were hidden behind it. */
+.piles{position:absolute;top:3px;z-index:12;width:100%;display:flex;justify-content:space-between;padding:0 10px;pointer-events:none}
+.pile:empty{visibility:hidden}
+.pile{display:inline-flex;align-items:center;gap:5px;pointer-events:auto}
+.pile svg{width:15px;height:15px;flex:none}
+.pile b{font-family:Bitter,serif;font-size:13px;color:var(--bone)}
+/* End turn sits between the counters so no hand size ever covers it, or is covered by it */
+.hand .turnbtn{bottom:auto;top:2px;right:auto;left:50%;transform:translateX(-50%);z-index:13;
+  min-height:0;height:24px;padding:0 16px;font-size:12px}
+.hand .turnbtn:active{transform:translateX(-50%) translateY(2px)}
+.pile{font-size:11px;color:#c3cec5;font-variant-numeric:tabular-nums;padding:1px 8px;border-radius:99px;background:rgba(10,14,12,.72)}
 .turnbtn{position:absolute;right:10px;bottom:calc(26px + var(--safe-b));z-index:7}
 
 /* overlay */
@@ -570,46 +658,17 @@ body.grabbing{cursor:grabbing}
       <div class="spacer"></div>
       <div class="tag" id="camp-depth"></div>
     </div>
-    <div class="camp-body">
-      <div class="camp-hero">
-        <h1>Camp</h1>
-        <p id="camp-line">Everything here is yours to keep. Nothing you carry below is, until you climb back out.</p>
-      </div>
-
-      <div class="card-panel">
-        <h3>Skills</h3>
-        <div id="skilllist"></div>
-      </div>
-
-      <div class="card-panel">
-        <h3>Market</h3>
-        <div class="shoprow">
-          <p>Cards for sale. <span class="tag" id="market-note"></span></p>
-          <button class="btn" id="go-market">Visit</button>
-        </div>
-      </div>
-
-      <div class="card-panel">
-        <h3>Training</h3>
-        <div class="shoprow">
-          <p>Sharpen a card. <span class="tag">Every card has a stronger version.</span></p>
-          <span class="price" id="p-up"></span>
-          <button class="btn" id="buy-up">Choose</button>
-        </div>
-      </div>
-
-      <div class="card-panel">
-        <h3>Deck <span class="tag" id="deck-count"></span></h3>
-        <div class="decklist" id="camp-deck"></div>
-        <div style="height:10px"></div>
-        <button class="btn wide" id="view-deck">Deck &amp; collection</button>
-      </div>
-
-      <button class="btn primary wide" id="go-dungeon" style="margin-bottom:10px">Enter the dungeon</button>
-      <button class="btn wide" id="show-rules" style="margin-bottom:12px">How the dice work</button>
-      <div class="shoprow" style="border-top:1px solid rgba(255,255,255,.07)">
-        <p class="tag" id="savenote"></p>
-        <button class="btn danger" id="wipe">Erase</button>
+    <div class="world">
+      <div class="stage">
+        <div class="world-bg" data-asset="bg"></div>
+      <button class="bld go" id="go-dungeon" style="left:33%;top:3%;width:34%" aria-label="Enter the dungeon"><span class="art" data-asset="dungeon"></span><span class="plate"><b>Enter the dungeon</b><small id="note-dungeon"></small></span></button>
+      <button class="bld" id="show-rules" style="left:5%;top:23%;width:21%" aria-label="How the dice work"><span class="art" data-asset="rules"></span><span class="plate"><b>How the dice work</b><small id="note-rules"></small></span></button>
+      <button class="bld" id="go-skills" style="left:5%;top:38%;width:32%" aria-label="Skills"><span class="art" data-asset="skills"></span><span class="plate"><b>Skills</b><small id="note-skills"></small></span></button>
+      <button class="bld" id="go-market" style="left:62%;top:25%;width:32%" aria-label="Market"><span class="art" data-asset="market"></span><span class="plate"><b>Market</b><small id="note-market"></small></span></button>
+      <button class="bld" id="buy-up" style="left:62%;top:49%;width:32%" aria-label="Cardsmith"><span class="art" data-asset="training"></span><span class="plate"><b>Cardsmith</b><small id="note-training"></small></span></button>
+      <button class="bld" id="view-deck" style="left:7%;top:62%;width:30%" aria-label="Deck"><span class="art" data-asset="deck"></span><span class="plate"><b>Deck</b><small id="note-deck"></small></span></button>
+      <button class="bld" id="wipe" style="left:69%;top:73%;width:20%" aria-label="Erase save"><span class="art" data-asset="wipe"></span><span class="plate"><b>Erase save</b><small id="note-wipe"></small></span></button>
+        <div class="camp-line" id="camp-line"></div>
       </div>
     </div>
   </section>
@@ -637,13 +696,14 @@ body.grabbing{cursor:grabbing}
       <div class="stat" id="b-carry"></div>
     </div>
     <div class="field" id="field"></div>
+    <div id="hurt"></div>
     <div class="playerbar">
-      <svg class="hero" viewBox="0 0 48 48" id="hero-art"></svg>
       <div class="pstats">
         <div class="stat" id="b-hp"></div>
-        <div class="pbar"><i id="b-hpfill"></i></div>
+        <div class="pbar big" id="b-bars" data-tip="Block: the steel bar soaks up damage before your health does.">
+          <i id="b-hpfill"></i><div class="blockbar" id="b-blockfill"></div><span class="blocknum" id="b-blocknum"></span>
+        </div>
       </div>
-      <div class="shield" id="b-shield" hidden></div>
     </div>
     <div class="tray">
       <div class="trayrow">
@@ -658,6 +718,7 @@ body.grabbing{cursor:grabbing}
     <div class="hand" id="hand">
       <div class="piles">
         <span class="pile" id="p-draw"></span>
+        <span class="pile" id="p-scroll"></span>
         <span class="pile" id="p-disc"></span>
       </div>
       <button class="btn turnbtn" id="endturn">End turn</button>
@@ -747,6 +808,8 @@ const A = {
   spark:`<svg viewBox="0 0 24 24"><path d="M13 2L6 13h4.5L9 22l8-12h-4.6z" fill="#e0913a" stroke="#3a2410" stroke-width="1.1" stroke-linejoin="round"/><path d="M4 4l1.5 2M20 6l-2 1.5M4 19l2-1" stroke="#c9973f" stroke-width="1.4" stroke-linecap="round"/></svg>`,
   tally:`<svg viewBox="0 0 24 24"><path d="M6 5v14M10 5v14M14 5v14M18 5v14" stroke="#e2dac9" stroke-width="1.8" stroke-linecap="round"/><path d="M4 18L20 6" stroke="#a03328" stroke-width="2" stroke-linecap="round"/></svg>`,
   ember:`<svg class="emberfire" viewBox="0 0 100 100"><path d="M50 8c6 18 22 22 22 42a22 22 0 1 1-44 0c0-12 8-16 12-26 3 6 6 8 6 14 4-8 4-20 4-30z" fill="#c9973f" opacity=".55"/></svg>`,
+  drawpile:`<svg viewBox="0 0 24 24"><rect x="4" y="5" width="12" height="16" rx="2" fill="#2c3a32" stroke="#c3cec5" stroke-width="1.3"/><rect x="8" y="3" width="12" height="16" rx="2" fill="#e7dcc4" stroke="#3a3226" stroke-width="1.3"/><path d="M14 7v7m-3-3l3 3 3-3" stroke="#3a3226" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  discardpile:`<svg viewBox="0 0 24 24"><rect x="4" y="5" width="12" height="16" rx="2" fill="#4a423a" stroke="#a9a08e" stroke-width="1.3"/><rect x="8" y="3" width="12" height="16" rx="2" fill="#b9ae96" stroke="#3a3226" stroke-width="1.3"/><path d="M12 7l6 8M18 7l-6 8" stroke="#7a2b1f" stroke-width="1.7" stroke-linecap="round"/></svg>`,
   hero:`<svg viewBox="0 0 48 48"><ellipse cx="24" cy="44" rx="12" ry="3" fill="#000" opacity=".35"/><path d="M24 8a7 7 0 0 1 7 7v2a7 7 0 0 1-14 0v-2a7 7 0 0 1 7-7z" fill="#e0c9a6" stroke="#2b2419" stroke-width="1.2"/><path d="M14 43V27c0-5 4-8 10-8s10 3 10 8v16z" fill="#3f5c50" stroke="#0f1a15" stroke-width="1.2"/><path d="M34 24l6 4-2 3-6-4z" fill="#cdd6d2" stroke="#2b2419" stroke-width="1"/></svg>`
 };
 
@@ -924,6 +987,16 @@ const maxLvl = k => def(k).maxLvl || 1;
    costs here makes any other card cost more, so training a Tinder to ++++++
    never taxes the first sharpening of a Strike. */
 const sharpenCost = k => (11 + 3.4*def(k).cost) * Math.pow(1.55, lvl(k));
+/* Sharpening is paid in both things the resource bar shows: xp and gold.
+   SHARPEN_GOLD_PER_XP is the dial — gold dropped per fight is roughly twice the xp. */
+const SHARPEN_GOLD_PER_XP = 2;
+const sharpenGold = k => Math.round(sharpenCost(k) * SHARPEN_GOLD_PER_XP);
+const canSharpen = k => S.xp >= sharpenCost(k) && S.bank >= sharpenGold(k);
+const xpHTML = v => `<span class="stat pr">${A.xp}<b>${f2(v)}</b></span>`;
+const goldHTML = v => `<span class="stat pr">${A.coin}<b>${v}</b></span>`;
+const costHTML = k => xpHTML(sharpenCost(k)) + goldHTML(sharpenGold(k));
+const needText = k => [S.xp<sharpenCost(k) ? `${f2(sharpenCost(k)-S.xp)} more xp` : '',
+                       S.bank<sharpenGold(k) ? `${sharpenGold(k)-S.bank} more gold` : ''].filter(Boolean).join(' and ');
 const cardName = k => def(k).name + '+'.repeat(lvl(k));
 /* a card's die slot depends on its level — and a copy that already carries a
    baked pip has no slot left to fill */
@@ -939,10 +1012,10 @@ const f2 = n => (+n).toFixed(2);
 
 /* ---------------- enemies ---------------- */
 const BESTIARY = {
-  slime:{name:'Rot Slime',hp:28,art:'slime',small:true,pattern:[{atk:6},{atk:6},{blk:7}]},
-  wretch:{name:'Grave Wretch',hp:22,art:'wretch',small:true,pattern:[{atk:9},{buff:2},{atk:9}]},
-  brute:{name:'Stone Brute',hp:48,art:'brute',pattern:[{blk:9},{atk:13},{atk:8}]},
-  wraith:{name:'Dicewraith',hp:92,art:'wraith',boss:true,pattern:[{atk:9},{hex:1},{atk:17},{blk:12}]}
+  slime:{name:'Rot Slime',hp:38,art:'slime',small:true,pattern:[{atk:8},{atk:8},{blk:9}]},
+  wretch:{name:'Grave Wretch',hp:30,art:'wretch',small:true,pattern:[{atk:11},{buff:2},{atk:11}]},
+  brute:{name:'Stone Brute',hp:64,art:'brute',pattern:[{blk:11},{atk:16},{atk:10}]},
+  wraith:{name:'Dicewraith',hp:120,art:'wraith',boss:true,pattern:[{atk:11},{hex:1},{atk:21},{blk:15}]}
 };
 
 /* ---------------- the dice economy ----------------
@@ -956,7 +1029,12 @@ const MIN_DECK = 8;           /* a deck can be thinned, not emptied */
 const DICE_PER_ROLL = 3;      /* a roll is a handful, not a die */
 const MAX_TRAY      = 5;      /* the tray only holds so much — rolling at 4 spills */
 const MAX_PIP       = 8;      /* a rolled die stops at 6; Weighted Die pushes past it */
-const rollsForFloor = f => 5 + f;
+/* The Roll button is a meter, not a counter. S.rollCharge runs 0..1, a roll
+   needs it full and empties it, and every turn start fills 1/refillTurns of
+   it — across fights, not per fight. The Bonesetter skill shortens refillTurns. */
+const rollReady = () => S.rollCharge >= 1 - 1e-9;
+const refillTurns = () => skillVal('bonesetter');
+const turnsToRoll = () => Math.ceil((1 - S.rollCharge) * refillTurns() - 1e-9);
 
 /* ---------------- player skills ----------------
    Every skill's value follows sqrt(rank): rank 1 moves the number a lot,
@@ -973,7 +1051,11 @@ const SKILLS = {
   stamina:{name:'Stamina', blurb:'Cards drawn each turn', cost:17.3,
     value:r=>5+0.34*Math.sqrt(r)},
   defense:{name:'Defense', blurb:'Block you start each turn with', cost:13.7,
-    value:r=>2.5*Math.sqrt(r)}          /* rank 0 is 0, always */
+    value:r=>2.5*Math.sqrt(r)},         /* rank 0 is 0, always */
+  /* The Roll button refills a fraction each turn; this is how many turns a
+     full refill takes. It starts at 5 and every rank shaves a little off. */
+  bonesetter:{name:'Bonesetter', blurb:'Turns for the Roll button to refill', cost:15.2,
+    value:r=>5/(1+0.3*Math.sqrt(r))}
 };
 /* Everything the game reads is the rounded value; the raw curve is what the
    camp screen shows you when a rank buys less than a whole point. */
@@ -1041,7 +1123,7 @@ function applySave(data){
   const d=data.s;
   if(data.v===1 && d.pouch && !d.collection) d.collection=d.pouch;   /* renamed in 2 */
   Object.keys(S).forEach(k=>{ if(d[k]!==undefined) S[k]=d[k]; });
-  S.skills = Object.assign({health:0,mana:0,stamina:0,defense:0}, d.skills||{});
+  S.skills = Object.assign({health:0,mana:0,stamina:0,defense:0,bonesetter:0}, d.skills||{});
   S.maxHP = skillVal('health');        /* derived, never trusted from the file */
   S.hp = Math.min(S.hp, S.maxHP);
   return true;
@@ -1055,13 +1137,13 @@ const SAVE_NOTE = {
 /* ---------------- run state ---------------- */
 function freshState(){ return {
   maxHP:60, hp:60, bank:0, xp:0,
-  skills:{health:0, mana:0, stamina:0, defense:0},
+  skills:{health:0, mana:0, stamina:0, defense:0, bonesetter:0},
   deck:['strike','strike','strike','strike','guard','guard','guard','cleave','gambit','loaded'],
   collection:[],                      /* owned, not slotted — the deck is chosen, never grown by accident */
   burnCost:55,
   market:{stock:[], stamp:-1},   /* stamp is the delve the stock was cut for */
   floor:1, carried:{gold:0,cards:[],xp:0},
-  rolls:0, tray:[], inDive:false,
+  rollCharge:1, tray:[], inDive:false,
   seed:Date.now()|0, floorState:null, delves:0, best:0
 }}
 const S = freshState();
@@ -1080,10 +1162,10 @@ function addDie(v){
 }
 function rollDice(){
   if(!B || B.busy || B.over) return;
-  if(S.rolls<=0) return toast('No rolls left on this floor.');
+  if(!rollReady()) return toast(`The Roll button needs ${turnsToRoll()} more turn${turnsToRoll()===1?'':'s'} to refill.`);
   const room = MAX_TRAY - liveDice().length;
   if(room<=0) return toast('The tray is full. Spend some dice first.');
-  S.rolls--;
+  S.rollCharge=0;
   let got=0;
   for(let i=0;i<DICE_PER_ROLL;i++) if(addDie()) got++;
   if(got<DICE_PER_ROLL) toast(`Only room for ${got} — ${DICE_PER_ROLL-got} spilled off the table.`);
@@ -1153,46 +1235,136 @@ function sheet(html){$('#sheet').innerHTML=html;$('#overlay').classList.add('on'
 function closeSheet(){$('#overlay').classList.remove('on')}
 function stat(icon,val,cls){return `${icon}<b class="${cls||''}">${val}</b>`}
 
+/* ---------------- tooltips ----------------
+   Anything with data-tip explains itself: hover on a mouse, tap on a phone. Keywords
+   inside card text are wrapped by kwify() and the note opens below the card. */
+const KW = {
+  ethereal:'Ethereal: vanishes if you do not play it this turn.',
+  exhaust:'Exhaust: gone for the rest of this fight once played.',
+  retain:'Retain: stays in your hand at end of turn.',
+  innate:'Innate: always in your opening hand.',
+  weakened:'Weakened: its next attack hits for less.',
+  weak:'Weak: its next attack hits for less.',
+  vulnerable:'Vulnerable: takes extra damage.',
+  poison:'Poison: loses health every turn.',
+  strength:'Strength: adds to every attack it makes.',
+  thorns:'Thorns: attackers take damage back.',
+  block:'Block: soaks up damage before health does.'
+};
+const _kwRe = new RegExp('\\b(' + Object.keys(KW).sort((a,b)=>b.length-a.length).join('|') + ')\\b','gi');
+function kwify(html){
+  return String(html).split(/(<[^>]*>)/).map(part =>
+    part.startsWith('<') ? part
+      : part.replace(_kwRe, m => `<span class="kw" data-tip="${KW[m.toLowerCase()]}">${m}</span>`)).join('');
+}
+const tipEl = document.createElement('div'); tipEl.id='tip'; $('#app').appendChild(tipEl);
+let tipTimer=0, tipAt=0;
+function showTip(el){
+  const text = el.dataset.tip; if(!text) return;
+  tipEl.textContent = text; tipEl.classList.add('on'); tipAt = Date.now();
+  const app=$('#app').getBoundingClientRect(), k=VIEW_SCALE||1;
+  const host = el.classList.contains('kw') ? (el.closest('.pcard,.pick')||el) : el;
+  const r = host.getBoundingClientRect(), w=tipEl.offsetWidth, h=tipEl.offsetHeight;
+  const W=app.width/k, H=app.height/k;
+  let x=(r.left+r.width/2-app.left)/k - w/2; x=Math.max(6,Math.min(W-w-6,x));
+  let y=(r.bottom-app.top)/k + 6; if(y+h>H-6) y=(r.top-app.top)/k - h - 6;
+  tipEl.style.left=x+'px'; tipEl.style.top=Math.max(6,y)+'px';
+  clearTimeout(tipTimer); tipTimer=setTimeout(hideTip,2800);
+}
+function hideTip(){ tipEl.classList.remove('on'); }
+document.addEventListener('mouseover', e=>{ const t=e.target.closest&&e.target.closest('[data-tip]'); if(t) showTip(t); });
+document.addEventListener('mouseout',  e=>{ if(e.target.closest&&e.target.closest('[data-tip]')) hideTip(); });
+document.addEventListener('click', e=>{
+  const t=e.target.closest&&e.target.closest('[data-tip]');
+  if(t) showTip(t); else if(Date.now()-tipAt>450) hideTip();
+});
+
 /* ================= CAMP ================= */
+/* Placeholder art. To use your own, fill CAMP_ASSETS with image paths — keys are
+   bg, dungeon, rules, skills, market, training, deck, wipe — and the img replaces the drawing. */
+const CAMP_ASSETS = {};
+const _H = (wall,roof,door,extra='')=>`<svg viewBox="0 0 96 80" aria-hidden="true"><ellipse cx="48" cy="75" rx="42" ry="4.5" fill="#000" opacity=".28"/><rect x="14" y="34" width="68" height="41" fill="${wall}" stroke="#1b140c" stroke-width="2"/><path d="M6 37L48 8l42 29z" fill="${roof}" stroke="#1b140c" stroke-width="2" stroke-linejoin="round"/><rect x="40" y="49" width="16" height="26" rx="2" fill="${door}" stroke="#1b140c" stroke-width="2"/><rect x="20" y="45" width="12" height="12" fill="#e3c88a" stroke="#1b140c" stroke-width="1.6"/><rect x="64" y="45" width="12" height="12" fill="#e3c88a" stroke="#1b140c" stroke-width="1.6"/>${extra}</svg>`;
+const _tree = (x,y,r=11)=>`<g transform="translate(${x} ${y})"><ellipse cx="0" cy="${r*0.9}" rx="${r*0.9}" ry="${r*0.35}" fill="#000" opacity=".2"/><rect x="-2" y="${r*0.3}" width="4" height="${r*0.7}" fill="#5a3f22"/><circle cx="0" cy="0" r="${r}" fill="#2d5a33"/><circle cx="-${r*0.3}" cy="-${r*0.3}" r="${r*0.6}" fill="#37703d"/></g>`;
+const CAMP_ART = {
+  bg:`<svg viewBox="0 0 360 560" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><pattern id="gr" width="14" height="14" patternUnits="userSpaceOnUse"><rect width="14" height="14" fill="#3f6a3b"/><path d="M3 6l1-3 1 3M10 12l1-3 1 3" stroke="#4d7c47" fill="none" stroke-width="1"/></pattern></defs>
+    <rect width="360" height="560" fill="url(#gr)"/>
+    <path d="M0 0H360V74L318 52 268 88 214 58 150 92 92 56 40 84 0 62Z" fill="#4a4e48"/>
+    <path d="M0 0H360V46L300 30 244 58 180 34 112 62 50 36 0 48Z" fill="#5d625a"/>
+    <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M180 150C180 205 130 215 150 270S230 330 200 400 160 470 180 560" stroke="#a88b5b" stroke-width="30"/>
+      <path d="M170 215Q130 205 96 205M170 330Q150 310 134 300M190 240Q210 240 224 238M200 365Q215 362 224 362M165 440Q150 445 138 445M195 470Q220 480 246 482" stroke="#a88b5b" stroke-width="14"/>
+      <path d="M180 150C180 205 130 215 150 270S230 330 200 400 160 470 180 560" stroke="#c4a977" stroke-width="22"/>
+      <path d="M170 215Q130 205 96 205M170 330Q150 310 134 300M190 240Q210 240 224 238M200 365Q215 362 224 362M165 440Q150 445 138 445M195 470Q220 480 246 482" stroke="#c4a977" stroke-width="8"/>
+    </g>
+    <ellipse cx="52" cy="530" rx="40" ry="16" fill="#3c6f86"/><ellipse cx="52" cy="528" rx="33" ry="11" fill="#5b95ad"/>
+    ${[[340,110],[345,205],[320,320],[342,430],[305,525],[14,130],[12,325],[14,430],[118,528],[262,540],[100,108],[255,100]].map(t=>_tree(t[0],t[1],t[0]%3?11:13)).join('')}
+    ${[[70,300],[120,380],[300,260],[290,470],[160,60],[300,40],[40,470]].map(f=>`<circle cx="${f[0]}" cy="${f[1]}" r="1.8" fill="#e7dcc4"/><circle cx="${f[0]+6}" cy="${f[1]+4}" r="1.6" fill="#e3c88a"/>`).join('')}
+  </svg>`,
+  skills: _H('#8a6a44','#a03328','#3b2a18','<path d="M48 14l2.2 5.4 5.8.5-4.4 3.8 1.4 5.7-5-3.1-5 3.1 1.4-5.7-4.4-3.8 5.8-.5z" fill="#e3c88a" stroke="#1b140c" stroke-width="1"/>'),
+  training: _H('#7b7f7a','#3a3a40','#2a2118','<rect x="66" y="6" width="9" height="22" fill="#5b5f58" stroke="#1b140c" stroke-width="2"/><circle cx="70" cy="4" r="3" fill="#e08a3c"/><path d="M16 72h16l-2-7h-12z" fill="#2c2c30" stroke="#1b140c" stroke-width="1.4"/>'),
+  deck: _H('#8a6a44','#4e8c7d','#3b2a18','<rect x="38" y="17" width="9" height="13" rx="1" fill="#e7dcc4" stroke="#1b140c" transform="rotate(-10 42 23)"/><rect x="49" y="17" width="9" height="13" rx="1" fill="#e7dcc4" stroke="#1b140c" transform="rotate(10 53 23)"/>'),
+  market: `<svg viewBox="0 0 96 80" aria-hidden="true"><ellipse cx="48" cy="75" rx="42" ry="4.5" fill="#000" opacity=".28"/><rect x="12" y="44" width="72" height="31" fill="#6a4b2a" stroke="#1b140c" stroke-width="2"/><path d="M6 20h84l-6 26H12z" fill="#e7dcc4" stroke="#1b140c" stroke-width="2" stroke-linejoin="round"/><path d="M20 20h14l-1 26H21zM48 20h14l-1 26H49zM76 20h8l-2 26h-6z" fill="#c9973f"/><rect x="22" y="54" width="10" height="14" rx="1" fill="#e7dcc4" stroke="#1b140c"/><rect x="36" y="54" width="10" height="14" rx="1" fill="#e7dcc4" stroke="#1b140c"/><circle cx="64" cy="62" r="7" fill="#c9973f" stroke="#1b140c" stroke-width="1.6"/></svg>`,
+  dungeon: `<svg viewBox="0 0 96 80" aria-hidden="true"><ellipse cx="48" cy="76" rx="44" ry="4" fill="#000" opacity=".28"/><path d="M2 76L30 24l18 16 18-26 28 62z" fill="#6d716a" stroke="#1b140c" stroke-width="2" stroke-linejoin="round"/><path d="M30 76V54a18 18 0 0 1 36 0v22z" fill="#0c0a08" stroke="#1b140c" stroke-width="2"/><circle cx="48" cy="68" r="4" fill="#e08a3c"/><rect x="24" y="52" width="3" height="14" fill="#5a3f22"/><circle cx="25.5" cy="49" r="3" fill="#e08a3c"/><rect x="69" y="52" width="3" height="14" fill="#5a3f22"/><circle cx="70.5" cy="49" r="3" fill="#e08a3c"/></svg>`,
+  rules: `<svg viewBox="0 0 96 80" aria-hidden="true"><ellipse cx="48" cy="76" rx="30" ry="4" fill="#000" opacity=".28"/><rect x="22" y="40" width="5" height="36" fill="#5a3f22"/><rect x="69" y="40" width="5" height="36" fill="#5a3f22"/><rect x="14" y="14" width="68" height="44" rx="2" fill="#8a6a44" stroke="#1b140c" stroke-width="2"/><rect x="22" y="21" width="52" height="30" fill="#e7dcc4" stroke="#1b140c"/><rect x="40" y="27" width="16" height="16" rx="3" fill="#fff" stroke="#1b140c" stroke-width="1.6"/><circle cx="45" cy="32" r="1.8" fill="#221c14"/><circle cx="51" cy="38" r="1.8" fill="#221c14"/></svg>`,
+  wipe: `<svg viewBox="0 0 96 80" aria-hidden="true"><ellipse cx="48" cy="76" rx="22" ry="4" fill="#000" opacity=".28"/><rect x="44" y="18" width="8" height="58" fill="#5a3f22" stroke="#1b140c" stroke-width="1.6"/><path d="M14 22h58l10 11-10 11H14z" fill="#b8906a" stroke="#1b140c" stroke-width="2" stroke-linejoin="round"/><path d="M28 33h30" stroke="#1b140c" stroke-width="3" stroke-linecap="round"/></svg>`
+};
+let _campPainted = false;
+function paintCamp(){
+  if(_campPainted) return; _campPainted = true;
+  document.querySelectorAll('[data-asset]').forEach(el=>{
+    const k=el.dataset.asset;
+    el.innerHTML = CAMP_ASSETS[k] ? `<img src="${CAMP_ASSETS[k]}" alt="" draggable="false">` : (CAMP_ART[k]||'');
+  });
+}
 function renderCamp(){
+  paintCamp();
   $('#camp-hp').innerHTML = stat(A.heart, `${fmt(S.hp)}/${f1(S.maxHP)}`);
   $('#camp-gold').innerHTML = stat(A.coin, S.bank);
   $('#camp-xp').innerHTML = stat(A.xp, f1(S.xp));
   $('#camp-depth').textContent = S.best ? `deepest floor ${S.best}` : 'no delves yet';
-  const cheapest = [...S.deck,...S.collection].filter(k=>lvl(k)<maxLvl(k))
-                     .reduce((m,k)=>Math.min(m, sharpenCost(k)), Infinity);
-  $('#p-up').textContent = isFinite(cheapest) ? `from ${f2(cheapest)} xp` : '—';
+
+  const cands = [...S.deck,...S.collection].filter(k=>lvl(k)<maxLvl(k));
+  const best = cands.reduce((m,k)=>!m || sharpenCost(k)<sharpenCost(m) ? k : m, null);
+  $('#note-training').innerHTML = best ? `from ${costHTML(best)}` : 'all sharpened';
+  $('#buy-up').classList.toggle('dim', !cands.some(canSharpen));
+
   ensureStock();
-  $('#market-note').textContent = S.market.stock.length
+  $('#note-market').textContent = S.market.stock.length
     ? `${S.market.stock.length} on the table, from ${Math.min(...S.market.stock.map(o=>o.price))}g`
     : 'sold out until your next delve';
-  $('#buy-up').disabled = !isFinite(cheapest) || S.xp < cheapest;
 
-  $('#skilllist').innerHTML = Object.keys(SKILLS).map(k=>{
-    const s=SKILLS[k], r=S.skills[k], step=skillStep(k), cost=skillCost(k);
-    const detail = `${f2(step.now)} → <b style="color:#e3c88a">${f2(step.then)}</b>`
-      + ` <span class="tag">+${f2(step.then-step.now)}</span>`;
-    return `<div class="shoprow">
-      <p>${s.name} <span class="tag">rank ${r} · ${s.blurb}</span><br><span class="tag">${detail}</span></p>
-      <span class="price">${f2(cost)} xp</span>
-      <button class="btn" data-skill="${k}" ${S.xp<cost?'disabled':''}>Train</button>
-    </div>`;
-  }).join('');
-  $('#skilllist').querySelectorAll('button[data-skill]').forEach(b=>b.onclick=()=>{
-    const k=b.dataset.skill; S.xp-=skillCost(k); S.skills[k]++;
-    if(k==='health'){ const gain=skillVal('health')-S.maxHP; S.maxHP=skillVal('health'); S.hp+=gain; }
-    renderCamp(); toast(`${SKILLS[k].name} is now ${f2(skillVal(k))}.`);
-  });
+  const cheapestSkill = Math.min(...Object.keys(SKILLS).map(skillCost));
+  $('#note-skills').innerHTML = `train from ${xpHTML(cheapestSkill)}`;
+  $('#go-skills').classList.toggle('dim', S.xp < cheapestSkill);
 
-  $('#deck-count').textContent = `${S.deck.length} cards${S.collection.length?` · ${S.collection.length} in the collection`:''}`;
-  $('#camp-deck').innerHTML = deckGroups()
-    .map(x=>`<span class="chip ${isUp(x.key)?'up':''}" data-key="${x.key}">${cardName(x.key)}${x.n>1?' ×'+x.n:''}</span>`).join('');
-  $('#camp-deck').querySelectorAll('.chip').forEach(el=>el.onclick=()=>openCardDetail(el.dataset.key));
-  $('#savenote').textContent = SAVE_NOTE[Store.mode];
+  $('#note-deck').textContent = `${S.deck.length} cards${S.collection.length?` · ${S.collection.length} spare`:''}`;
+  $('#note-dungeon').textContent = S.best ? `deepest floor ${S.best}` : 'no delves yet';
+  $('#note-rules').textContent = 'notice board';
+  $('#note-wipe').textContent = 'start over';
+  $('#camp-line').textContent = `Everything here is yours to keep. Nothing you carry below is, until you climb back out. ${SAVE_NOTE[Store.mode]}`;
   S.inDive=false;
   show('scr-camp');
   saveGame();
 }
+function openSkills(){
+  sheet(`<h2>Skills</h2>
+    <p>Banked xp trains these. You have ${xpHTML(S.xp)}</p>
+    <div class="card-panel">${Object.keys(SKILLS).map(k=>{
+      const s=SKILLS[k], r=S.skills[k], step=skillStep(k), cost=skillCost(k);
+      const detail = `${f2(step.now)} → <b style="color:#e3c88a">${f2(step.then)}</b> <span class="tag">+${f2(step.then-step.now)}</span>`;
+      return `<div class="shoprow">
+        <p>${s.name} <span class="tag">rank ${r} · ${s.blurb}</span><br><span class="tag">${detail}</span></p>
+        <span class="price">${xpHTML(cost)}</span>
+        <button class="btn" data-skill="${k}" ${S.xp<cost?'disabled':''}>Train</button>
+      </div>`;}).join('')}</div>
+    <button class="btn wide" onclick="closeSheet()">Done</button>`);
+  document.querySelectorAll('#sheet button[data-skill]').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.skill; S.xp-=skillCost(k); S.skills[k]++;
+    if(k==='health'){ const gain=skillVal('health')-S.maxHP; S.maxHP=skillVal('health'); S.hp+=gain; }
+    renderCamp(); openSkills(); toast(`${SKILLS[k].name} is now ${f2(skillVal(k))}.`);
+  });
+}
+$('#go-skills').onclick=openSkills;
 $('#view-deck').onclick=()=>openCollection('deck');
 
 /* ---- deck and collection ----
@@ -1281,9 +1453,9 @@ function openCardDetail(key){
       ${inCollection?'<button class="btn primary" id="to-deck">Slot into the deck</button>':''}
       ${inDeck?'<button class="btn" id="to-collection">Return to the collection</button>':''}
       ${owned && lvl(key)<maxLvl(key)
-          ? `<button class="btn" id="sharpen-card" ${S.xp>=sharpenCost(key)?'':'disabled'}>
-               ${S.xp>=sharpenCost(key) ? `Sharpen — ${f2(sharpenCost(key))} xp`
-                                        : `Sharpen needs ${f2(sharpenCost(key)-S.xp)} more xp`}</button>`
+          ? `<button class="btn" id="sharpen-card" ${canSharpen(key)?'':'disabled'}>
+               ${canSharpen(key) ? `Sharpen — ${costHTML(key)}`
+                                 : `Sharpen needs ${needText(key)}`}</button>`
           : ''}
       ${owned?`<button class="btn danger" id="burn-card">Burn this copy — ${S.burnCost}g</button>`:''}
       <button class="btn" onclick="closeSheet()">Close</button>
@@ -1294,7 +1466,7 @@ function openCardDetail(key){
   if(inCollection) $('#to-deck').onclick=()=>{ toDeck(key); back(); };
   if(inDeck)  $('#to-collection').onclick=()=>{ if(toCollection(key)) back(); };
   if(owned)   $('#burn-card').onclick=()=>burnCard(key, back);
-  if(owned && lvl(key)<maxLvl(key) && S.xp>=sharpenCost(key))
+  if(owned && lvl(key)<maxLvl(key) && canSharpen(key))
     $('#sharpen-card').onclick=()=>{
       const where = inDeck ? 'deck' : 'collection';
       const i = (where==='deck'?S.deck:S.collection).indexOf(key);
@@ -1319,7 +1491,7 @@ function upgradePath(key){
   }
   return `<div class="uppath">${rows.join('')}</div>` +
     (here>=top ? '<p class="tag" style="margin:8px 0 0">Fully sharpened.</p>'
-               : `<p class="tag" style="margin:8px 0 0">${top-here} level${top-here===1?'':'s'} left · next costs ${f2(sharpenCost(key))} xp</p>`);
+               : `<p class="tag" style="margin:8px 0 0">${top-here} level${top-here===1?'':'s'} left · next costs ${costHTML(key)}</p>`);
 }
 
 /* Taking a card out of the deck is free and lives one tap away on the collection
@@ -1419,22 +1591,22 @@ function sharpenable(){
 }
 function openSharpen(){
   const rows=sharpenable();
-  sheet(`<h2>Sharpen a card</h2>
-    <p>Each card is priced on its own, and gets dearer the more you put into it. You have ${f1(S.xp)} xp.</p>
+  sheet(`<h2>The Cardsmith</h2>
+    <p>Each card is priced on its own, and gets dearer the more you put into it. You have ${xpHTML(S.xp)}${goldHTML(S.bank)}</p>
     ${rows.length
       ? `<div class="cardgrid" id="uplist">${rows.map(r=>
-          cardFaceHTML(r.id,'pick'+(S.xp<sharpenCost(r.id)?' tooexpensive':''),r.n)
+          cardFaceHTML(r.id,'pick'+(canSharpen(r.id)?'':' tooexpensive'),r.n)
             .replace('</button>',
-              `<span class="pricetag">${f2(sharpenCost(r.id))} xp</span>`
+              `<span class="pricetag">${costHTML(r.id)}</span>`
              +`<span class="wheretag">${r.where}</span></button>`)).join('')}</div>`
       : '<div class="emptynote">Everything you own is fully sharpened.</div>'}
     <button class="btn wide" onclick="closeSheet()">Not now</button>`);
   document.querySelectorAll('#uplist .pick').forEach((el,i)=>el.onclick=()=>openSharpenOne(rows[i]));
 }
 function openSharpenOne(r){
-  const key=r.id, c=def(key), L=lvl(key), next=L+1, price=sharpenCost(key), afford=S.xp>=price;
+  const key=r.id, c=def(key), L=lvl(key), next=L+1, price=sharpenCost(key), gold=sharpenGold(key), afford=canSharpen(key);
   sheet(`<h2>${cardName(key)} → ${c.name+'+'.repeat(next)}</h2>
-    <p>in your ${r.where} · ${f2(price)} xp for this level · you have ${f1(S.xp)} xp</p>
+    <p>in your ${r.where} · this level costs ${costHTML(key)} · you have ${xpHTML(S.xp)}${goldHTML(S.bank)}</p>
     <div class="pickrow">${cardFaceHTML(key,'pick big')}${cardFaceHTML(key+'+','pick big')}</div>
     <div class="card-panel" style="margin-bottom:12px">
       <h3>Upgrade path</h3>
@@ -1442,27 +1614,27 @@ function openSharpenOne(r){
     </div>
     <div class="stack">
       <button class="btn primary" id="confirm-up" ${afford?'':'disabled'}>
-        ${afford?`Sharpen for ${f2(price)} xp`:`Needs ${f2(price-S.xp)} more xp`}</button>
+        ${afford?`Sharpen for ${costHTML(key)}`:`Needs ${needText(key)}`}</button>
       <button class="btn" id="back-up">Other cards</button>
     </div>`);
   $('#back-up').onclick=()=>openSharpen();
   if(afford) $('#confirm-up').onclick=()=>{
     (r.where==='deck'?S.deck:S.collection)[r.i]=key+'+';
-    S.xp-=price;
+    S.xp-=price; S.bank-=gold;
     closeSheet();
     if($('#scr-collection').classList.contains('on')) renderCollection(); else renderCamp();
     toast(cardName(key+'+')+' is yours.');
   };
 }
 $('#show-rules').onclick=()=>sheet(`<h2>How the dice work</h2>
-  <p>Dice do not arrive on their own. You get a budget of rolls for each floor — six on the first, one more each floor down — and a roll drops three dice into the tray. Tap a die to arm it, then tap a card: the die goes into the card's slot and scales it. The card text updates as soon as you arm a die, so you see the number before you commit.</p><p>Nothing sweeps the tray. A die you don't spend is still there next turn, and still there in the next fight on that floor, which is the whole decision: burn rolls to crush a skirmish, or walk into the deep fight holding a six. The tray holds five, so rolling when you already hold four spills what doesn't fit.</p><p>Nothing you roll comes up higher than a six. Weighted Die is the exception — it pushes what is already in the tray past a real die face, as far as eight, and a die that heavy is worth holding for the card that scales hardest off it.</p><p>A dashed slot means the die is optional. A solid red slot means the card does nothing without one — and with an empty tray and no rolls left, that card is dead weight until you descend.</p>
+  <p>Dice do not arrive on their own. The Roll button is a meter: it must be full to roll, rolling empties it, and it refills a little at the start of every turn, in fights and across them. A roll drops three dice into the tray. Tap a die to arm it, then tap a card: the die goes into the card's slot and scales it. The card text updates as soon as you arm a die, so you see the number before you commit.</p><p>Nothing sweeps the tray. A die you don't spend is still there next turn, and still there in the next fight on that floor, which is the whole decision: spend dice to crush a skirmish, or walk into the deep fight holding a six. The tray holds five, so rolling when you already hold four spills what doesn't fit.</p><p>Nothing you roll comes up higher than a six. Weighted Die is the exception — it pushes what is already in the tray past a real die face, as far as eight, and a die that heavy is worth holding for the card that scales hardest off it.</p><p>A dashed slot means the die is optional. A solid red slot means the card does nothing without one — and with an empty tray and no rolls left, that card is dead weight until you descend.</p>
   <p>Gold, xp and cards you win underground are <em>carried</em>, not banked. Clear a floor and you get one chance to climb out with them. Die or abandon and they are gone — your deck, your health and anything already banked survive.</p>
-  <p>A card you take underground is yours, but it is not in your deck. It goes to the collection, and you slot it in at camp — the deck you go down with is the deck you built, never one that grew by accident. A tap on a card in the deck or the collection opens it; moving, burning and sharpening all happen in that window. Taking cards out of the deck costs nothing. Burning destroys a copy for good, and lives on the card itself — open any card from Deck &amp; collection and the option is there. New cards come from the market, whose table is cut fresh after every delve.</p><p>Any die the game would otherwise roll behind your back is rolled by you: a card that rerolls hands you a single die, says in one line what the roll is for, and waits for you to tap it.</p><p>A tap never plays a card. Tapping one picks it up, tapping it again puts it down, and tapping a creature only aims at it. To play, either press the Play button that appears above your hand — it names the card, the cost and the target — or drag the card: up for anything, onto a creature for an aimed one.</p><p>Nothing you train is a whole number. Every skill grows by a fraction of a point per rank and the fraction is kept, not rounded away: mana carries inside a turn, health and block are simply fractional, and cards drawn accumulate a carry across turns, so a stamina of 5.34 deals a sixth card every third turn. The camp screen shows two decimals on purpose.</p><p>Mana in particular is not a whole number. Each rank of the skill adds a fraction of a point, and the leftovers carry inside a turn — a 3.4 turn is three cards and change, and the change is what buys the fourth card a few ranks later. The well by the tray shows what you hold; the red band on its surface is what the card in your hand is about to take.</p><p>Banked xp sharpens cards at camp. Most cards have one stronger version; a few keep going for several levels, and Tinder only grows a die slot at its third. A sharpened copy stays sharpened for good. Each card is priced on its own and gets dearer the more you put into that card, so pouring xp into one favourite never raises the price of starting on another.</p>
-  <p>The same xp trains four skills: health, mana per turn, cards drawn per turn, and the block you start each turn holding. Every one of them grows on a square root, so the first rank is worth several later ones and the price climbs while the payoff flattens. Nothing is capped. It simply stops being the best thing to buy, which is the only cap that matters.</p>
+  <p>A card you take underground is yours, but it is not in your deck. It goes to the collection, and you slot it in at camp — the deck you go down with is the deck you built, never one that grew by accident. A tap on a card in the deck or the collection opens it; moving, burning and sharpening all happen in that window. Taking cards out of the deck costs nothing. Burning destroys a copy for good, and lives on the card itself — open any card from Deck &amp; collection and the option is there. New cards come from the market, whose table is cut fresh after every delve.</p><p>Any die the game would otherwise roll behind your back is rolled by you: a card that rerolls hands you a single die, says in one line what the roll is for, and waits for you to tap it.</p><p>A tap never plays a card. Tapping one picks it up, tapping it again puts it down, and tapping a creature only aims at it. To play, either press the Play button that appears above your hand — it names the card, the cost and the target — or drag the card: up for anything, onto a creature for an aimed one.</p><p>Nothing you train is a whole number. Every skill grows by a fraction of a point per rank and the fraction is kept, not rounded away: mana carries inside a turn, health and block are simply fractional, and cards drawn accumulate a carry across turns, so a stamina of 5.34 deals a sixth card every third turn. The camp screen shows two decimals on purpose.</p><p>Mana in particular is not a whole number. Each rank of the skill adds a fraction of a point, and the leftovers carry inside a turn — a 3.4 turn is three cards and change, and the change is what buys the fourth card a few ranks later. The well by the tray shows what you hold; the red band on its surface is what the card in your hand is about to take.</p><p>Banked xp and gold sharpen cards at camp. Most cards have one stronger version; a few keep going for several levels, and Tinder only grows a die slot at its third. A sharpened copy stays sharpened for good. Each card is priced on its own and gets dearer the more you put into that card, so pouring xp into one favourite never raises the price of starting on another.</p>
+  <p>The same xp trains five skills: health, mana per turn, cards drawn per turn, the block you start each turn holding, and Bonesetter, which shortens the time the Roll button takes to refill. Every one of them grows on a square root, so the first rank is worth several later ones and the price climbs while the payoff flattens. Nothing is capped. It simply stops being the best thing to buy, which is the only cap that matters.</p>
   <button class="btn wide" onclick="closeSheet()">Got it</button>`);
 $('#go-dungeon').onclick=()=>{
   if(S.deck.length<MIN_DECK){ toast(`Slot at least ${MIN_DECK} cards into your deck first.`); return openCollection('collection'); }
-  S.floor=1;S.carried={gold:0,cards:[],xp:0};S.rolls=rollsForFloor(1);S.tray=[];
+  S.floor=1;S.carried={gold:0,cards:[],xp:0};S.rollCharge=1;S.tray=[];
   S.seed=(Date.now()|0);S.delves++;genFloor();renderFloor()};
 
 function pickN(arr,n){const a=[...arr];const out=[];while(out.length<n&&a.length)out.push(a.splice(rnd(a.length),1)[0]);return out}
@@ -1472,7 +1644,7 @@ function cardFaceHTML(key,cls,count){
     ${count>1?`<span class="count">×${count}</span>`:''}
     <div class="cname">${cardName(key)}</div>
     <div class="cart">${A[c.art]}</div>
-    <div class="ctext">${c.text(0,u)}</div></button>`;
+    <div class="ctext">${kwify(c.text(0,u))}</div></button>`;
 }
 
 /* ================= FLOOR ================= */
@@ -1506,7 +1678,7 @@ function renderFloor(){
   const open = fs.entries.filter(e=>!e.boss&&!e.cleared).length===0;
   $('#f-hp').innerHTML=stat(A.heart,`${fmt(S.hp)}/${f1(S.maxHP)}`);
   $('#f-carry').innerHTML=stat(A.sack,`${S.carried.gold}g · ${f1(S.carried.xp)}xp`+(S.carried.cards.length?` · ${S.carried.cards.length} cards`:''));
-  $('#f-depth').textContent=`floor ${S.floor} · ${S.rolls} rolls`;
+  $('#f-depth').textContent=`floor ${S.floor}`;
   $('#f-hint').textContent = (S.tray.length?`${S.tray.length} dice held (${S.tray.map(d=>d.v).join(' ')}). `:'Tray empty. ')
     + (open ? 'Only the deep fight left.' : 'Clear every fight to unlock the deep one.');
   const links = fs.entries.map(e=>`<line x1="50%" y1="8%" x2="${e.x*100}%" y2="${e.y*100}%" stroke="rgba(201,151,63,.18)" stroke-width="1.5" stroke-dasharray="4 5"/>`).join('');
@@ -1528,11 +1700,11 @@ function renderFloor(){
   show('scr-floor');
 }
 $('#abandon').onclick=()=>{
-  if(!S.carried.gold && !S.carried.cards.length && !S.carried.xp){ S.hp=S.maxHP; S.tray=[]; S.rolls=0; renderCamp(); return; }
+  if(!S.carried.gold && !S.carried.cards.length && !S.carried.xp){ S.hp=S.maxHP; S.tray=[]; S.rollCharge=1; renderCamp(); return; }
   sheet(`<h2>Walk away?</h2><p>You lose ${S.carried.gold} gold, ${f1(S.carried.xp)} xp and ${S.carried.cards.length} card${S.carried.cards.length===1?'':'s'}. Your deck and health come back with you.</p>
     <div class="stack"><button class="btn danger" id="ab-yes">Lose it and go</button>
     <button class="btn" onclick="closeSheet()">Keep delving</button></div>`);
-  $('#ab-yes').onclick=()=>{S.carried={gold:0,cards:[],xp:0};S.tray=[];S.rolls=0;S.hp=S.maxHP;closeSheet();renderCamp();toast('You climb out empty-handed.')};
+  $('#ab-yes').onclick=()=>{S.carried={gold:0,cards:[],xp:0};S.tray=[];S.rollCharge=1;S.hp=S.maxHP;closeSheet();renderCamp();toast('You climb out empty-handed.')};
 };
 
 /* ================= BATTLE ================= */
@@ -1558,7 +1730,6 @@ function startBattle(entry){
     dieId:B_dieSeq, armed:null, armedAt:0, busy:false, lock:0, sel:null, target:0, turn:0, over:false
   };
   B.enemies.forEach(nextIntent);
-  $('#hero-art').outerHTML = A.hero.replace('<svg','<svg class="hero" id="hero-art"');
   saveGame();          /* the fight itself is not serialized — this is the point you return to */
   show('scr-battle');
   startTurn();
@@ -1566,6 +1737,7 @@ function startBattle(entry){
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
 
 function startTurn(){
+  S.rollCharge = Math.min(1, S.rollCharge + 1/refillTurns());
   B.turn++; B.block=B.baseBlock; B.edge=0; B.energy=B.maxEnergy; B.armed=null; B.sel=null; B.busy=false;
   /* the fraction is not thrown away — it waits for the turn it completes */
   B.drawCarry += B.drawN;
@@ -1578,7 +1750,7 @@ function drawCards(n){
   for(let i=0;i<n;i++){
     if(!B.draw.length){ B.draw=shuffle(B.discard); B.discard=[]; }
     if(!B.draw.length) break;
-    if(B.hand.length>=10){ B.discard.push(B.draw.pop()); continue; }
+    if(B.hand.length>=MAX_HAND){ B.discard.push(B.draw.pop()); continue; }
     B.hand.push(B.draw.pop());
   }
 }
@@ -1661,19 +1833,27 @@ function enemyTurn(){
     if(!e){ if(!checkEnd()) startTurn(); return; }
     e.block=0;
     const it=e.intent;
+    const done=()=>{
+      nextIntent(e); renderBattle(); i++;
+      if(S.hp<=0){ return defeat(); }
+      setTimeout(step,380);
+    };
     if(it.atk!=null){
       const raw=Math.max(0, it.atk - (e.weak||0)); e.weak=0;
-      let dmg=raw;
-      const absorbed=Math.min(B.block,dmg); B.block-=absorbed; dmg-=absorbed;
-      S.hp-=dmg; floatOnPlayer(`-${raw}`,'#f0a89f');
-      $('#app').classList.add('shake'); setTimeout(()=>$('#app').classList.remove('shake'),300);
+      const absorbed=Math.min(B.block,raw), dmg=raw-absorbed;
+      /* the strike flies first; the numbers only change when it lands */
+      animateStrike(e, absorbed, dmg, ()=>{
+        B.block-=absorbed; S.hp-=dmg;
+        done();
+      });
+      return;
     } else if(it.blk!=null){ e.block+=it.blk; floatOn(e,`+${it.blk}`,'#8fd0bd') }
     else if(it.buff!=null){ e.str+=it.buff; floatOn(e,`str +${it.buff}`,'#f0c96b') }
     else if(it.hex!=null){
       /* The hex used to shrink next turn's automatic roll. With rolls as a
          floor budget it takes from that budget instead — and if the budget is
          already gone, it takes the best die off your tray. */
-      if(S.rolls>0){ S.rolls--; floatOn(e,'a roll, gone','#c9a6ff'); }
+      if(S.rollCharge>0.05){ S.rollCharge=0; floatOn(e,'your roll, drained','#c9a6ff'); }
       else {
         const live=liveDice();
         if(live.length){ const best=live.reduce((a,b)=>b.v>a.v?b:a); best.spent=true;
@@ -1682,11 +1862,43 @@ function enemyTurn(){
       }
       syncTray();
     }
-    nextIntent(e); renderBattle(); i++;
-    if(S.hp<=0){ return defeat(); }
-    setTimeout(step,380);
+    done();
   };
   step();
+}
+/* An attack is a bolt that travels from the creature to the front edge of your
+   steel block bar — or your health if there is none. What the plate soaks goes
+   out in sparks and the bar shrinks; what gets through flashes the screen red. */
+function animateStrike(e, absorbed, dmg, land){
+  const idx=B.enemies.indexOf(e), el=$(`.enemy[data-i="${idx}"]`), bar=$('#b-bars'), app=$('#app');
+  if(!el || !bar){ land(); return; }
+  const p=app.getBoundingClientRect(), r=el.getBoundingClientRect(), br=bar.getBoundingClientRect(), k=VIEW_SCALE||1;
+  const sx=(r.left+r.width/2-p.left)/k, sy=(r.top+r.height/2-p.top)/k;
+  const frac = B.block>0 ? Math.min(1,B.block/S.maxHP) : Math.min(1,Math.max(0,S.hp)/S.maxHP);
+  const tx=(br.left-p.left)/k + Math.max(0.02,frac)*br.width/k, ty=(br.top+br.height/2-p.top)/k;
+  el.classList.add('lunge'); setTimeout(()=>el.classList.remove('lunge'),360);
+  const bolt=document.createElement('div'); bolt.className='bolt'; bolt.style.left=sx+'px'; bolt.style.top=sy+'px';
+  app.appendChild(bolt);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{ bolt.style.transform=`translate(${tx-sx}px,${ty-sy}px) scale(.7)`; }));
+  setTimeout(()=>{
+    bolt.remove();
+    if(absorbed>0){
+      for(let n=0;n<10;n++){
+        const sp=document.createElement('div'); sp.className='spark'; sp.style.left=tx+'px'; sp.style.top=ty+'px';
+        const a=-Math.PI/2+(Math.random()-.5)*2.6, d=14+Math.random()*30;
+        sp.style.setProperty('--dx',Math.cos(a)*d+'px'); sp.style.setProperty('--dy',Math.sin(a)*d+'px');
+        app.appendChild(sp); setTimeout(()=>sp.remove(),520);
+      }
+      bar.classList.remove('clang'); void bar.offsetWidth; bar.classList.add('clang');
+      floatOnPlayer(`${fmt(absorbed)} blocked`,'#8fd0bd');
+    }
+    if(dmg>0){
+      const h=$('#hurt'); h.classList.remove('on'); void h.offsetWidth; h.classList.add('on');
+      app.classList.add('shake'); setTimeout(()=>app.classList.remove('shake'),300);
+      setTimeout(()=>floatOnPlayer(`-${fmt(dmg)}`,'#f0a89f'),absorbed>0?160:0);
+    }
+    land();
+  },370);
 }
 function checkEnd(){
   if(!aliveEnemies().length){ victory(); return true }
@@ -1827,6 +2039,63 @@ function drawSlotArrow(){
   svg.classList.add('on');
 }
 
+
+/* ---- the hand ----
+   Up to five cards fan out as before. More than that and a fan would pile them
+   so thickly that only a corner of each shows, so the hand becomes a flat row
+   you pan sideways: cards keep their full width and nothing overlaps. Panning
+   is done by hand (not native scroll) so a card can still be dragged up out of
+   the row to play it — the first few pixels of a gesture decide which it is. */
+const MAX_HAND = 7;          /* a hand holds seven; draws past that go to the discard */
+const HAND_FAN_MAX = 5, CARD_W = 104, CARD_STEP = 112;
+const handScrolls = n => n > HAND_FAN_MAX;
+function handMaxScroll(n){
+  const W = $('#hand').clientWidth || 360;
+  return Math.max(0, (n-1)*CARD_STEP + CARD_W + 16 - W);
+}
+function handSlot(i,n,raised){
+  if(handScrolls(n)){
+    const W = $('#hand').clientWidth || 360;
+    B.handScroll = Math.max(0, Math.min(handMaxScroll(n), B.handScroll||0));
+    return {x: -W/2 + 8 + CARD_W/2 + i*CARD_STEP - B.handScroll, rot:0, y: raised?-12:0};
+  }
+  const off=i-(n-1)/2;
+  return {x: off*(n>6?40:n>4?54:62), rot: off*(n>6?3:4.5), y: Math.abs(off)*Math.abs(off)*3 - (raised?34:0)};
+}
+function relayoutHand(){
+  const n=B.hand.length;
+  document.querySelectorAll('#hand .pcard').forEach(el=>{
+    if(el.classList.contains('dragging')) return;
+    const lay=handSlot(el._i,n,B.sel===el._i);
+    el._off=lay.x; el._lift=lay.y;
+    el.style.transform=`translateX(${lay.x}px) rotate(${lay.rot}deg) translateY(${lay.y}px)`;
+  });
+  updateScrollHint();
+}
+function panHand(sx){
+  B.handScroll = Math.max(0, Math.min(handMaxScroll(B.hand.length), sx));
+  relayoutHand();
+}
+function updateScrollHint(){
+  const el=$('#p-scroll'), n=B.hand.length;
+  $('#hand').classList.toggle('scrollmode', handScrolls(n));
+  if(!handScrolls(n)){ el.textContent=''; return; }
+  el.textContent = '';   /* the End turn button takes this slot in scroll mode */
+}
+(function(){
+  const hand=$('#hand'); let pan=null;
+  hand.addEventListener('pointerdown',e=>{
+    if(!B || e.target.closest('.pcard') || e.target.closest('button') || !handScrolls(B.hand.length)) return;
+    pan={x:e.clientX, sx:B.handScroll||0}; try{ hand.setPointerCapture(e.pointerId); }catch(_){}
+  });
+  hand.addEventListener('pointermove',e=>{ if(pan) panHand(pan.sx - (e.clientX-pan.x)/VIEW_SCALE); });
+  const stop=()=>{ pan=null; };
+  hand.addEventListener('pointerup',stop); hand.addEventListener('pointercancel',stop);
+  hand.addEventListener('wheel',e=>{
+    if(!B || !handScrolls(B.hand.length)) return;
+    e.preventDefault(); panHand((B.handScroll||0) + (Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY));
+  },{passive:false});
+})();
 function dragStart(ev, i, el){
   if(B.busy || B.over) return;
   const c=def(B.hand[i]);
@@ -1837,8 +2106,12 @@ function dragStart(ev, i, el){
 function dragMove(ev){
   if(!drag) return;
   const dx=(ev.clientX-drag.x0)/VIEW_SCALE, dy=(ev.clientY-drag.y0)/VIEW_SCALE;
+  if(drag.panning){ panHand(drag.sx0 - dx); return; }
   if(!drag.moved){
     if(Math.hypot(ev.clientX-drag.x0, ev.clientY-drag.y0) < DRAG_SLOP) return;
+    if(handScrolls(B.hand.length) && Math.abs(dx) > Math.abs(dy)*1.2){
+      drag.panning=true; drag.sx0=B.handScroll||0; panHand(drag.sx0 - dx); return;
+    }
     drag.moved=true;
     drag.el.classList.add('dragging');
     document.body.classList.add('grabbing');
@@ -1864,6 +2137,7 @@ function dragMove(ev){
 function dragEnd(ev){
   if(!drag) return;
   const d=drag; drag=null;
+  if(d.panning) return;                 /* a pan is not a tap */
   document.body.classList.remove('grabbing');
   hideArrow(); hoverEnemy(null); $('#slotarrow').classList.remove('on');
   $('#hand').classList.remove('armedrop');
@@ -2001,7 +2275,7 @@ function pipLayout(v){
 function renderBattle(){
   /* enemies */
   $('#b-where').textContent = `Floor ${S.floor} · ${B.entry.boss?'the deep fight':'skirmish'}`;
-  $('#b-carry').innerHTML = stat(A.sack,`${S.carried.gold}g`) + stat(A.dice,`${S.rolls}`);
+  $('#b-carry').innerHTML = stat(A.sack,`${S.carried.gold}g`) + stat(A.dice,`${Math.round(100*S.rollCharge)}%`);
   const field=$('#field');
   const selCard = (B.sel!=null && B.hand[B.sel]) ? def(B.hand[B.sel]) : null;
   const aiming = !!(selCard && selCard.aim);
@@ -2012,12 +2286,16 @@ function renderBattle(){
     const atk = it.atk!=null ? Math.max(0, it.atk-(e.weak||0)) : null;
     const iv = atk!=null?atk : it.blk!=null?it.blk : it.buff!=null?'+'+it.buff : '';
     const targeted = i===B.target;
+    const intentTip = it.atk!=null ? `Attack: hits you for ${atk}${e.weak?' (already weakened)':''} next.`
+      : it.blk!=null ? `Defend: it will gain ${it.blk} block.`
+      : it.buff!=null ? `Buff: it will gain ${it.buff} strength and hit harder from then on.`
+      : 'Hex: it will drain your Roll button, or take your best die if it is already empty.';
     const cls = [e.small?'small':'', targeted?'targeted':'', aiming&&!targeted?'dim':'', e.flash?'struck':''].join(' ');
     return `<div class="enemy ${cls}" data-i="${i}">
-      <div class="intent">${ic}<span>${iv}</span></div>
+      <div class="intent" data-tip="${intentTip}">${ic}<span>${iv}</span></div>
       ${CREATURE[e.art]}
       <div class="hpbar"><i style="width:${100*e.hp/e.maxHP}%"></i></div>
-      <div class="label">${targeted?`<span class="aimmark">${A.crosshair}</span>`:''}${e.hp}/${e.maxHP}${e.block?` <span class="eblock">${A.shieldIcon}${e.block}</span>`:''}${e.weak?` <span style="color:#c9a6ff">−${e.weak}</span>`:''}</div>
+      <div class="label">${targeted?`<span class="aimmark">${A.crosshair}</span>`:''}${e.hp}/${e.maxHP}${e.block?` <span class="eblock" data-tip="Block: ${e.block} damage is soaked up before its health is hit.">${A.shieldIcon}${e.block}</span>`:''}${e.weak?` <span class="ewk" data-tip="Weak: its next attack hits for ${e.weak} less.">−${e.weak}</span>`:''}${e.str>0?` <span class="estr" data-tip="Strength: every attack it makes hits for ${e.str} more.">${A.buff}+${e.str}</span>`:''}</div>
     </div>`;
   }).join('');
   B.enemies.forEach(e=>e.flash=false);
@@ -2034,8 +2312,11 @@ function renderBattle(){
   /* player */
   $('#b-hp').innerHTML = stat(A.heart,`${fmt(S.hp)}/${f1(S.maxHP)}`);
   $('#b-hpfill').style.width = (100*Math.max(0,S.hp)/S.maxHP)+'%';
-  const sh=$('#b-shield'); sh.hidden = B.block<=0;
-  sh.innerHTML = `${A.shieldIcon}<span>${fmt(B.block)}</span>`;
+  const bf=$('#b-blockfill'), prevBlock=+(bf.dataset.v||0);
+  bf.style.width = Math.min(100, 100*Math.max(0,B.block)/S.maxHP)+'%';
+  $('#b-blocknum').innerHTML = B.block>0 ? `${A.shieldIcon}${fmt(B.block)}` : '';
+  if(B.block>prevBlock){ bf.classList.remove('gain'); void bf.offsetWidth; bf.classList.add('gain'); }
+  bf.dataset.v = B.block;
   renderEnergy(pendingCost());
 
   /* dice — the tray, not a per-turn handout */
@@ -2052,15 +2333,17 @@ function renderBattle(){
     renderBattle();
   });
   const rb=$('#rollbtn'), room=MAX_TRAY-live.length;
-  rb.innerHTML = `<b>Roll</b><small>${S.rolls} left</small>`;
-  rb.disabled = S.rolls<=0 || room<=0;
+  rb.innerHTML = `<b>Roll</b><small>${rollReady()?'ready':`in ${turnsToRoll()} turn${turnsToRoll()===1?'':'s'}`}</small>`;
+  rb.style.setProperty('--fill', (100*Math.min(1,S.rollCharge))+'%');
+  rb.classList.toggle('ready', rollReady());
+  rb.disabled = !rollReady() || room<=0;
   rb.classList.toggle('hot', !rb.disabled && live.length===0);
   $('#trayhint').textContent =
     B.armed!=null ? 'Armed. The line shows where it lands — tap a card to hold it.'
-    : !live.length ? (S.rolls>0 ? `No dice held. A roll drops ${DICE_PER_ROLL}, and you have ${S.rolls} for this whole floor.`
-                                : 'No dice, no rolls. Cards that need one are dead until you descend.')
+    : !live.length ? (rollReady() ? `No dice held. Roll now: it drops ${DICE_PER_ROLL}, then the button refills over ${f1(refillTurns())} turns.`
+                                : `No dice held. The Roll button is ${Math.round(100*S.rollCharge)}% full — ${turnsToRoll()} more turn${turnsToRoll()===1?'':'s'}.`)
     : room<DICE_PER_ROLL ? `${live.length} held, room for ${room} — rolling now would spill ${DICE_PER_ROLL-room}.`
-    : `${live.length} held, ${S.rolls} rolls left on this floor. Dice you keep carry into the next fight.`;
+    : `${live.length} held, ${rollReady()?'roll ready':`roll refills in ${turnsToRoll()} turn${turnsToRoll()===1?'':'s'}`}. Dice you keep carry into the next fight.`;
 
   /* hand */
   const hand=$('#hand');
@@ -2070,10 +2353,11 @@ function renderBattle(){
     const c=def(id), u=lvl(id), dslot=dieOf(id), baked=bakedPip(id);
     const off=i-(n-1)/2;
     const raised=B.sel===i;
+    const lay=handSlot(i,n,raised);
     const pip = baked || ((armedDie && dslot!=='none') ? armedDie.v : 0);
     const el=document.createElement('div');
     el.className='pcard'+(raised?' raised':'')+(u?' upgraded':'')+(c.cost>B.energy+1e-9?' unaffordable':'');
-    el.style.transform=`translateX(${off*(n>6?40:n>4?54:62)}px) rotate(${off*(n>6?3:4.5)}deg) translateY(${Math.abs(off)*Math.abs(off)*3 - (raised?34:0)}px)`;
+    el.style.transform=`translateX(${lay.x}px) rotate(${lay.rot}deg) translateY(${lay.y}px)`;
     el.style.zIndex = raised?9:i;
     const slot = baked ? `<span class="slot filled charged">${baked}</span>`
       : dslot==='none' ? ''
@@ -2087,18 +2371,20 @@ function renderBattle(){
     el.innerHTML=`<span class="cost">${fmt(c.cost)}</span>${slot}
       <div class="cname">${cardName(id)}</div>
       <div class="cart">${A[c.art]}</div>
-      <div class="ctext">${c.text(pip,u)}${note?`<br><span style="color:#7a6c52">${note}</span>`:''}</div>`;
+      <div class="ctext">${kwify(c.text(pip,u))}${note?`<br><span style="color:#7a6c52">${note}</span>`:''}</div>`;
     /* the fan offsets are remembered so a drag can rebuild the transform
        without the rotation, rather than fighting the inline one */
-    el._off = off*(n>6?40:n>4?54:62);
-    el._lift = Math.abs(off)*Math.abs(off)*3 - (raised?34:0);
-    el.addEventListener('pointerdown', ev=>{ ev.preventDefault(); dragStart(ev,i,el); });
+    el._off = lay.x;
+    el._lift = lay.y;
+    el._i = i;
+    el.addEventListener('pointerdown', ev=>{ ev.preventDefault(); const kw=ev.target.closest&&ev.target.closest('.kw'); if(kw) showTip(kw); dragStart(ev,i,el); });
     el.addEventListener('pointermove', dragMove);
     el.addEventListener('pointerup', dragEnd);
     el.addEventListener('pointercancel', ()=>{ if(drag){drag=null; hideArrow(); hoverEnemy(null);
       document.body.classList.remove('grabbing'); $('#hand').classList.remove('armedrop'); renderBattle();} });
     hand.appendChild(el);
   });
+  updateScrollHint();
   const pc=$('#playconfirm');
   if(selCard){
     const t = selCard.aim==='all' ? 'everything'
@@ -2119,8 +2405,11 @@ function renderBattle(){
     hand.appendChild(h);
   }
   drawSlotArrow();
-  $('#p-draw').textContent = `draw ${B.draw.length} · ${f2(B.drawN)}/turn`;
-  $('#p-disc').textContent = `discard ${B.discard.length}`;
+  const pd=$('#p-draw'), pdi=$('#p-disc');
+  pd.innerHTML = `${A.drawpile}<b>${B.draw.length}</b>`;
+  pd.dataset.tip = `Draw pile: ${B.draw.length} card${B.draw.length===1?'':'s'}. You draw ${f2(B.drawN)} a turn.`;
+  pdi.innerHTML = `${A.discardpile}<b>${B.discard.length}</b>`;
+  pdi.dataset.tip = `Discard pile: ${B.discard.length} card${B.discard.length===1?'':'s'}. It reshuffles into the draw pile when that runs out.`;
 }
 $('#field').addEventListener('click',e=>{ if(e.target.id==='field'&&B){B.sel=null;renderBattle()} });
 
@@ -2133,11 +2422,11 @@ function floatOn(e,txt,color){
   $('#app').appendChild(f); setTimeout(()=>f.remove(),900);
 }
 function floatOnPlayer(txt,color){
-  const el=$('#hero-art'); const f=document.createElement('div'); f.className='floattext';
+  const el=$('#b-bars'); const f=document.createElement('div'); f.className='floattext';
   f.textContent=txt; f.style.color=color;
   const r=el.getBoundingClientRect(), p=$('#app').getBoundingClientRect();
-  f.style.left=((r.left-p.left)/VIEW_SCALE)+'px';
-  f.style.top=((r.top-p.top)/VIEW_SCALE-10)+'px';
+  f.style.left=((r.left-p.left)/VIEW_SCALE+r.width/VIEW_SCALE*0.35)+'px';
+  f.style.top=((r.top-p.top)/VIEW_SCALE-16)+'px';
   $('#app').appendChild(f); setTimeout(()=>f.remove(),900);
 }
 
@@ -2183,16 +2472,16 @@ function floorClear(){
   $('#extract').onclick=()=>{
     S.bank+=S.carried.gold; S.xp+=S.carried.xp; S.collection.push(...S.carried.cards);
     const g=S.carried.gold,x=S.carried.xp,c=S.carried.cards.length;
-    S.carried={gold:0,cards:[],xp:0}; S.tray=[]; S.rolls=0; S.hp=S.maxHP; closeSheet(); renderCamp();
+    S.carried={gold:0,cards:[],xp:0}; S.tray=[]; S.rollCharge=1; S.hp=S.maxHP; closeSheet(); renderCamp();
     toast(`Banked ${g} gold, ${f1(x)} xp${c?` and ${c} card${c===1?'':'s'} into the collection`:''}.`);
   };
-  $('#descend').onclick=()=>{S.floor++;S.rolls=rollsForFloor(S.floor);genFloor();closeSheet();renderFloor();
-    toast(`Floor ${S.floor}. ${S.rolls} fresh rolls.`)};
+  $('#descend').onclick=()=>{S.floor++;genFloor();closeSheet();renderFloor();
+    toast(`Floor ${S.floor}.`)};
 }
 function defeat(){
   if(B.over) return; B.over=true;
   const g=S.carried.gold,x=S.carried.xp,c=S.carried.cards.length;
-  S.carried={gold:0,cards:[],xp:0}; S.tray=[]; S.rolls=0; S.hp=S.maxHP;
+  S.carried={gold:0,cards:[],xp:0}; S.tray=[]; S.rollCharge=1; S.hp=S.maxHP;
   setTimeout(()=>{
     sheet(`<h2>You go down on floor ${S.floor}</h2>
       <p>${g||c||x?`The floor keeps ${g} gold, ${f1(x)} xp and ${c} card${c===1?'':'s'}.`:'You were carrying nothing, at least.'} Your deck, your health and everything already banked are still yours.</p>
@@ -2224,6 +2513,33 @@ $('#wipe').onclick=()=>{
   const restored = applySave(data);
   if(restored && S.inDive && S.floorState) { renderFloor(); toast(`Back on floor ${S.floor}.`); }
   else renderCamp();
+})();
+
+/* ---------------- back-button guard ----------------
+   A stray swipe-back or back tap would drop the player out of the game. Keep a
+   spare history entry in front of the page; when it is popped, ask first.
+   Back with a sheet open simply closes the sheet, which is what people expect. */
+(function(){
+  let leaving=false;
+  try{ history.replaceState({db:0},''); history.pushState({db:1},''); }catch(e){ return; }
+  window.addEventListener('popstate',()=>{
+    if(leaving) return;
+    try{ history.pushState({db:1},''); }catch(e){}
+    if($('#overlay').classList.contains('on')){ closeSheet(); return; }
+    sheet(`<h2>Leave Dicebound?</h2>
+      <p>${S.inDive ? 'You are mid-delve. Your loot is still carried, not banked, and a fight in progress is not saved.'
+                    : 'Your camp is saved. Heading back will take you out of the game.'}</p>
+      <div class="stack">
+        <button class="btn primary" id="stay-yes">Stay and play</button>
+        <button class="btn danger" id="leave-yes">Leave</button>
+      </div>`);
+    $('#stay-yes').onclick=()=>closeSheet();
+    $('#leave-yes').onclick=()=>{ leaving=true; closeSheet(); history.go(-2); };
+  });
+  window.addEventListener('beforeunload',e=>{
+    if(!S.inDive || leaving) return;
+    e.preventDefault(); e.returnValue='';
+  });
 })();
 </script>
 </body>
