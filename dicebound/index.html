@@ -79,6 +79,10 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .btn:active{transform:translateY(2px);box-shadow:0 0 0 rgba(0,0,0,.5)}
 .btn.primary{background:linear-gradient(#c9973f,#9c6f24);border-color:#e5c07c;color:#1a1408}
 .btn.danger{border-color:rgba(160,51,40,.7);color:#e9b9b3}
+.btn.hold{position:relative;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+.btn.hold::before{content:'';position:absolute;inset:0;background:rgba(190,64,50,.75);transform:scaleX(0);transform-origin:left;transition:transform .2s ease-out}
+.btn.hold.on::before{transform:scaleX(1);transition:transform 1.5s linear}
+.btn.hold span{position:relative}
 .btn[disabled]{opacity:.4;pointer-events:none}
 .btn.wide{width:100%}
 
@@ -100,6 +104,21 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .card-panel h3{margin:0 0 8px;font-size:14px;color:var(--brass)}
 .shoprow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid rgba(255,255,255,.07)}
 .shoprow:first-of-type{border-top:0}
+.skrow{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)}
+.skrow:first-of-type{border-top:0}
+.skinfo{flex:1;min-width:0}
+.skname{font:600 15px Inter,sans-serif;color:var(--bone)}
+.skdelta{margin-left:6px;font:600 12px Inter,sans-serif;color:#e3c88a;white-space:nowrap}
+.skblurb{margin-top:2px;font-size:12px;color:#8f9c92}
+.skret{margin-top:4px;font-size:12px;color:#8f9c92}
+.skret b{font-weight:600;color:#cdd8cf}
+.skret span{opacity:.85}
+.skbtn{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1px;min-width:84px;min-height:48px;padding:6px 10px;line-height:1.15}
+.trainchg{display:flex;align-items:baseline;justify-content:center;gap:12px;margin:6px 0 14px;font:700 28px Bitter,serif;color:#8f9c92}
+.trainchg b{color:#e5c07c}.trainchg i{font-style:normal;font-size:20px;color:#6f7d73}
+.skbtn .skgain{display:block;color:#e5c07c;font-weight:700;font-size:13px}
+.skbtn .skcost{font-size:12px;opacity:.95}
+.skbtn .skcost .stat{margin:0}
 .shoprow p{margin:0;flex:1;font-size:13px;color:#c3cec5}
 /* ---------- camp overworld ----------
    The stage keeps a fixed 360x560 shape; buildings are placed in % of it so art you
@@ -155,8 +174,15 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
 /* ---------- floor map ---------- */
 .map{flex:1;position:relative;margin:10px;border:1px solid rgba(201,151,63,.2);border-radius:4px;overflow:hidden;
-  background:radial-gradient(90% 60% at 50% 20%, #22302a, #101715)}
+  background:
+    radial-gradient(70% 28% at 50% 4%, rgba(224,145,58,.22), transparent 70%),
+    radial-gradient(130% 90% at 50% 45%, transparent 55%, rgba(0,0,0,.55)),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 1px, transparent 1px 58px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0 1px, transparent 1px 76px),
+    linear-gradient(#1a2620,#101715)}
 .map svg.links{position:absolute;inset:0;width:100%;height:100%}
+.map .stairs{position:absolute;left:50%;top:2.5%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;font:600 10px Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#d9a85a}
+.map .stairs i{display:block;width:34px;height:12px;border-radius:17px 17px 0 0;background:linear-gradient(#0a0e0c,#26332b);border:1px solid rgba(217,168,90,.6);border-bottom:0;box-shadow:0 -4px 14px rgba(224,145,58,.45)}
 .node{
   position:absolute;transform:translate(-50%,-50%);
   width:74px;min-height:var(--slot);
@@ -170,6 +196,15 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   box-shadow:0 3px 10px rgba(0,0,0,.6);
 }
 .node .disc svg{width:40px;height:40px}
+.node .disc svg.art{width:46px;height:50px;overflow:visible}
+.node.boss .disc svg.art{width:62px;height:68px}
+.node .badge{position:absolute;top:-4px;right:6px;min-width:20px;height:20px;border-radius:10px;padding:0 5px;display:grid;place-items:center;font:700 11px Inter,sans-serif;background:#c9973f;color:#1b1500;border:1px solid #f0d79a;box-shadow:0 1px 4px rgba(0,0,0,.6)}
+.node.cleared .badge{background:#4a5249;color:#cdd8cf;border-color:#6a736b;filter:none}
+.node.boss{width:92px}
+.node.boss .disc{width:76px;height:76px;border-width:3px}
+.node.boss .disc svg{width:52px;height:52px}
+.node.boss small{color:#e0a59d;font-weight:600;letter-spacing:.04em}
+.node .disc{position:relative}
 .node small{font-size:10.5px;color:#a7b3a8;text-align:center;line-height:1.2}
 .node.cleared .disc{filter:grayscale(1) brightness(.5);border-color:#4a5249}
 .node.cleared small{color:#5f6a61}
@@ -237,6 +272,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   font-family:Bitter,serif;font-size:12px;font-weight:700;color:#10201c;text-shadow:0 1px 0 rgba(255,255,255,.5);pointer-events:none}
 .blocknum svg{width:13px;height:13px}
 .blocknum:empty{display:none}
+.pbar.snap *{transition:none!important;animation:none!important}
 .pbar.clang{animation:clang .28s}
 @keyframes clang{20%{transform:translateX(-4px) scaleY(1.12)}60%{transform:translateX(3px)}}
 .bolt{position:absolute;z-index:18;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;pointer-events:none;
@@ -250,6 +286,89 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 #hurt{position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none;z-index:4;opacity:0}
 #hurt.on{animation:hurtflash .55s ease-out}
 @keyframes hurtflash{0%{opacity:1;box-shadow:inset 0 0 90px 18px rgba(210,40,30,.75)}100%{opacity:0}}
+
+/* dice pouch */
+.pouchh{margin:4px 0 8px;font-size:13px;color:var(--brass)}
+.dieslots{display:flex;gap:10px;margin-bottom:16px}
+.dpick{flex:1;min-width:0;position:relative;text-align:center;font-size:11px;padding:10px 4px 8px;border-radius:6px;
+  border:1px solid rgba(201,151,63,.4);background:linear-gradient(#1f2b25,#151e19);color:var(--bone)}
+.dpick svg{width:38px;height:38px;display:block;margin:0 auto 4px}
+.dpick b{display:block;font-family:Bitter,serif;font-size:12px}
+.dpick small{display:block;color:#a9b6ac;font-size:10px;margin-top:2px}
+.dpick.k-enchanted svg{filter:drop-shadow(0 0 6px #b98cf0)}
+.dpick.k-loaded svg{filter:drop-shadow(0 0 4px #c9973f)}
+.dpick.k-fickle svg{filter:drop-shadow(0 0 4px #c0483c)}
+.dpick.k-even svg{filter:drop-shadow(0 0 4px #7fb7a6)}
+.dpick.k-steady svg{filter:drop-shadow(0 0 4px #9fb4d6)}
+.dpick .rune{position:absolute;top:5px;right:5px;width:17px;height:17px;display:block}
+.dpick .rune svg{width:17px;height:17px}
+.fc svg{width:60%;height:60%}
+.dpick.k-flame svg,.dpick.k-ward svg,.dpick.k-heart svg,.dpick.k-spark svg,.dpick.k-scholar svg{filter:none}
+.dpick.k-lucky svg{filter:drop-shadow(0 0 4px #7bc47f)}
+.dpick .snum{position:absolute;top:3px;left:5px;font-size:9px;color:#a9b6ac}
+/* in the pouch: lit, framed, bright. spare: dim, dashed, sitting in the bag */
+#pouch-slots{display:flex;flex-direction:column;gap:16px;padding:16px 10px 12px;border:1px solid rgba(201,151,63,.4);border-radius:12px;
+  background:rgba(201,151,63,.05)}
+#pouch-slots .dpick{border:1px solid #3f5245;background:#1f2b23}
+#pouch-slots .traybox,#pouch-slots .restgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 8px}
+#pouch-slots .traybox{position:relative;padding:22px 6px 8px;border:2px solid rgba(229,192,124,.95);border-radius:12px;background:linear-gradient(180deg,#4a3a1c,#3a2f1a);box-shadow:0 0 16px rgba(201,151,63,.3)}
+#pouch-slots .traybox::before{content:'Encounter tray';position:absolute;top:-8px;left:12px;padding:0 6px;background:#1c2a21;color:#e5c07c;font:600 10px/16px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase}
+#pouch-slots .restgrid{padding:0 7px}
+#pouch-slots .dpick svg{width:40px;height:40px}
+#pouch-slots .dpick small{display:none}
+#pouch-slots .dpick b{font-size:11px}
+#pouch-slots .snum{top:-9px;left:50%;transform:translateX(-50%);padding:0 7px;border-radius:99px;
+  background:#26352b;color:#cdbb8a;font-size:10px;font-weight:600}
+.trayprev{margin-top:14px;padding:10px 12px 4px;border:1px solid rgba(201,151,63,.35);border-radius:10px;background:rgba(0,0,0,.25)}
+.trayhead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.trayrow{display:flex;gap:8px;margin:10px 0 4px}
+#sheet .trayrow{margin:14px 0 16px}
+.tslot{flex:1;aspect-ratio:1;max-width:58px;border:1px dashed rgba(201,151,63,.3);border-radius:6px;display:grid;place-items:center;
+  font:700 20px Bitter,serif;color:#e7dcc4}
+.tslot{position:relative}
+.tslot small{position:absolute;top:2px;left:4px;font:600 9px Inter,sans-serif;opacity:.55}
+.tslot.off{border:1px solid #3a4a3e;background:#1c261f;color:#7d8a80;opacity:.8}
+.rtgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 8px;margin:18px 0 16px}
+.rt{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px 8px;border:1px solid #3f5245;border-radius:10px;background:#1f2b23;color:#cdd8cf}
+.rt .snum{position:absolute;top:-9px;left:50%;transform:translateX(-50%);padding:0 7px;border-radius:99px;background:#26352b;color:#cdbb8a;font:600 10px Inter,sans-serif}
+.rt strong{font:700 26px Bitter,serif;line-height:1.1}
+.rt b{font:600 10px Inter,sans-serif;color:#8f9c92}
+.rt .rtf{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:6px;width:54px}
+.rt .rtf i{font:600 10px/16px Inter,sans-serif;font-style:normal;text-align:center;border-radius:3px;background:rgba(255,255,255,.08);color:#9fb0a3}
+.rt .rtf i.f{background:#e5c07c;color:#1b1500}
+.rt .rtf i.ic svg{width:12px;height:12px;vertical-align:-2px}
+.rt.in .rtf i{background:rgba(42,33,22,.12);color:#6b5a3a}
+.rt.in .rtf i.f{background:#2a2116;color:#efe6d0}
+.rt.in{border:2px solid #e5c07c;background:#efe6d0;color:#2a2116;box-shadow:0 0 12px rgba(229,192,124,.45)}
+.rt.in b{color:#6b5a3a}
+.rt.in .snum{background:#c9973f;color:#1b1500}
+.rt.out{opacity:.5}
+.rlabel{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#a9b6ac;margin:12px 0 -2px}
+.tslot.on{border:2px solid var(--brass);background:#efe6d0;color:#2a2116;box-shadow:0 0 10px rgba(201,151,63,.35)}
+.tslot.lock{opacity:.35}
+#pouch-slots .dpick.picked{box-shadow:0 0 0 3px #fff,0 0 16px rgba(255,235,170,.8);transform:translateY(-3px)}
+#pouch-slots .dpick.sel,#pouch-bag .dpick.sel{box-shadow:0 0 0 2px #1b140c,0 0 0 4px #f3d27a;opacity:1}
+#pouch-slots .dpick:not(.picked).dim{opacity:.45}
+#pouch-bag .dpick{border:1.5px dashed rgba(169,182,172,.45);background:rgba(10,16,13,.55);opacity:.72}
+#pouch-bag .dpick svg{width:32px;height:32px;filter:saturate(.6)}
+#pouch-bag .dpick:hover{opacity:1}
+.diegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
+.faces{display:flex;gap:6px;margin:10px 0;justify-content:center}
+.fc{width:34px;height:34px;border-radius:6px;display:grid;place-items:center;font-family:Bitter,serif;font-weight:700;
+  background:#f2ecdf;color:#221c14;border:2px solid transparent}
+button.fc{cursor:pointer}
+.fc.on{border-color:#b98cf0;box-shadow:0 0 8px #b98cf0}
+.faces .fc{width:44px;height:44px}
+.net{display:grid;grid-template-columns:repeat(4,44px);grid-auto-rows:44px;gap:3px;justify-content:center;margin:14px 0 16px}
+.net .fc{width:44px;height:44px;border-radius:4px}
+.cardslot{border-style:dashed;color:#e7dcc4;margin:4px 0 16px;padding:10px 12px;line-height:1.3}
+.cardslot small{display:block;margin-top:2px;font-weight:400;font-size:11px;color:#a9b6ac}
+#sheet .pickrow{margin:6px 0}
+#leave{position:absolute;inset:0;z-index:60;display:none;align-items:center;justify-content:center;padding:18px;
+  background:rgba(6,10,8,.88)}
+#leave.on{display:flex}
+ul.rules{margin:0 0 12px;padding-left:18px;font-size:13.5px;line-height:1.5;color:#d3dbd5}
+ul.rules li{margin-bottom:6px}
 
 /* dice tray */
 .tray{
@@ -289,7 +408,9 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 }
 .pricetag{display:flex;align-items:center;gap:4px;white-space:nowrap}
 .pricetag .stat.pr{margin:0}
-.pricetag + .wheretag{bottom:auto;top:28px}
+.updot{display:inline-block;width:8px;height:8px;margin-left:7px;border-radius:50%;vertical-align:1px}
+.updot.here{background:var(--brass);box-shadow:0 0 6px rgba(201,151,63,.8)}
+.updot.next{border:1.5px solid var(--brass)}
 #uplist .pick{padding-bottom:26px}
 .pick.tooexpensive{filter:grayscale(.6) brightness(.75)}
 .pick .count{
@@ -413,6 +534,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 #overlay{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;padding:18px;
   background:rgba(6,10,8,.82);backdrop-filter:blur(2px)}
 #overlay.on{display:flex}
+/* keep the wallet bar clear above a sheet so the player always sees what they own */
+#app:has(#overlay.on) .screen.on .topbar{z-index:30;background:#0f1613;box-shadow:0 1px 0 rgba(201,151,63,.3)}
 .sheet{
   width:100%;max-width:420px;max-height:88%;overflow-y:auto;
   background:linear-gradient(#1d2823,#121a16);
@@ -420,9 +543,18 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 }
 .sheet h2{margin:0 0 6px;font-size:20px}
 .sheet p{margin:0 0 14px;color:#b6c2b7}
-.loot{display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap}
-.loot div{font-family:Bitter,serif;font-size:16px}
+.loot{display:flex;align-items:center;gap:14px;margin-bottom:16px;padding:8px 12px;flex-wrap:wrap;border-radius:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);opacity:.8}
+.loot em{font:600 10px Inter,sans-serif;font-style:normal;letter-spacing:.08em;text-transform:uppercase;color:#8f9c92;margin-right:2px}
+.loot div{font-family:Bitter,serif;font-size:14px;color:#b9c4bb}
+.loot svg{width:18px;height:18px;vertical-align:-4px;margin-right:4px}
+.choose{padding:12px 10px 4px;margin:0 -4px 12px;border-radius:8px;border:1px solid rgba(229,192,124,.6);background:linear-gradient(rgba(201,151,63,.14),rgba(201,151,63,.05));box-shadow:0 0 14px rgba(201,151,63,.18)}
+.choose p{margin:0 0 10px;font-weight:600;color:#e5c07c}
+.choose .btn.diepick{margin-top:2px}
 .pickrow{display:flex;gap:8px;justify-content:center;margin-bottom:14px}
+.btn.diepick{display:flex;align-items:center;gap:12px;text-align:left;margin-bottom:10px;border-style:dashed}
+.btn.diepick svg{width:30px;height:30px;flex:none}
+.btn.diepick span{display:flex;flex-direction:column}
+.btn.diepick small{font-weight:400;font-size:11.5px;color:#a9b6ac}
 .pick{width:96px;height:138px;position:relative;border-radius:5px;padding:7px;
   background:linear-gradient(170deg,var(--stock),var(--stock-2));color:var(--ink);border:1px solid #8e7d5c;
   display:flex;flex-direction:column;text-align:left}
@@ -443,6 +575,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   opacity:0;pointer-events:none;transition:opacity .2s;max-width:80%;text-align:center;
 }
 #toast.on{opacity:1}
+#toast{pointer-events:none}
 /* --- slotting a die: the cues that make the mechanic legible --- */
 .die.armed::after{
   content:"";position:absolute;inset:-6px;border-radius:12px;
@@ -751,8 +884,26 @@ body.grabbing{cursor:grabbing}
       <button class="seg" data-tab="deck" id="tab-deck"></button>
       <button class="seg" data-tab="collection" id="tab-collection"></button>
     </div>
+    <div style="padding:0 12px 6px"><button class="btn wide" id="to-pouch"></button></div>
     <p class="tag" id="collection-hint"></p>
     <div class="collection-body"><div class="cardgrid" id="collection-grid"></div></div>
+  </section>
+
+  <!-- ============ DICE POUCH ============ -->
+  <section class="screen" id="scr-pouch">
+    <div class="topbar">
+      <div class="stat" id="pouch-count"></div>
+      <div class="spacer"></div>
+      <button class="btn" id="pouch-done">Done</button>
+    </div>
+    <p class="tag" id="pouch-hint">Your pouch holds 6 dice. Each roll puts 3 of them on the tray, picked at random. Tap a die to change it.</p>
+    <div class="collection-body">
+      <h3 class="pouchh">In your pouch</h3>
+      <div class="dieslots" id="pouch-slots"></div>
+      <button class="btn wide" id="pouch-sim" style="margin-top:14px">Preview the encounter tray</button>
+      <h3 class="pouchh" style="margin-top:22px;color:#a9b6ac">Dice in your collection</h3>
+      <div class="diegrid" id="pouch-bag"></div>
+    </div>
   </section>
 
   <div id="rollsplash"></div>
@@ -768,6 +919,7 @@ body.grabbing{cursor:grabbing}
   </svg>
 
   <div id="overlay"><div class="sheet" id="sheet"></div></div>
+  <div id="leave"><div class="sheet" id="leavesheet"></div></div>
   <div id="toast"></div>
 </div>
 
@@ -781,6 +933,22 @@ body.grabbing{cursor:grabbing}
 
 const $ = s => document.querySelector(s);
 const rnd = n => Math.floor(Math.random()*n);
+/* Dice rolls use the browser's cryptographic generator. Rejection sampling keeps every
+   value exactly equally likely (a plain % would favour the low ones), and the pick of
+   which pouch dice go to the tray is a Fisher-Yates shuffle, which is unbiased. */
+function secureInt(n){
+  if(n<=1) return 0;
+  const c=window.crypto;
+  if(!c || !c.getRandomValues) return Math.floor(Math.random()*n);
+  const lim=Math.floor(4294967296/n)*n, a=new Uint32Array(1);
+  do{ c.getRandomValues(a); }while(a[0]>=lim);
+  return a[0]%n;
+}
+function shuffled(list){
+  const a=list.slice();
+  for(let i=a.length-1;i>0;i--){ const j=secureInt(i+1); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 
 /* ---------------- art (inline svg, no bitmaps) ---------------- */
@@ -871,7 +1039,7 @@ const CARDS = {
     text:(p,u)=>`Reroll the tray and add <b>${u?2:1}</b> more dice. No roll spent. Draw 1.`,
     play(p,u){ liveDice().forEach(d=>{d.v=1+rnd(6);d.fresh=true});
       let got=0; for(let i=0;i<(u?2:1);i++) if(addDie()) got++;
-      if(!got && liveDice().length>=MAX_TRAY) toast('Tray was full — only the reroll landed.');
+      if(!got && liveDice().length>=trayMax()) toast('Tray was full — only the reroll landed.');
       drawCards(1); }},
 
   bulwark:{name:'Bulwark',cost:2,die:'none',art:'wall',
@@ -1026,8 +1194,11 @@ const BESTIARY = {
    "what do I do with these dice" and becomes "is this fight worth a roll, or
    do I want to meet the deep one holding a six?"                          */
 const MIN_DECK = 8;           /* a deck can be thinned, not emptied */
-const DICE_PER_ROLL = 3;      /* a roll is a handful, not a die */
-const MAX_TRAY      = 5;      /* the tray only holds so much — rolling at 4 spills */
+/* A roll is a handful, not a die: it starts at 3 dice and the Wide Tray skill adds a
+   whole die only after many ranks (the value is fractional, the tray counts whole dice). */
+const rollSize = () => Math.floor(skillVal('tray') + 1e-9);
+const POUCH_SIZE = 6;         /* dice carried in the pouch; each roll draws rollSize() of them at random */
+const trayMax  = () => rollSize() + 2;      /* the tray only holds so much — two spare places beyond one roll */
 const MAX_PIP       = 8;      /* a rolled die stops at 6; Weighted Die pushes past it */
 /* The Roll button is a meter, not a counter. S.rollCharge runs 0..1, a roll
    needs it full and empties it, and every turn start fills 1/refillTurns of
@@ -1055,7 +1226,11 @@ const SKILLS = {
   /* The Roll button refills a fraction each turn; this is how many turns a
      full refill takes. It starts at 5 and every rank shaves a little off. */
   bonesetter:{name:'Bonesetter', blurb:'Turns for the Roll button to refill', cost:15.2,
-    value:r=>5/(1+0.3*Math.sqrt(r))}
+    value:r=>5/(1+0.3*Math.sqrt(r))},
+  /* Dice a roll puts on the tray. 3 at rank 0, 4 at rank 16 (about 340 xp for that
+     rank alone), 5 at rank 64. Deliberately very slow. */
+  tray:{name:'Wide Tray', blurb:'Dice per roll (whole dice count)', cost:20,
+    value:r=>3+0.25*Math.sqrt(r)}
 };
 /* Everything the game reads is the rounded value; the raw curve is what the
    camp screen shows you when a rank buys less than a whole point. */
@@ -1115,6 +1290,7 @@ const Store = (()=>{
   return {init,load,save,wipe,get mode(){return mode}};
 })();
 
+const emptyCarry = () => ({gold:0,cards:[],xp:0,dice:[]});
 const SAVE_VERSION = 2;      /* 1 called the collection a pouch */
 function saveGame(){ Store.save({v:SAVE_VERSION, s:S}); }
 function applySave(data){
@@ -1123,30 +1299,45 @@ function applySave(data){
   const d=data.s;
   if(data.v===1 && d.pouch && !d.collection) d.collection=d.pouch;   /* renamed in 2 */
   Object.keys(S).forEach(k=>{ if(d[k]!==undefined) S[k]=d[k]; });
-  S.skills = Object.assign({health:0,mana:0,stamina:0,defense:0,bonesetter:0}, d.skills||{});
+  S.skills = Object.assign({health:0,mana:0,stamina:0,defense:0,bonesetter:0,tray:0}, d.skills||{});
+  if(!S.carried.dice) S.carried.dice=[];
   S.maxHP = skillVal('health');        /* derived, never trusted from the file */
   S.hp = Math.min(S.hp, S.maxHP);
+  normalizePouch();
   return true;
 }
+/* The pouch holds POUCH_SIZE dice; a roll throws rollSize() of them. Older saves
+   had 3, so top them up with plain bone dice. */
+function normalizePouch(){
+  if(!Array.isArray(S.dicebag)) S.dicebag=[];
+  S.pouch=(Array.isArray(S.pouch)?S.pouch:[]).filter((id,i,a)=>S.dicebag.some(d=>d.id===id)&&a.indexOf(id)===i).slice(0,POUCH_SIZE);
+  const spare=S.dicebag.filter(d=>!S.pouch.includes(d.id));
+  while(S.pouch.length<POUCH_SIZE){
+    const d=spare.shift()||(S.dicebag.push({id:S.dieSeq++,kind:'bone'}),S.dicebag[S.dicebag.length-1]);
+    S.pouch.push(d.id);
+  }
+}
 const SAVE_NOTE = {
-  cloud:'Progress saves automatically.',
-  local:'Progress saves automatically in this browser.',
-  memory:'Storage is unavailable here — progress lasts until you close the tab.'
+  cloud:'Saves automatically.',
+  local:'Saves automatically in this browser.',
+  memory:'Saving is off here. Progress is lost when you close the tab.'
 };
 
 /* ---------------- run state ---------------- */
 function freshState(){ return {
   maxHP:60, hp:60, bank:0, xp:0,
-  skills:{health:0, mana:0, stamina:0, defense:0, bonesetter:0},
+  skills:{health:0, mana:0, stamina:0, defense:0, bonesetter:0, tray:0},
   deck:['strike','strike','strike','strike','guard','guard','guard','cleave','gambit','loaded'],
   collection:[],                      /* owned, not slotted — the deck is chosen, never grown by accident */
   burnCost:55,
   market:{stock:[], stamp:-1},   /* stamp is the delve the stock was cut for */
-  floor:1, carried:{gold:0,cards:[],xp:0},
+  floor:1, carried:emptyCarry(),
   rollCharge:1, tray:[], inDive:false,
-  seed:Date.now()|0, floorState:null, delves:0, best:0
+  dicebag:[1,2,3,4,5,6].map(id=>({id,kind:'bone'})), pouch:[1,2,3,4,5,6], dieSeq:7,
+  seed:Date.now()|0, floorState:null, delves:0, best:0, testDiceGiven:false, testRunesGiven:false
 }}
 const S = freshState();
+const DIE_GIVEN_FLOOR = 8;   /* from here on a dropped die comes with the card instead of replacing it */
 let B = null; /* battle */
 let B_dieSeq = 1;
 
@@ -1155,21 +1346,56 @@ let B_dieSeq = 1;
 function syncTray(){ S.tray = B.dice.filter(d=>!d.spent).map(d=>({v:d.v})); }
 function liveDice(){ return B.dice.filter(d=>!d.spent) }
 function addDie(v){
-  if(liveDice().length>=MAX_TRAY) return false;
+  if(liveDice().length>=trayMax()) return false;
   B.dice.push({v:v||(1+rnd(6)),spent:false,id:B_dieSeq++,fresh:true});
   B.dieId=B_dieSeq;
   return true;
 }
+const DIE_KINDS = {
+  bone:{name:'Bone Die', faces:[1,2,3,4,5,6], text:'A plain six-sided die.'},
+  loaded:{name:'Loaded Die', faces:[2,3,4,4,5,6], text:'Never rolls a 1.'},
+  fickle:{name:'Fickle Die', faces:[1,1,2,5,6,6], text:'Rolls low or high, rarely in the middle.'},
+  even:{name:'Even Die', faces:[2,2,4,4,6,6], text:'Only ever rolls 2, 4 or 6.'},
+  steady:{name:'Steady Die', faces:[3,3,3,4,4,4], text:'Always a 3 or a 4.'},
+  lucky:{name:'Lucky Die', faces:[1,4,4,5,5,6], text:'Mostly high, with one unlucky face.'},
+  /* icon dice: a normal d6 whose 6 carries an icon. The die still counts as a 6 on the tray; the icon fires once as it lands. */
+  flame:{name:'Flame Die', faces:[1,2,3,4,5,6], icon:'sword', text:'The 6 carries a blade: it hits the target for 3 as it lands.', fx:()=>damageTarget(3), fxText:'Hits the target for 3'},
+  ward:{name:'Ward Die', faces:[1,2,3,4,5,6], icon:'shieldIcon', text:'The 6 carries a shield: it gives 3 block as it lands.', fx:()=>gainBlock(3), fxText:'Gives 3 block'},
+  heart:{name:'Heart Die', faces:[1,2,3,4,5,6], icon:'heart', text:'The 6 carries a heart: it heals 2 as it lands.', fx:()=>heal(2), fxText:'Heals 2'},
+  spark:{name:'Spark Die', faces:[1,2,3,4,5,6], icon:'spark', text:'The 6 carries a spark: it gives 1 mana as it lands.', fx:()=>{ B.energy+=1; floatOnPlayer('+1 mana','#e0b25a'); }, fxText:'Gives 1 mana'},
+  scholar:{name:'Scholar Die', faces:[1,2,3,4,5,6], icon:'drawpile', text:'The 6 carries a book: it draws a card as it lands.', fx:()=>drawCards(1), fxText:'Draws a card'},
+  enchanted:{name:'Enchanted Die', faces:[1,2,3,4,5,6], text:'Put a card on one face. When the die lands on that face, the card is played.'}
+};
+const dieById = id => S.dicebag.find(d=>d.id===id);
+/* The die's card is played the moment its face lands: free, never enters the hand
+   or the discard pile, and the die keeps the card for next time. */
+function conjure(d, v){
+  const id=d.card, c=def(id), u=lvl(id), dslot=dieOf(id), baked=bakedPip(id);
+  const pip = baked || (dslot!=='none' ? v : 0);
+  toast(`${cardName(id)} played!`);
+  c.play(pip,u,id);
+}
+/* One roll, used by the battle and by the pouch preview alike: every pouch die gets a
+   face, then a random rollSize() of them are the ones that land on the tray. */
+function rollPouch(){
+  const n=rollSize();
+  return shuffled(S.pouch.map((_,i)=>i)).map((i,k)=>{ const d=dieById(S.pouch[i]), f=DIE_KINDS[d.kind].faces;
+    return {i,d,v:f[secureInt(f.length)],landed:k<n}; });
+}
 function rollDice(){
   if(!B || B.busy || B.over) return;
-  if(!rollReady()) return toast(`The Roll button needs ${turnsToRoll()} more turn${turnsToRoll()===1?'':'s'} to refill.`);
-  const room = MAX_TRAY - liveDice().length;
-  if(room<=0) return toast('The tray is full. Spend some dice first.');
+  if(!rollReady()) return toast(`Roll is ready in ${turnsToRoll()} turn${turnsToRoll()===1?'':'s'}.`);
+  const room = trayMax() - liveDice().length;
+  if(room<=0) return toast('Tray is full. Use a die first.');
   S.rollCharge=0;
   let got=0;
-  for(let i=0;i<DICE_PER_ROLL;i++) if(addDie()) got++;
-  if(got<DICE_PER_ROLL) toast(`Only room for ${got} — ${DICE_PER_ROLL-got} spilled off the table.`);
-  syncTray(); renderBattle();
+  /* every pouch die is rolled; a random rollSize() of them land on the tray */
+  for(const r of rollPouch().filter(x=>x.landed)){
+    if(addDie(r.v)){ got++; if(r.d.kind==='enchanted' && r.d.card && r.v===r.d.face) conjure(r.d,r.v);
+      const K=DIE_KINDS[r.d.kind]; if(K.fx && r.v===6){ toast(`${K.name}: ${K.fxText.toLowerCase()}`); K.fx(); } }
+  }
+  if(got<rollSize()) toast(`Tray is full. ${rollSize()-got} dice lost.`);
+  syncTray(); renderBattle(); checkEnd();
 }
 
 /* ---------------- presentation ----------------
@@ -1231,8 +1457,11 @@ if(window.visualViewport) window.visualViewport.addEventListener('resize', layou
 const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),1400)}
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));$('#'+id).classList.add('on')}
-function sheet(html){$('#sheet').innerHTML=html;$('#overlay').classList.add('on')}
-function closeSheet(){$('#overlay').classList.remove('on')}
+let sheetModal=false;   /* a modal sheet can only be closed by choosing something on it */
+function sheet(html,modal){$('#sheet').innerHTML=html;sheetModal=!!modal;$('#overlay').classList.add('on')}
+function closeSheet(){sheetModal=false;$('#overlay').classList.remove('on')}
+/* tap the dimmed area to dismiss, unless the sheet is a must-answer one */
+$('#overlay').addEventListener('click',e=>{ if(e.target===$('#overlay') && !sheetModal) closeSheet(); });
 function stat(icon,val,cls){return `${icon}<b class="${cls||''}">${val}</b>`}
 
 /* ---------------- tooltips ----------------
@@ -1341,28 +1570,43 @@ function renderCamp(){
   $('#note-dungeon').textContent = S.best ? `deepest floor ${S.best}` : 'no delves yet';
   $('#note-rules').textContent = 'notice board';
   $('#note-wipe').textContent = 'start over';
-  $('#camp-line').textContent = `Everything here is yours to keep. Nothing you carry below is, until you climb back out. ${SAVE_NOTE[Store.mode]}`;
+  $('#camp-line').textContent = `Loot is only safe once you climb out. ${SAVE_NOTE[Store.mode]}`;
   S.inDive=false;
   show('scr-camp');
   saveGame();
 }
 function openSkills(){
   sheet(`<h2>Skills</h2>
-    <p>Banked xp trains these. You have ${xpHTML(S.xp)}</p>
+    <p>Spend xp to get stronger. Each rank adds less.</p>
     <div class="card-panel">${Object.keys(SKILLS).map(k=>{
       const s=SKILLS[k], r=S.skills[k], step=skillStep(k), cost=skillCost(k);
-      const detail = `${f2(step.now)} → <b style="color:#e3c88a">${f2(step.then)}</b> <span class="tag">+${f2(step.then-step.now)}</span>`;
-      return `<div class="shoprow">
-        <p>${s.name} <span class="tag">rank ${r} · ${s.blurb}</span><br><span class="tag">${detail}</span></p>
-        <span class="price">${xpHTML(cost)}</span>
-        <button class="btn" data-skill="${k}" ${S.xp<cost?'disabled':''}>Train</button>
+      const nm=n=>String(+(+n).toFixed(2));
+      const gain=Math.abs(step.then-step.now), first=Math.abs(s.value(1)-s.value(0)), pct=Math.max(4,Math.min(100,Math.round(gain/first*100)));
+      return `<div class="skrow">
+        <div class="skinfo"><div class="skname">${s.name} <span class="skdelta">${nm(step.now)} → ${nm(step.then)}</span></div>
+          <div class="skblurb">${s.blurb}</div></div>
+        <button class="btn skbtn" data-skill="${k}" ${S.xp<cost?'disabled':''} aria-label="Train ${s.name}: ${step.then>=step.now?'+':'−'}${nm(gain)} for ${f2(cost)} xp">Train<span class="skgain">${step.then>=step.now?'+':'−'}${nm(gain)}</span><span class="skcost">${xpHTML(cost)}</span></button>
       </div>`;}).join('')}</div>
     <button class="btn wide" onclick="closeSheet()">Done</button>`);
-  document.querySelectorAll('#sheet button[data-skill]').forEach(b=>b.onclick=()=>{
-    const k=b.dataset.skill; S.xp-=skillCost(k); S.skills[k]++;
+  document.querySelectorAll('#sheet button[data-skill]').forEach(b=>b.onclick=()=>openTrainSure(b.dataset.skill));
+}
+function openTrainSure(k){
+  const sk=SKILLS[k], step=skillStep(k), cost=skillCost(k), can=S.xp>=cost;
+  const nm=n=>String(+(+n).toFixed(2)), up=step.then>=step.now;
+  sheet(`<h2>Train ${sk.name}?</h2>
+    <p>${sk.blurb}</p>
+    <div class="trainchg"><span>${nm(step.now)}</span><i>→</i><b>${nm(step.then)}</b></div>
+    <div class="stack">
+      <button class="btn primary" id="train-yes" ${can?'':'disabled'}>${can?`Train for ${f2(cost)} xp`:`Need ${f2(cost-S.xp)} more xp`}</button>
+      <button class="btn" id="train-no">Not now</button>
+    </div>`,true);
+  $('#train-no').onclick=openSkills;
+  $('#train-yes').onclick=()=>{
+    if(S.xp<cost) return openSkills();
+    S.xp-=cost; S.skills[k]++;
     if(k==='health'){ const gain=skillVal('health')-S.maxHP; S.maxHP=skillVal('health'); S.hp+=gain; }
-    renderCamp(); openSkills(); toast(`${SKILLS[k].name} is now ${f2(skillVal(k))}.`);
-  });
+    renderCamp(); openSkills(); toast(`${sk.name} is now ${f2(skillVal(k))}.`);
+  };
 }
 $('#go-skills').onclick=openSkills;
 $('#view-deck').onclick=()=>openCollection('deck');
@@ -1383,19 +1627,19 @@ function renderCollection(){
   const deckMode = collectionTab==='deck';
   const list = deckMode ? S.deck : S.collection;
   const g = groups(list);
+  $('#to-pouch').innerHTML = `${A.dice.replace('<svg','<svg style="width:18px;height:18px;vertical-align:-4px;margin-right:6px"')}Dice pouch · ${S.pouch.length} dice`;
   $('#collection-count').innerHTML = stat(A.xp, `${S.deck.length} in deck · ${S.collection.length} in collection`);
   $('#tab-deck').textContent = `Deck (${S.deck.length})`;
   $('#tab-collection').textContent = `Collection (${S.collection.length})`;
   $('#tab-deck').classList.toggle('on', deckMode);
   $('#tab-collection').classList.toggle('on', !deckMode);
   $('#collection-hint').textContent = deckMode
-    ? `Tap a card to open it — moving, burning and sharpening are in there. A deck needs at least ${MIN_DECK} cards.`
-    : 'Tap a card to open it. Slotting it into the deck, burning it and sharpening it are all in there.';
+    ? `Tap a card to open it. Your deck needs at least ${MIN_DECK} cards.`
+    : 'Tap a card to open it. Spare cards can go into your deck.';
   const grid=$('#collection-grid');
   grid.innerHTML = g.length
-    ? g.map(x=>cardFaceHTML(x.key,'pick',x.n)
-        .replace('</button>',`<span class="wheretag">${deckMode?'in deck':'collection'}</span></button>`)).join('')
-    : `<div class="emptynote" style="grid-column:1/-1">${deckMode?'No cards in the deck.':'Nothing in the collection yet. Cards you take underground land here when you climb out.'}</div>`;
+    ? g.map(x=>cardFaceHTML(x.key,'pick',x.n)).join('')
+    : `<div class="emptynote" style="grid-column:1/-1">${deckMode?'No cards in the deck.':'No spare cards yet. Cards you win are added here.'}</div>`;
   /* A tap reads the card. Moving it, burning it and sharpening it all live
      inside that window — a tap used to move the card, which meant browsing
      your own deck quietly rebuilt it. */
@@ -1405,15 +1649,121 @@ function renderCollection(){
 function toDeck(key){
   const i=S.collection.indexOf(key); if(i<0) return false;
   S.collection.splice(i,1); S.deck.push(key); renderCollection();
-  toast(`${cardName(key)} slotted into the deck.`); return true;
+  toast(`${cardName(key)} added to your deck.`); return true;
 }
 function toCollection(key){
-  if(S.deck.length<=MIN_DECK){ toast(`A deck needs at least ${MIN_DECK} cards.`); return false; }
+  if(S.deck.length<=MIN_DECK){ toast(`Your deck needs at least ${MIN_DECK} cards.`); return false; }
   const i=S.deck.indexOf(key); if(i<0) return false;
   S.deck.splice(i,1); S.collection.push(key); renderCollection();
-  toast(`${cardName(key)} back in the collection.`); return true;
+  toast(`${cardName(key)} moved to your collection.`); return true;
 }
 $('#collection-done').onclick=()=>renderCamp();
+/* ---------------- dice pouch ----------------
+   A roll throws the dice in the pouch, one per slot. The Enchanted Die can carry
+   a card on one face: when it lands there, the card is played. */
+function dieIconHTML(d){ return A.dice; }
+const runeTag=d=>{ const k=DIE_KINDS[d.kind]; return k.icon?`<span class="rune">${A[k.icon]}</span>`:''; };
+function dieBadge(d){
+  const K=DIE_KINDS[d.kind];
+  const KB=DIE_KINDS[d.kind]; if(KB.icon) return `6: ${KB.fxText}`;
+  return d.kind==='enchanted' ? `Face ${d.face||6}${d.card?` · ${cardName(d.card)}`:' · no card'}` : K.text.split('.')[0];
+}
+let pouchSel=null;     /* die picked on the pouch screen, waiting for a second tap to swap */
+let pouchPv=null;      /* preview roll: [{i: pouch slot, v: face}] — display only, changes nothing */
+let trayRoll=null, trayRolling=false;
+function previewRoll(){
+  if(trayRolling) return;
+  const final=rollPouch(); trayRolling=true; let f=0;
+  const t=setInterval(()=>{
+    f++;
+    if(f>=7){ clearInterval(t); trayRolling=false; trayRoll=final; pouchPv=final.filter(r=>r.landed).map(r=>({i:r.i,v:r.v})); renderPouch(); }
+    else trayRoll=final.map(r=>({...r,v:1+secureInt(6)}));
+    openTrayModal();
+  },70);
+}
+function openTrayModal(){
+  /* the pouch laid out as it is in your slots, then marked: gold = landed on the tray */
+  const bySlot=S.pouch.map((id,i)=>{ const r=(trayRoll||[]).find(x=>x.i===i); return {i,d:dieById(id),r}; });
+  const done=trayRoll && !trayRolling;
+  const tile=t=>{ const cls=!done?'':(t.r&&t.r.landed?' in':' out');
+    const v=t.r?t.r.v:null, hit=v==null?-1:DIE_KINDS[t.d.kind].faces.indexOf(v);
+    const KK=DIE_KINDS[t.d.kind];
+    const fs=KK.faces.map((f,k)=>`<i class="${k===hit?'f':''}${KK.icon&&f===6?' ic':''}">${KK.icon&&f===6?A[KK.icon]:f}</i>`).join('');
+    return `<div class="rt${cls}"><strong>${v==null?'?':v}</strong><b>${DIE_KINDS[t.d.kind].name}</b><span class="rtf">${fs}</span></div>`; };
+  sheet(`<h2>Encounter tray</h2>
+    <p>${done?`Your whole pouch was rolled. The gold ${rollSize()} landed on the tray.`:`A roll rolls all ${S.pouch.length} pouch dice. ${rollSize()} of them land on the tray, picked at random.`}</p>
+    <div class="rtgrid">${bySlot.map(tile).join('')}</div>
+    <div class="stack"><button class="btn primary wide" id="tm-roll">${trayRoll?'Roll again':'Try a roll'}</button>
+    <button class="btn wide" id="tm-close">Close</button></div>`,true);
+  $('#tm-roll').onclick=previewRoll;
+  $('#tm-close').onclick=()=>{ trayRoll=null; pouchPv=null; closeSheet(); renderPouch(); };
+}
+function renderPouch(){
+  $('#pouch-count').innerHTML = stat(A.dice, `${S.dicebag.length} dice`);
+  $('#pouch-sim').onclick=openTrayModal;
+  $('#pouch-hint').textContent=pouchSel!==null?'Tap another die to swap places with it. Tap the same die again for its details.':`Your pouch holds ${POUCH_SIZE} dice. Each roll puts ${rollSize()} of them on the tray, picked at random. Tap a die to move it.`;
+  const slotBtn=(id,i)=>{ const d=dieById(id), pk=pouchPv&&pouchPv.some(p=>p.i===i);
+    return `<button class="dpick k-${d.kind}${pk?' picked':''}${pouchPv&&!pk?' dim':''}${pouchSel===id?' sel':''}" data-die="${id}"><span class="snum">${i+1}</span>${runeTag(d)}${A.dice}<b>${DIE_KINDS[d.kind].name}</b><small>${dieBadge(d)}</small></button>`; };
+  const nT=Math.min(rollSize(),S.pouch.length);
+  $('#pouch-slots').innerHTML = `<div class="traybox" title="The tray takes ${rollSize()} dice per roll">${S.pouch.slice(0,nT).map((id,i)=>slotBtn(id,i)).join('')}</div>`
+    + (nT<S.pouch.length?`<div class="restgrid">${S.pouch.slice(nT).map((id,i)=>slotBtn(id,i+nT)).join('')}</div>`:'');
+  const spare=S.dicebag.filter(d=>!S.pouch.includes(d.id));
+  $('#pouch-bag').innerHTML = spare.length ? spare.map(d=>
+    `<button class="dpick k-${d.kind}${pouchSel===d.id?' sel':''}" data-die="${d.id}">${runeTag(d)}${A.dice}<b>${DIE_KINDS[d.kind].name}</b><small>${dieBadge(d)}</small></button>`).join('')
+    : `<div class="emptynote" style="grid-column:1/-1">No other dice yet. Enemies sometimes drop them.</div>`;
+  document.querySelectorAll('#scr-pouch [data-die]').forEach(el=>el.onclick=()=>tapDie(+el.dataset.die));
+  saveGame();
+}
+function swapDice(a,b){
+  const ia=S.pouch.indexOf(a), ib=S.pouch.indexOf(b);
+  if(ia>=0&&ib>=0){ S.pouch[ia]=b; S.pouch[ib]=a; }
+  else if(ia>=0) S.pouch[ia]=b;
+  else if(ib>=0) S.pouch[ib]=a;
+}
+function tapDie(id){
+  if(pouchSel===null){ pouchSel=id; }
+  else if(pouchSel===id){ pouchSel=null; renderPouch(); openDie(id); return; }
+  else if(S.pouch.includes(pouchSel)||S.pouch.includes(id)){ swapDice(pouchSel,id); pouchSel=null; pouchPv=null; }
+  else pouchSel=id;
+  renderPouch();
+}
+function openPouch(){ pouchSel=null; pouchPv=null; renderPouch(); show('scr-pouch'); }
+function putInSlot(id,n){
+  const cur=S.pouch.indexOf(id), other=S.pouch[n];
+  if(cur>=0) S.pouch[cur]=other;
+  S.pouch[n]=id; closeSheet(); renderPouch();
+}
+/* unfolded die, row/col: opposite faces (1-6, 2-5, 3-4) never touch */
+const NET={1:'2/2',2:'1/2',3:'2/1',4:'2/3',5:'3/2',6:'2/4'};
+function openDie(id){
+  const d=dieById(id), K=DIE_KINDS[d.kind], slot=S.pouch.indexOf(id), ench=d.kind==='enchanted';
+  if(ench && !d.face) d.face=6;
+  sheet(`<h2>${K.name}</h2>
+    ${ench?'':`<p>${K.text}</p>`}
+    ${K.icon?`<div class="net" aria-label="Unfolded die">${K.faces.map(f=>`<div class="fc${f===6?' on':''}" style="grid-area:${NET[f]}">${f===6?A[K.icon]:f}</div>`).join('')}</div>`:''}
+    ${ench?`<div class="net" role="group" aria-label="Unfolded die: tap a face">${K.faces.map(f=>`<button class="fc ${f===d.face?'on':''}" style="grid-area:${NET[f]}" data-face="${f}" aria-label="Face ${f}">${f}</button>`).join('')}</div>
+      ${d.card?`<div class="pickrow">${cardFaceHTML(d.card,'pick')}</div><button class="btn wide" id="card-off">Take the card off</button>`
+               :`<button class="btn wide cardslot" id="card-on">Choose a card for face ${d.face}<small>It plays when this die rolls a ${d.face}</small></button>`}`:''}
+    <button class="btn wide primary" onclick="closeSheet()">Done</button>`);
+  document.querySelectorAll('#sheet [data-face]').forEach(b=>b.onclick=()=>{ d.face=+b.dataset.face; saveGame(); openDie(id); renderPouch(); });
+  if(ench && d.card) $('#card-off').onclick=()=>{ S.collection.push(d.card); d.card=null; saveGame(); openDie(id); renderPouch(); };
+  if(ench && !d.card) $('#card-on').onclick=()=>openDieCards(id);
+}
+function openDieCards(id){
+  const d=dieById(id), g=groups(S.collection);
+  sheet(`<h2>Pick a card</h2>
+    <p>The card sits on the die until you take it off.</p>
+    ${g.length?`<div class="cardgrid" id="dc-grid">${g.map(x=>cardFaceHTML(x.key,'pick',x.n)).join('')}</div>`
+              :`<div class="emptynote">No spare cards. Move a card out of your deck first.</div>`}
+    <button class="btn wide" id="dc-back">Back</button>`);
+  $('#dc-back').onclick=()=>openDie(id);
+  document.querySelectorAll('#dc-grid .pick').forEach((el,i)=>el.onclick=()=>{
+    const key=g[i].key; S.collection.splice(S.collection.indexOf(key),1); d.card=key; saveGame(); openDie(id); renderPouch();
+  });
+}
+$('#to-pouch').onclick=openPouch;
+$('#pouch-done').onclick=()=>openCollection('deck');
+
 $('#tab-deck').onclick=()=>openCollection('deck');
 $('#tab-collection').onclick=()=>openCollection('collection');
 /* The pip table is the thing a card face can't say: what this card is worth
@@ -1484,7 +1834,7 @@ function upgradePath(key){
     const gain = l>0 && c.step ? c.step(l) : '';
     const die  = (typeof c.die==='function' ? c.die(l) : c.die);
     rows.push(`<div class="uprow ${l===here?'here':''} ${l<here?'past':''}">
-      <span class="uplvl">${l===here?'▸ ':''}${name}</span>
+      <span class="uplvl">${name}${l===here?'<i class="updot here" title="Current level" aria-label="Current level"></i>':l===here+1?'<i class="updot next" title="Next level" aria-label="Next level"></i>':''}</span>
       <span class="uptext">${c.text(0,l)}${gain?` <span class="tag">${gain}</span>`:''}
         ${die==='none'?'<span class="tag">no die slot</span>':''}</span>
     </div>`);
@@ -1498,12 +1848,12 @@ function upgradePath(key){
    screen. Burning is the other thing: it destroys the copy for good, costs
    gold, and so it sits behind a confirmation on the card itself. */
 function burnCard(key, done){
-  if(S.bank < S.burnCost) return toast(`Burning costs ${S.burnCost}g — you have ${S.bank}g.`);
+  if(S.bank < S.burnCost) return toast(`Burning costs ${S.burnCost}g.`);
   const inCollection=S.collection.indexOf(key), inDeck=S.deck.indexOf(key);
   if(inCollection<0 && inDeck<0) return;
-  if(inCollection<0 && S.deck.length<=MIN_DECK) return toast(`A deck needs at least ${MIN_DECK} cards.`);
+  if(inCollection<0 && S.deck.length<=MIN_DECK) return toast(`Your deck needs at least ${MIN_DECK} cards.`);
   sheet(`<h2>Burn ${cardName(key)}?</h2>
-    <p>${S.burnCost}g, and this copy is gone for good — ${inCollection>=0?'out of your collection':'out of your deck'}.
+    <p>This costs ${S.burnCost}g and destroys this copy for good.
        To simply take it out of the deck, close this and tap it in the Deck tab; that costs nothing.</p>
     <div class="stack">
       <button class="btn danger" id="burn-yes">Burn it</button>
@@ -1540,14 +1890,14 @@ $('#go-market').onclick=()=>{ ensureStock(); renderMarket(); show('scr-market');
 $('#market-done').onclick=()=>renderCamp();
 $('#market-restock').onclick=()=>{
   if(S.bank<RESTOCK_COST) return toast(`Restocking costs ${RESTOCK_COST}g.`);
-  S.bank-=RESTOCK_COST; S.market.stock=cutStock(4); renderMarket(); toast('New cards on the table.');
+  S.bank-=RESTOCK_COST; S.market.stock=cutStock(4); renderMarket(); toast('New cards for sale.');
 };
 const RESTOCK_COST = 40;
 function renderMarket(){
   $('#market-gold').innerHTML = stat(A.coin, S.bank);
   $('#market-hint').textContent = S.market.stock.length
-    ? 'Tap a card to buy it — it goes to your collection. Tap the dot to read one first.'
-    : 'The table is bare. Restock, or come back from a delve.';
+    ? 'Tap a card to buy it.'
+    : 'Sold out. Restock, or come back after a run.';
   const grid=$('#market-grid');
   grid.innerHTML = S.market.stock.length
     ? S.market.stock.map(o=>cardFaceHTML(o.key, 'pick'+(S.bank<o.price?' tooexpensive':''))
@@ -1557,15 +1907,26 @@ function renderMarket(){
     const o=S.market.stock[i];
     el.onclick=(ev)=>{
       if(ev.target.classList.contains('infodot')) return openCardDetail(o.key);
-      if(S.bank<o.price) return toast(`${o.price}g — you have ${S.bank}g.`);
-      S.bank-=o.price; S.collection.push(o.key);
-      S.market.stock.splice(i,1);
-      renderMarket(); saveGame();
-      toast(`${cardName(o.key)} is in your collection — slot it into the deck.`);
+      const can=S.bank>=o.price;
+      sheet(`<h2>Buy ${cardName(o.key)}?</h2>
+        <div class="pickrow">${cardFaceHTML(o.key,'pick big')}</div>
+        <div class="stack">
+          <button class="btn primary" id="buy-yes" ${can?'':'disabled'}>${can?`Buy for ${o.price}g`:`Need ${o.price-S.bank} more gold`}</button>
+          <button class="btn" id="buy-no">Not now</button>
+        </div>`);
+      $('#buy-no').onclick=()=>closeSheet();
+      $('#buy-yes').onclick=()=>{
+        const at=S.market.stock.indexOf(o);
+        if(at<0 || S.bank<o.price) return closeSheet();
+        S.bank-=o.price; S.collection.push(o.key);
+        S.market.stock.splice(at,1);
+        closeSheet(); renderMarket(); saveGame();
+        toast(`${cardName(o.key)} bought. It is in your collection.`);
+      };
     };
   });
   const rb=$('#market-restock');
-  rb.textContent = `Restock the table — ${RESTOCK_COST}g`;
+  rb.textContent = `New cards — ${RESTOCK_COST}g`;
   rb.disabled = S.bank < RESTOCK_COST;
 }
 /* Training: spend banked XP to turn one copy into its sharpened version. */
@@ -1591,23 +1952,22 @@ function sharpenable(){
 }
 function openSharpen(){
   const rows=sharpenable();
+  const face=r=>cardFaceHTML(r.id,'pick'+(canSharpen(r.id)?'':' tooexpensive'),r.n)
+    .replace('</button>',`<span class="pricetag">${costHTML(r.id)}</span></button>`);
+  const sect=(title,w)=>{ const rs=rows.filter(r=>r.where===w); return rs.length?`<h3 class="pouchh">${title}</h3><div class="cardgrid">${rs.map(face).join('')}</div>`:''; };
   sheet(`<h2>The Cardsmith</h2>
-    <p>Each card is priced on its own, and gets dearer the more you put into it. You have ${xpHTML(S.xp)}${goldHTML(S.bank)}</p>
-    ${rows.length
-      ? `<div class="cardgrid" id="uplist">${rows.map(r=>
-          cardFaceHTML(r.id,'pick'+(canSharpen(r.id)?'':' tooexpensive'),r.n)
-            .replace('</button>',
-              `<span class="pricetag">${costHTML(r.id)}</span>`
-             +`<span class="wheretag">${r.where}</span></button>`)).join('')}</div>`
+    <p>Each upgrade costs more than the last.</p>
+    ${rows.length?`<div id="uplist">${sect('In your deck','deck')}${sect('In your collection','collection')}</div>`
       : '<div class="emptynote">Everything you own is fully sharpened.</div>'}
     <button class="btn wide" onclick="closeSheet()">Not now</button>`);
-  document.querySelectorAll('#uplist .pick').forEach((el,i)=>el.onclick=()=>openSharpenOne(rows[i]));
+  const order=[...rows.filter(r=>r.where==='deck'),...rows.filter(r=>r.where==='collection')];
+  document.querySelectorAll('#uplist .pick').forEach((el,i)=>el.onclick=()=>openSharpenOne(order[i]));
 }
 function openSharpenOne(r){
   const key=r.id, c=def(key), L=lvl(key), next=L+1, price=sharpenCost(key), gold=sharpenGold(key), afford=canSharpen(key);
   sheet(`<h2>${cardName(key)} → ${c.name+'+'.repeat(next)}</h2>
-    <p>in your ${r.where} · this level costs ${costHTML(key)} · you have ${xpHTML(S.xp)}${goldHTML(S.bank)}</p>
-    <div class="pickrow">${cardFaceHTML(key,'pick big')}${cardFaceHTML(key+'+','pick big')}</div>
+    <p>In your ${r.where}.</p>
+    <div class="pickrow">${cardFaceHTML(key,'pick big')}</div>
     <div class="card-panel" style="margin-bottom:12px">
       <h3>Upgrade path</h3>
       ${upgradePath(key)}
@@ -1615,10 +1975,19 @@ function openSharpenOne(r){
     <div class="stack">
       <button class="btn primary" id="confirm-up" ${afford?'':'disabled'}>
         ${afford?`Sharpen for ${costHTML(key)}`:`Needs ${needText(key)}`}</button>
-      <button class="btn" id="back-up">Other cards</button>
     </div>`);
-  $('#back-up').onclick=()=>openSharpen();
-  if(afford) $('#confirm-up').onclick=()=>{
+  if(afford) $('#confirm-up').onclick=()=>openSharpenSure(r);
+}
+function openSharpenSure(r){
+  const key=r.id, c=def(key), next=lvl(key)+1, price=sharpenCost(key), gold=sharpenGold(key);
+  sheet(`<h2>Sharpen ${cardName(key)}?</h2>
+    <p>This turns it into ${c.name+'+'.repeat(next)} and spends ${costHTML(key)}. You can't undo it.</p>
+    <div class="stack">
+      <button class="btn primary" id="sure-yes">Yes, sharpen it</button>
+      <button class="btn" id="sure-no">Go back</button>
+    </div>`,true);
+  $('#sure-no').onclick=()=>openSharpenOne(r);
+  $('#sure-yes').onclick=()=>{
     (r.where==='deck'?S.deck:S.collection)[r.i]=key+'+';
     S.xp-=price; S.bank-=gold;
     closeSheet();
@@ -1626,15 +1995,19 @@ function openSharpenOne(r){
     toast(cardName(key+'+')+' is yours.');
   };
 }
-$('#show-rules').onclick=()=>sheet(`<h2>How the dice work</h2>
-  <p>Dice do not arrive on their own. The Roll button is a meter: it must be full to roll, rolling empties it, and it refills a little at the start of every turn, in fights and across them. A roll drops three dice into the tray. Tap a die to arm it, then tap a card: the die goes into the card's slot and scales it. The card text updates as soon as you arm a die, so you see the number before you commit.</p><p>Nothing sweeps the tray. A die you don't spend is still there next turn, and still there in the next fight on that floor, which is the whole decision: spend dice to crush a skirmish, or walk into the deep fight holding a six. The tray holds five, so rolling when you already hold four spills what doesn't fit.</p><p>Nothing you roll comes up higher than a six. Weighted Die is the exception — it pushes what is already in the tray past a real die face, as far as eight, and a die that heavy is worth holding for the card that scales hardest off it.</p><p>A dashed slot means the die is optional. A solid red slot means the card does nothing without one — and with an empty tray and no rolls left, that card is dead weight until you descend.</p>
-  <p>Gold, xp and cards you win underground are <em>carried</em>, not banked. Clear a floor and you get one chance to climb out with them. Die or abandon and they are gone — your deck, your health and anything already banked survive.</p>
-  <p>A card you take underground is yours, but it is not in your deck. It goes to the collection, and you slot it in at camp — the deck you go down with is the deck you built, never one that grew by accident. A tap on a card in the deck or the collection opens it; moving, burning and sharpening all happen in that window. Taking cards out of the deck costs nothing. Burning destroys a copy for good, and lives on the card itself — open any card from Deck &amp; collection and the option is there. New cards come from the market, whose table is cut fresh after every delve.</p><p>Any die the game would otherwise roll behind your back is rolled by you: a card that rerolls hands you a single die, says in one line what the roll is for, and waits for you to tap it.</p><p>A tap never plays a card. Tapping one picks it up, tapping it again puts it down, and tapping a creature only aims at it. To play, either press the Play button that appears above your hand — it names the card, the cost and the target — or drag the card: up for anything, onto a creature for an aimed one.</p><p>Nothing you train is a whole number. Every skill grows by a fraction of a point per rank and the fraction is kept, not rounded away: mana carries inside a turn, health and block are simply fractional, and cards drawn accumulate a carry across turns, so a stamina of 5.34 deals a sixth card every third turn. The camp screen shows two decimals on purpose.</p><p>Mana in particular is not a whole number. Each rank of the skill adds a fraction of a point, and the leftovers carry inside a turn — a 3.4 turn is three cards and change, and the change is what buys the fourth card a few ranks later. The well by the tray shows what you hold; the red band on its surface is what the card in your hand is about to take.</p><p>Banked xp and gold sharpen cards at camp. Most cards have one stronger version; a few keep going for several levels, and Tinder only grows a die slot at its third. A sharpened copy stays sharpened for good. Each card is priced on its own and gets dearer the more you put into that card, so pouring xp into one favourite never raises the price of starting on another.</p>
-  <p>The same xp trains five skills: health, mana per turn, cards drawn per turn, the block you start each turn holding, and Bonesetter, which shortens the time the Roll button takes to refill. Every one of them grows on a square root, so the first rank is worth several later ones and the price climbs while the payoff flattens. Nothing is capped. It simply stops being the best thing to buy, which is the only cap that matters.</p>
+$('#show-rules').onclick=()=>sheet(`<h2>How to play</h2>
+  <ul class="rules">
+    <li><b>Roll.</b> Tap Roll to throw the 3 dice in your pouch. The button refills a little every turn.</li>
+    <li><b>Use dice.</b> Tap a die, then a card. The die makes the card stronger.</li>
+    <li><b>Play cards.</b> Tap a card, then press Play. Or drag it up. Cards cost mana.</li>
+    <li><b>Block.</b> The steel bar over your health stops damage first.</li>
+    <li><b>Loot.</b> Gold, xp and cards are only yours if you climb out. If you die, you lose them.</li>
+    <li><b>Camp.</b> Spend xp on skills and card upgrades. Buy cards at the market. Change your deck and dice.</li>
+  </ul>
   <button class="btn wide" onclick="closeSheet()">Got it</button>`);
 $('#go-dungeon').onclick=()=>{
-  if(S.deck.length<MIN_DECK){ toast(`Slot at least ${MIN_DECK} cards into your deck first.`); return openCollection('collection'); }
-  S.floor=1;S.carried={gold:0,cards:[],xp:0};S.rollCharge=1;S.tray=[];
+  if(S.deck.length<MIN_DECK){ toast(`Your deck needs at least ${MIN_DECK} cards.`); return openCollection('collection'); }
+  S.floor=1;S.carried=emptyCarry();S.rollCharge=1;S.tray=[];
   S.seed=(Date.now()|0);S.delves++;genFloor();renderFloor()};
 
 function pickN(arr,n){const a=[...arr];const out=[];while(out.length<n&&a.length)out.push(a.splice(rnd(a.length),1)[0]);return out}
@@ -1679,32 +2052,35 @@ function renderFloor(){
   $('#f-hp').innerHTML=stat(A.heart,`${fmt(S.hp)}/${f1(S.maxHP)}`);
   $('#f-carry').innerHTML=stat(A.sack,`${S.carried.gold}g · ${f1(S.carried.xp)}xp`+(S.carried.cards.length?` · ${S.carried.cards.length} cards`:''));
   $('#f-depth').textContent=`floor ${S.floor}`;
-  $('#f-hint').textContent = (S.tray.length?`${S.tray.length} dice held (${S.tray.map(d=>d.v).join(' ')}). `:'Tray empty. ')
-    + (open ? 'Only the deep fight left.' : 'Clear every fight to unlock the deep one.');
-  const links = fs.entries.map(e=>`<line x1="50%" y1="8%" x2="${e.x*100}%" y2="${e.y*100}%" stroke="rgba(201,151,63,.18)" stroke-width="1.5" stroke-dasharray="4 5"/>`).join('');
-  map.innerHTML = `<svg class="links">${links}</svg>` + fs.entries.map(e=>{
+  $('#f-hint').textContent = (S.tray.length?`${S.tray.length} dice held (${S.tray.map(d=>d.v).join(' ')}). `:'No dice held. ')
+    + (open ? 'Only the boss is left.' : 'Beat every fight to reach the boss.');
+  const links = fs.entries.map(e=>{
+    const lit=!e.cleared && !(e.boss && !open), x=e.x*100, y=e.y*100, m=(8+y)/2;
+    return `<path d="M50 9 C50 ${m} ${x} ${m} ${x} ${y}" fill="none" vector-effect="non-scaling-stroke" stroke="${lit?'rgba(229,192,124,.55)':'rgba(255,255,255,.1)'}" stroke-width="${lit?2:1.5}" stroke-dasharray="${lit?'none':'3 5'}" stroke-linecap="round"/>`; }).join('');
+  map.innerHTML = `<svg class="links" viewBox="0 0 100 100" preserveAspectRatio="none">${links}</svg><div class="stairs"><i></i>Stairs down</div>` + fs.entries.map(e=>{
     const locked = e.boss && !open;
-    const art = e.boss ? A.skull : (e.group.length>1?A.sword:A.sword);
+    const art = CREATURE[BESTIARY[e.group[0]].art]||(e.boss?A.skull:A.sword);
+    const badge = e.cleared ? '<span class="badge">✓</span>' : (e.group.length>1 ? `<span class="badge">×${e.group.length}</span>` : '');
     return `<div class="node ${e.cleared?'cleared':''} ${e.boss?'boss':''} ${locked?'locked':''}" data-id="${e.id}" style="left:${e.x*100}%;top:${e.y*100}%">
-      <div class="disc">${art}</div>
-      <small>${e.boss?'Deep fight':e.group.map(g=>BESTIARY[g].name.split(' ')[1]||BESTIARY[g].name).join(' + ')}</small></div>`;
+      <div class="disc">${art}${badge}</div>
+      <small>${e.boss?'Floor Boss':e.group.map(g=>BESTIARY[g].name.split(' ')[1]||BESTIARY[g].name).join(' + ')}</small></div>`;
   }).join('');
   S.inDive=true;
   saveGame();
   map.querySelectorAll('.node').forEach(n=>n.onclick=()=>{
     const e=fs.entries.find(x=>x.id===n.dataset.id);
     if(e.cleared) return toast('Already cleared.');
-    if(e.boss && !open) return toast('Clear the rest of the floor first.');
+    if(e.boss && !open) return toast('Beat the other fights first.');
     startBattle(e);
   });
   show('scr-floor');
 }
 $('#abandon').onclick=()=>{
-  if(!S.carried.gold && !S.carried.cards.length && !S.carried.xp){ S.hp=S.maxHP; S.tray=[]; S.rollCharge=1; renderCamp(); return; }
-  sheet(`<h2>Walk away?</h2><p>You lose ${S.carried.gold} gold, ${f1(S.carried.xp)} xp and ${S.carried.cards.length} card${S.carried.cards.length===1?'':'s'}. Your deck and health come back with you.</p>
-    <div class="stack"><button class="btn danger" id="ab-yes">Lose it and go</button>
-    <button class="btn" onclick="closeSheet()">Keep delving</button></div>`);
-  $('#ab-yes').onclick=()=>{S.carried={gold:0,cards:[],xp:0};S.tray=[];S.rollCharge=1;S.hp=S.maxHP;closeSheet();renderCamp();toast('You climb out empty-handed.')};
+  if(!S.carried.gold && !S.carried.cards.length && !S.carried.dice.length && !S.carried.xp){ S.hp=S.maxHP; S.tray=[]; S.rollCharge=1; renderCamp(); return; }
+  sheet(`<h2>Leave the dungeon?</h2><p>You will lose the ${S.carried.gold} gold, ${f1(S.carried.xp)} xp and ${S.carried.cards.length+S.carried.dice.length} items you are carrying.</p>
+    <div class="stack"><button class="btn danger" id="ab-yes">Leave and lose it</button>
+    <button class="btn" onclick="closeSheet()">Keep going</button></div>`);
+  $('#ab-yes').onclick=()=>{S.carried=emptyCarry();S.tray=[];S.rollCharge=1;S.hp=S.maxHP;closeSheet();renderCamp();toast('You left with nothing.')};
 };
 
 /* ================= BATTLE ================= */
@@ -1727,7 +2103,7 @@ function startBattle(entry){
     drawN:skillVal('stamina'), drawCarry:0, baseBlock:skillVal('defense'),
     block:0, edge:0,
     dice:S.tray.map(d=>({v:d.v,spent:false,id:B_dieSeq++,fresh:false})),
-    dieId:B_dieSeq, armed:null, armedAt:0, busy:false, lock:0, sel:null, target:0, turn:0, over:false
+    fresh:true, dieId:B_dieSeq, armed:null, armedAt:0, busy:false, lock:0, sel:null, target:0, turn:0, over:false
   };
   B.enemies.forEach(nextIntent);
   saveGame();          /* the fight itself is not serialized — this is the point you return to */
@@ -1945,9 +2321,9 @@ function playCard(handIdx, aimAt){
   if(B.over || B.busy) return;
   if(Date.now() < (B.lock||0)) return;      /* no second card off one twitch */
   const id=B.hand[handIdx], c=def(id), u=lvl(id), dslot=dieOf(id), baked=bakedPip(id);
-  if(c.cost > B.energy + 1e-9) return toast(`Not enough mana — ${fmt(c.cost)} needed, ${f1(B.energy)} left.`);
+  if(c.cost > B.energy + 1e-9) return toast(`Not enough mana. Needs ${fmt(c.cost)}.`);
   const die = B.armed!=null ? B.dice.find(d=>d.id===B.armed) : null;
-  if(dslot==='req' && !die) return toast('This one needs a die. Tap a die first.');
+  if(dslot==='req' && !die) return toast('Needs a die. Tap a die first.');
   const pip = baked || ((dslot!=='none' && die) ? die.v : 0);
   if(dslot==='none' && die) B.armed=null;
   if(aimAt!=null) B.target=aimAt;
@@ -2286,10 +2662,10 @@ function renderBattle(){
     const atk = it.atk!=null ? Math.max(0, it.atk-(e.weak||0)) : null;
     const iv = atk!=null?atk : it.blk!=null?it.blk : it.buff!=null?'+'+it.buff : '';
     const targeted = i===B.target;
-    const intentTip = it.atk!=null ? `Attack: hits you for ${atk}${e.weak?' (already weakened)':''} next.`
-      : it.blk!=null ? `Defend: it will gain ${it.blk} block.`
-      : it.buff!=null ? `Buff: it will gain ${it.buff} strength and hit harder from then on.`
-      : 'Hex: it will drain your Roll button, or take your best die if it is already empty.';
+    const intentTip = it.atk!=null ? `Attack: hits you for ${atk}.`
+      : it.blk!=null ? `Defend: gains ${it.blk} block.`
+      : it.buff!=null ? `Buff: gains ${it.buff} strength, so it hits harder.`
+      : 'Hex: drains your Roll meter, or takes your best die.';
     const cls = [e.small?'small':'', targeted?'targeted':'', aiming&&!targeted?'dim':'', e.flash?'struck':''].join(' ');
     return `<div class="enemy ${cls}" data-i="${i}">
       <div class="intent" data-tip="${intentTip}">${ic}<span>${iv}</span></div>
@@ -2311,12 +2687,15 @@ function renderBattle(){
 
   /* player */
   $('#b-hp').innerHTML = stat(A.heart,`${fmt(S.hp)}/${f1(S.maxHP)}`);
+  const bars=$('#b-bars');
+  if(B.fresh) bars.classList.add('snap');      /* a new fight starts with the bars already at their values */
   $('#b-hpfill').style.width = (100*Math.max(0,S.hp)/S.maxHP)+'%';
-  const bf=$('#b-blockfill'), prevBlock=+(bf.dataset.v||0);
+  const bf=$('#b-blockfill'), prevBlock=B.fresh ? B.block : +(bf.dataset.v||0);
   bf.style.width = Math.min(100, 100*Math.max(0,B.block)/S.maxHP)+'%';
   $('#b-blocknum').innerHTML = B.block>0 ? `${A.shieldIcon}${fmt(B.block)}` : '';
   if(B.block>prevBlock){ bf.classList.remove('gain'); void bf.offsetWidth; bf.classList.add('gain'); }
   bf.dataset.v = B.block;
+  if(B.fresh){ void bars.offsetWidth; requestAnimationFrame(()=>bars.classList.remove('snap')); B.fresh=false; }
   renderEnergy(pendingCost());
 
   /* dice — the tray, not a per-turn handout */
@@ -2332,18 +2711,18 @@ function renderBattle(){
     if(B.armed!=null) B.armedAt=Date.now();
     renderBattle();
   });
-  const rb=$('#rollbtn'), room=MAX_TRAY-live.length;
+  const rb=$('#rollbtn'), room=trayMax()-live.length;
   rb.innerHTML = `<b>Roll</b><small>${rollReady()?'ready':`in ${turnsToRoll()} turn${turnsToRoll()===1?'':'s'}`}</small>`;
   rb.style.setProperty('--fill', (100*Math.min(1,S.rollCharge))+'%');
   rb.classList.toggle('ready', rollReady());
   rb.disabled = !rollReady() || room<=0;
   rb.classList.toggle('hot', !rb.disabled && live.length===0);
   $('#trayhint').textContent =
-    B.armed!=null ? 'Armed. The line shows where it lands — tap a card to hold it.'
-    : !live.length ? (rollReady() ? `No dice held. Roll now: it drops ${DICE_PER_ROLL}, then the button refills over ${f1(refillTurns())} turns.`
-                                : `No dice held. The Roll button is ${Math.round(100*S.rollCharge)}% full — ${turnsToRoll()} more turn${turnsToRoll()===1?'':'s'}.`)
-    : room<DICE_PER_ROLL ? `${live.length} held, room for ${room} — rolling now would spill ${DICE_PER_ROLL-room}.`
-    : `${live.length} held, ${rollReady()?'roll ready':`roll refills in ${turnsToRoll()} turn${turnsToRoll()===1?'':'s'}`}. Dice you keep carry into the next fight.`;
+    B.armed!=null ? 'Die picked. Now tap a card.'
+    : !live.length ? (rollReady() ? `No dice. Tap Roll for ${rollSize()}.`
+                                : `No dice. Roll is ready in ${turnsToRoll()} turn${turnsToRoll()===1?'':'s'}.`)
+    : room<rollSize() ? `${live.length} dice. Rolling now would lose ${rollSize()-room}.`
+    : `${live.length} dice. ${rollReady()?'Roll is ready.':`Roll is ready in ${turnsToRoll()} turn${turnsToRoll()===1?'':'s'}.`}`;
 
   /* hand */
   const hand=$('#hand');
@@ -2400,8 +2779,8 @@ function renderBattle(){
     const h=document.createElement('div'); h.className='playhint';
     const c=selCard;
     h.textContent = c.aim
-      ? 'tap a creature to aim · drag onto one to throw it'
-      : 'drag it up, or use the button';
+      ? 'Tap an enemy to aim, or drag the card onto one'
+      : 'Drag the card up, or press Play';
     hand.appendChild(h);
   }
   drawSlotArrow();
@@ -2440,15 +2819,24 @@ function victory(){
   S.carried.xp += xp;
   B.entry.cleared = true;
   const offers = pickN(REWARD_POOL, 3);
+  /* the odd fight drops a die; the enchanted one is the prize */
+  const roll=Math.random(), pe=boss?0.5:0.12;
+  const kind = roll<pe ? 'enchanted' : roll<pe+0.08 ? ['loaded','fickle','even','steady','lucky','flame','ward','heart','spark','scholar'][Math.floor(Math.random()*10)] : null;
+  const drop = kind ? {id:S.dieSeq++, kind} : null;
+  /* a die is a choice against the card, until the depths, where it is simply given */
+  const given = drop && S.floor>=DIE_GIVEN_FLOOR;
+  if(given) S.carried.dice.push(drop);
   setTimeout(()=>{
-    sheet(`<h2>${boss?'The deep one falls':'Cleared'}</h2>
-      <p>Carried, not banked, and not in your deck — a card you take goes to the collection when you climb out, for you to slot in at camp.</p>
-      <div class="loot"><div>${A.coin} +${gold} gold</div><div>${A.xp} +${f1(xp)} xp</div></div>
-      <p>Take a card:</p>
+    sheet(`<h2>${boss?'Boss defeated':'Victory'}</h2>
+      <p>Loot is only yours if you climb out.</p>
+      <div class="loot"><em>Earned</em><div>${A.coin} +${gold} gold</div><div>${A.xp} +${f1(xp)} xp</div>${given?`<div>${A.dice} ${DIE_KINDS[drop.kind].name}!</div>`:''}</div>
+      <div class="choose"><p>${drop&&!given?'Choose one: a card, or the die':'Choose a card'}</p>
       <div class="pickrow">${offers.map(id=>cardFaceHTML(id,'pick')).join('')}</div>
-      <button class="btn wide" id="skipcard">Take nothing</button>`);
+      ${drop&&!given?`<button class="btn wide diepick" id="takedie">${A.dice}<span><b>${DIE_KINDS[drop.kind].name}</b><small>${DIE_KINDS[drop.kind].text.split('.')[0]}. Skips the card.</small></span></button>`:''}</div>
+      <button class="btn wide" id="skipcard">Skip</button>`,true);
     document.querySelectorAll('#sheet .pick').forEach((el,i)=>el.onclick=()=>{
       S.carried.cards.push(offers[i]); closeSheet(); afterBattle(); });
+    if(drop&&!given) $('#takedie').onclick=()=>{ S.carried.dice.push(drop); closeSheet(); afterBattle(); };
     $('#skipcard').onclick=()=>{closeSheet();afterBattle()};
   },500);
 }
@@ -2460,32 +2848,31 @@ function floorClear(){
   const bonus = 18*S.floor, xpBonus = 7.4*S.floor;
   S.carried.gold += bonus; S.carried.xp += xpBonus;
   S.best=Math.max(S.best,S.floor);
-  sheet(`<h2>Floor ${S.floor} is clear</h2>
-    <p>Stairs up on one side, stairs down on the other.</p>
+  sheet(`<h2>Floor ${S.floor} cleared</h2>
     <div class="loot"><div>${A.coin} +${bonus}</div><div>${A.xp} +${f1(xpBonus)}</div>
-      <div>${A.sack} ${S.carried.gold}g · ${f1(S.carried.xp)}xp · ${S.carried.cards.length} cards carried</div></div>
+      <div>${A.sack} ${S.carried.gold}g · ${f1(S.carried.xp)}xp · ${S.carried.cards.length} cards${S.carried.dice.length?` · ${S.carried.dice.length} dice`:''}</div></div>
     <div class="stack">
-      <button class="btn primary" id="extract">Climb out and bank it</button>
-      <button class="btn" id="descend">Go down to floor ${S.floor+1}</button>
+      <button class="btn primary" id="extract">Climb out and keep your loot</button>
+      <button class="btn" id="descend">Go deeper (floor ${S.floor+1})</button>
     </div>
-    <p style="margin-top:12px;font-size:12px">Deeper floors pay more. You keep nothing if you fall.</p>`);
+    <p style="margin-top:12px;font-size:12px">Deeper floors pay more. If you die, you lose ALL the loot you've earned.</p>`,true);
   $('#extract').onclick=()=>{
-    S.bank+=S.carried.gold; S.xp+=S.carried.xp; S.collection.push(...S.carried.cards);
-    const g=S.carried.gold,x=S.carried.xp,c=S.carried.cards.length;
-    S.carried={gold:0,cards:[],xp:0}; S.tray=[]; S.rollCharge=1; S.hp=S.maxHP; closeSheet(); renderCamp();
-    toast(`Banked ${g} gold, ${f1(x)} xp${c?` and ${c} card${c===1?'':'s'} into the collection`:''}.`);
+    S.bank+=S.carried.gold; S.xp+=S.carried.xp; S.collection.push(...S.carried.cards); S.dicebag.push(...S.carried.dice);
+    const g=S.carried.gold,x=S.carried.xp,c=S.carried.cards.length+S.carried.dice.length;
+    S.carried=emptyCarry(); S.tray=[]; S.rollCharge=1; S.hp=S.maxHP; closeSheet(); renderCamp();
+    toast(`Kept ${g} gold, ${f1(x)} xp${c?` and ${c} new item${c===1?'':'s'}`:''}.`);
   };
   $('#descend').onclick=()=>{S.floor++;genFloor();closeSheet();renderFloor();
     toast(`Floor ${S.floor}.`)};
 }
 function defeat(){
   if(B.over) return; B.over=true;
-  const g=S.carried.gold,x=S.carried.xp,c=S.carried.cards.length;
-  S.carried={gold:0,cards:[],xp:0}; S.tray=[]; S.rollCharge=1; S.hp=S.maxHP;
+  const g=S.carried.gold,x=S.carried.xp,c=S.carried.cards.length+S.carried.dice.length;
+  S.carried=emptyCarry(); S.tray=[]; S.rollCharge=1; S.hp=S.maxHP;
   setTimeout(()=>{
-    sheet(`<h2>You go down on floor ${S.floor}</h2>
-      <p>${g||c||x?`The floor keeps ${g} gold, ${f1(x)} xp and ${c} card${c===1?'':'s'}.`:'You were carrying nothing, at least.'} Your deck, your health and everything already banked are still yours.</p>
-      <button class="btn wide primary" id="backcamp">Wake up at camp</button>`);
+    sheet(`<h2>You died on floor ${S.floor}</h2>
+      <p>${g||c||x?`You lost ${g} gold, ${f1(x)} xp and ${c} item${c===1?'':'s'} you were carrying.`:'You were not carrying anything.'} Everything you came in with is safe.</p>
+      <button class="btn wide primary" id="backcamp">Back to camp</button>`,true);
     $('#backcamp').onclick=()=>{closeSheet();renderCamp()};
   },600);
 }
@@ -2494,16 +2881,22 @@ function defeat(){
 window.closeSheet=closeSheet;
 $('#wipe').onclick=()=>{
   sheet(`<h2>Erase everything?</h2>
-    <p>Deck, skills, gold, xp and any dive in progress. There is no undo.</p>
+    <p>This deletes your deck, skills, gold and xp. It cannot be undone.</p>
     <div class="stack">
-      <button class="btn danger" id="wipe-yes">Erase it all</button>
+      <button class="btn danger hold" id="wipe-yes"><span>Hold to erase everything</span></button>
       <button class="btn" onclick="closeSheet()">Keep my progress</button>
     </div>`);
-  $('#wipe-yes').onclick=async()=>{
-    await Store.wipe();
-    Object.assign(S, freshState());
-    closeSheet(); renderCamp(); toast('Wiped. Starting over.');
-  };
+  const wy=$('#wipe-yes'); let wt=null;
+  const wStart=e=>{ e.preventDefault(); if(wt) return; wy.classList.add('on');
+    wt=setTimeout(async()=>{ wt=null;
+      await Store.wipe();
+      Object.assign(S, freshState());
+      closeSheet(); renderCamp(); toast('Wiped. Starting over.');
+    },1500); };
+  const wStop=()=>{ if(wt){clearTimeout(wt);wt=null;} wy.classList.remove('on'); };
+  wy.addEventListener('pointerdown',wStart);
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>wy.addEventListener(ev,wStop));
+  wy.addEventListener('contextmenu',e=>e.preventDefault());
 };
 
 (async()=>{
@@ -2511,30 +2904,48 @@ $('#wipe').onclick=()=>{
   Store.init();
   const data = await Store.load();
   const restored = applySave(data);
+  /* playtest: one of each new variant, once per save */
+  if(!S.testDiceGiven){ ['even','steady','lucky'].forEach(kind=>S.dicebag.push({id:S.dieSeq++,kind})); S.testDiceGiven=true; saveGame(); }
+  if(!S.testRunesGiven){ ['flame','ward','heart','spark','scholar'].forEach(kind=>S.dicebag.push({id:S.dieSeq++,kind})); S.testRunesGiven=true; saveGame(); }
   if(restored && S.inDive && S.floorState) { renderFloor(); toast(`Back on floor ${S.floor}.`); }
   else renderCamp();
 })();
 
 /* ---------------- back-button guard ----------------
-   A stray swipe-back or back tap would drop the player out of the game. Keep a
-   spare history entry in front of the page; when it is popped, ask first.
-   Back with a sheet open simply closes the sheet, which is what people expect. */
+   Back on a screen with a parent (market, deck, pouch) goes to that parent. A
+   plain sheet just closes. Everywhere else it asks before leaving the game.
+   Browsers ignore history entries added without a tap, so the spare entry is
+   (re)added on every tap, not just once at load. */
 (function(){
   let leaving=false;
-  try{ history.replaceState({db:0},''); history.pushState({db:1},''); }catch(e){ return; }
+  const PARENT={'scr-market':'#market-done','scr-collection':'#collection-done','scr-pouch':'#pouch-done'};
+  const arm=()=>{ try{ if(!history.state || history.state.db!==1) history.pushState({db:1},''); }catch(e){} };
+  try{ history.replaceState({db:0},''); }catch(e){ return; }
+  document.addEventListener('pointerdown',arm,true);
+  document.addEventListener('keydown',arm,true);
+  const hideLeave=()=>$('#leave').classList.remove('on');
+  function askLeave(){
+    $('#leavesheet').innerHTML=`<h2>Leave Dicebound?</h2>
+      <p>${S.inDive ? 'You are in the dungeon. Your loot is not saved yet, and a fight in progress is lost.' : 'Your camp is saved.'}</p>
+      <div class="stack">
+        <button class="btn primary" id="stay-yes">Stay</button>
+        <button class="btn danger" id="leave-yes">Leave</button>
+      </div>`;
+    $('#leave').classList.add('on');
+    $('#stay-yes').onclick=hideLeave;
+    $('#leave-yes').onclick=()=>{ leaving=true; hideLeave(); history.go(history.state&&history.state.db===1?-2:-1); };
+  }
   window.addEventListener('popstate',()=>{
     if(leaving) return;
-    try{ history.pushState({db:1},''); }catch(e){}
-    if($('#overlay').classList.contains('on')){ closeSheet(); return; }
-    sheet(`<h2>Leave Dicebound?</h2>
-      <p>${S.inDive ? 'You are mid-delve. Your loot is still carried, not banked, and a fight in progress is not saved.'
-                    : 'Your camp is saved. Heading back will take you out of the game.'}</p>
-      <div class="stack">
-        <button class="btn primary" id="stay-yes">Stay and play</button>
-        <button class="btn danger" id="leave-yes">Leave</button>
-      </div>`);
-    $('#stay-yes').onclick=()=>closeSheet();
-    $('#leave-yes').onclick=()=>{ leaving=true; closeSheet(); history.go(-2); };
+    arm();
+    if($('#leave').classList.contains('on')){ hideLeave(); return; }
+    const sheetOpen=$('#overlay').classList.contains('on');
+    if(sheetOpen && !sheetModal){ closeSheet(); return; }
+    if(!sheetOpen){
+      const cur=document.querySelector('.screen.on'), p=cur && PARENT[cur.id];
+      if(p){ $(p).click(); return; }
+    }
+    askLeave();
   });
   window.addEventListener('beforeunload',e=>{
     if(!S.inDive || leaving) return;
