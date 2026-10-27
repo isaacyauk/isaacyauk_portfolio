@@ -314,6 +314,22 @@
   #toast button:active{transform:scale(.94)}
 
   @media (prefers-reduced-motion: reduce){ *{transition:none !important;animation:none !important} }
+
+  /* ---- "leave this page?" — shown when Back is pressed ---- */
+  #leaveBack{position:fixed;inset:0;z-index:60;background:rgba(30,30,28,.3);opacity:0;pointer-events:none;transition:opacity .25s}
+  #leaveBack.open{opacity:1;pointer-events:auto}
+  #leave{position:fixed;left:50%;top:50%;z-index:61;width:min(calc(100% - 40px),340px);padding:22px 20px 18px;border-radius:22px;background:var(--surface);color:var(--ink);
+    font-family:var(--font);box-shadow:0 24px 60px -20px rgba(0,0,0,.45);transform:translate(-50%,-46%) scale(.92);opacity:0;visibility:hidden;
+    transition:transform .38s var(--spring), opacity .22s, visibility 0s .38s}
+  #leave.open{transform:translate(-50%,-50%) scale(1);opacity:1;visibility:visible;transition:transform .38s var(--spring), opacity .22s, visibility 0s}
+  #leave h2{margin:0;font-size:19px;font-weight:600;letter-spacing:-.01em}
+  #leave p{margin:6px 0 18px;font-size:14px;line-height:1.45;color:var(--muted)}
+  #leave .lvrow{display:flex;gap:10px}
+  #leave button{flex:1;height:46px;border-radius:14px;font:600 15px var(--font);cursor:pointer;transition:transform .18s var(--spring)}
+  #leave button:active{transform:scale(.97)}
+  #leave button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  #leaveGo{border:1px solid var(--line);background:transparent;color:var(--ink)}
+  #leaveStay{border:0;background:var(--accent);color:#fff}
 </style>
 </head>
 <body>
@@ -359,6 +375,13 @@
 <div id="backdrop"></div>
 <div id="sheet" role="dialog" aria-modal="true"></div>
 <div id="toast" role="status"><span id="toastMsg"></span><button id="toastUndo">Undo</button></div>
+
+<div id="leaveBack"></div>
+<div id="leave" role="alertdialog" aria-modal="true" aria-labelledby="leaveT" aria-describedby="leaveD">
+  <h2 id="leaveT">Leave this page?</h2>
+  <p id="leaveD">What you've entered is saved in this browser.</p>
+  <div class="lvrow"><button type="button" id="leaveGo">Leave</button><button type="button" id="leaveStay">Stay</button></div>
+</div>
 
 <script>
 const $ = s => document.querySelector(s);
@@ -1502,6 +1525,34 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => stat
   if (state.view) Object.assign(view, state.view);
   applyView();
   render();
+})();
+
+/* ---------- Back button: ask before leaving ---------- */
+// Browsers only honour a history entry that was added after the person touched the page,
+// so the guard goes in on the first tap or key press. Back then lands here instead of leaving.
+(() => {
+  const dlg = document.getElementById('leave'), back = document.getElementById('leaveBack');
+  const stay = document.getElementById('leaveStay'), go = document.getElementById('leaveGo');
+  let armed = !!(history.state && history.state.leaveGuard), leaving = false;
+  const push = () => { try { history.pushState({leaveGuard:1}, ''); armed = true; } catch(e){} };
+  const show = on => { dlg.classList.toggle('open', on); back.classList.toggle('open', on); if (on) stay.focus(); };
+  const first = () => { if (!armed && !dlg.classList.contains('open')) push(); };
+  ['pointerdown', 'keydown'].forEach(t => window.addEventListener(t, first, true));
+  window.addEventListener('popstate', () => {
+    if (leaving) return;
+    if (history.state && history.state.leaveGuard){ armed = true; return; }   // stepped forward onto the guard
+    if (!armed) return;
+    armed = false;                       // the guard entry was just used up
+    show(true);
+  });
+  const stayPut = () => { if (!dlg.classList.contains('open')) return; show(false); if (!armed) push(); };
+  stay.onclick = stayPut; back.onclick = stayPut;
+  go.onclick = () => {
+    leaving = true; show(false);
+    history.back();
+    setTimeout(() => { leaving = false; }, 900);   // nowhere to go back to: just carry on
+  };
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && dlg.classList.contains('open')) stayPut(); });
 })();
 </script>
 </body>

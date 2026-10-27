@@ -1,0 +1,813 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<!-- A notebook, not a bank: nothing in this page is allowed to talk to the network (connect-src 'none'),
+     so what you write down can only ever live in this browser. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<title>Tally</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --canvas:#EBE7DD;
+    --dot:rgba(43,38,28,.13);
+    --ink:#2B2A26;
+    --muted:#7A766A;
+    --surface:#FBF9F4;
+    --line:rgba(43,42,38,.11);
+    --accent:#2B6C76;
+    --honey:#EAD9AA;
+    --honey-edge:#C3A55C;
+    --danger:#A2463B;
+    --good:#8FB98A;
+    --good-edge:#5C8659;
+    --good-soft:rgba(143,185,138,.2);
+    --short:#B4793F;
+    --spring:cubic-bezier(.34,1.32,.5,1);
+    --soft:cubic-bezier(.3,.9,.25,1);
+    --font:"Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{background:var(--canvas)}
+  body{margin:0;min-height:100%;color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased;
+    overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
+  button{font:inherit;color:inherit}
+  [hidden]{display:none !important}
+  #canvas{position:fixed;inset:0;z-index:-1;background:var(--canvas);
+    background-image:radial-gradient(var(--dot) 1px, transparent 1.3px);background-size:22px 22px}
+
+  /* ---- header ---- */
+  header{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;
+    padding:calc(10px + env(safe-area-inset-top)) 12px 20px;pointer-events:none;
+    background:linear-gradient(var(--canvas) 55%, rgba(235,231,221,0))}
+  .monthnav,.tools{display:flex;align-items:center;gap:2px;pointer-events:auto}
+  .icon-btn{width:38px;height:38px;border-radius:12px;border:0;background:transparent;display:grid;place-items:center;cursor:pointer;
+    transition:background .15s, transform .18s var(--spring)}
+  .icon-btn:hover{background:var(--line)}
+  .icon-btn:active{background:var(--line);transform:scale(.88)}
+  .monthname{border:0;background:transparent;font-size:17px;font-weight:600;letter-spacing:-.01em;padding:8px 8px;border-radius:10px;cursor:pointer;
+    min-width:136px;text-align:center;overflow:hidden;white-space:nowrap}
+  .monthname span{display:inline-block}
+  @keyframes nameN{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+  @keyframes nameP{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+  .monthname.n span{animation:nameN .34s var(--spring)}
+  .monthname.p span{animation:nameP .34s var(--spring)}
+  .icon-btn:focus-visible,.monthname:focus-visible,#add:focus-visible,.btn:focus-visible,.chip:focus-visible,
+  .crow:focus-visible,.grow:focus-visible,.sortbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  #eye .shut{display:none}
+  body.hide #eye .open{display:none}
+  body.hide #eye .shut{display:block}
+
+  /* ---- page ---- */
+  #page{width:min(100%,560px);margin:0 auto;padding:calc(68px + env(safe-area-inset-top)) 16px calc(130px + env(safe-area-inset-bottom))}
+  .flabel{display:flex;align-items:center;justify-content:space-between;margin:28px 6px 9px;font-size:13px;color:var(--muted);min-height:26px}
+  .flabel:first-child{margin-top:4px}
+  .flabel button{border:0;background:transparent;font-size:13px;color:var(--accent);cursor:pointer;padding:2px 6px;border-radius:8px;transition:transform .18s var(--spring)}
+  .flabel button:active{transform:scale(.94)}
+  .flabel button[hidden]{display:none}
+  .frame{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:18px 18px 16px}
+  @keyframes rise{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:none}}
+  .settle{animation:rise .7s var(--spring) both;animation-delay:calc(var(--i, 0) * 80ms)}
+  @keyframes slideN{from{opacity:0;transform:translateX(22px)}to{opacity:1;transform:none}}
+  @keyframes slideP{from{opacity:0;transform:translateX(-22px)}to{opacity:1;transform:none}}
+  .swap-n .swapme{animation:slideN .45s var(--spring)}
+  .swap-p .swapme{animation:slideP .45s var(--spring)}
+
+  /* ---- overview ---- */
+  .lbl{font-size:13px;color:var(--muted);margin-bottom:2px}
+  .bignum{position:relative;display:flex;align-items:baseline;gap:10px}
+  .bignum .of{font-size:18px;color:var(--muted);font-variant-numeric:tabular-nums;display:inline-block}
+  #spent{font-size:44px;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums;display:inline-block;transform-origin:left bottom}
+  .subline{margin:2px 0 0;font-size:14px;color:var(--muted);min-height:20px}
+  .subline b{font-weight:500;color:var(--short)}
+  .yearline{margin:2px 0 0;font-size:13px;color:var(--muted);min-height:18px;font-variant-numeric:tabular-nums}
+  .subline:empty,.yearline:empty{display:none}
+  .stack{display:flex;height:12px;border-radius:999px;background:var(--line);overflow:hidden;margin:16px 0 12px}
+  .seg{height:100%;width:0;border-right:1.5px solid var(--surface);transition:width .8s var(--soft)}
+  .seg:last-child{border-right:0}
+  .grow{display:grid;grid-template-columns:14px 1fr auto;align-items:center;column-gap:10px;row-gap:5px;border:0;background:transparent;text-align:left;cursor:pointer;
+    padding:7px 8px;margin:0 -8px;border-radius:12px;width:calc(100% + 16px);
+    transition:background .15s, transform .2s var(--spring), opacity .25s}
+  .grow:hover{background:rgba(43,42,38,.045)}
+  .grow:active{transform:scale(.985)}
+  .grow.on{background:var(--cb)}
+  .grow.dim{opacity:.4}
+  .cdot{width:12px;height:12px;border-radius:50%;background:var(--cb);border:1.5px solid var(--ce)}
+  .cname{font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cname small{font-size:12px;font-weight:400;color:var(--muted);margin-left:6px}
+  .camt{font-size:15px;font-variant-numeric:tabular-nums;font-weight:500}
+  .ctrack{grid-column:2 / 4;position:relative;height:5px;border-radius:999px;background:var(--line);overflow:hidden}
+  .ctrack span{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:999px;background:var(--ce);transition:width .8s var(--soft)}
+  .ctrack .e{opacity:.32}
+  /* ---- the list ---- */
+  .sortbar{position:relative;display:flex;background:var(--line);border-radius:12px;padding:3px;margin-bottom:12px}
+  .sortthumb{position:absolute;top:3px;bottom:3px;left:3px;width:calc((100% - 6px) / 3);border-radius:9px;background:var(--surface);
+    box-shadow:0 1px 3px rgba(43,42,38,.14);transform:translateX(calc(var(--k, 0) * 100%));transition:transform .4s var(--spring)}
+  .sortbtn{position:relative;flex:1;border:0;background:transparent;padding:8px 0;font-size:13.5px;font-weight:500;color:var(--muted);cursor:pointer;border-radius:9px;
+    transition:color .2s, transform .18s var(--spring)}
+  .sortbtn.on{color:var(--ink)}
+  .sortbtn:active{transform:scale(.95)}
+  .crow{position:relative;display:grid;grid-template-columns:14px 1fr auto 30px;align-items:center;gap:12px;margin-bottom:8px;padding:12px 10px 12px 14px;
+    background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden;cursor:pointer;user-select:none;-webkit-user-select:none;
+    transition:transform .22s var(--spring), box-shadow .2s, opacity .25s}
+  .crow>*{position:relative;z-index:1}
+  .crow .wash{position:absolute;inset:0;z-index:0;background:var(--cb);opacity:.75;transform:scaleX(0);transform-origin:left;transition:transform .9s var(--soft)}
+  .crow.landed .wash{transform:scaleX(1)}
+  .crow:hover{transform:translateY(-2px);box-shadow:0 12px 22px -16px rgba(43,42,38,.5)}
+  .crow:active{transform:scale(.985)}
+  .crow.dim{opacity:.38}
+  .cinfo{display:flex;flex-direction:column;min-width:0}
+  .cn1{font-size:15.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cn2{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .crow.late .cn2{color:var(--short)}
+  .crow.landed .cn2{color:var(--good-edge);font-weight:500}
+  .cam{font-size:18px;font-weight:600;letter-spacing:-.01em;font-variant-numeric:tabular-nums;display:inline-block}
+  .check{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;cursor:pointer;
+    background:var(--good-soft);border:1px solid rgba(92,134,89,.35);color:var(--good-edge);padding:0;position:relative;
+    transition:transform .2s var(--spring), background .18s, border-color .18s, color .18s}
+  .check svg{width:14px;height:14px;display:block;opacity:.55;transition:opacity .2s}
+  .check:hover{transform:scale(1.12) rotate(-6deg);background:var(--good);border-color:var(--good-edge);color:#fff}
+  .check:hover svg{opacity:1}
+  .check:active{transform:scale(.88)}
+  .crow.landed .check{background:var(--good-edge);border-color:var(--good-edge);color:#fff}
+  .crow.landed .check svg{opacity:1}
+  @keyframes squish{0%{transform:scale(1,1)}28%{transform:scale(1.025,.94)}58%{transform:scale(.99,1.02)}100%{transform:scale(1,1)}}
+  .crow.celebrate{animation:squish .62s var(--soft)}
+  @keyframes ring{0%{opacity:.75;transform:scale(1)}100%{opacity:0;transform:scale(2.6)}}
+  .crow.celebrate .check::after{content:"";position:absolute;inset:-1px;border-radius:50%;border:2px solid var(--good-edge);animation:ring .6s ease-out}
+  @keyframes popIn{
+    0%{opacity:0;transform:scale(.6) translateY(14px) rotate(-3deg)}
+    50%{opacity:1;transform:scale(1.05) translateY(-3px) rotate(1deg)}
+    76%{transform:scale(.99) translateY(1px)}
+    100%{opacity:1;transform:none}
+  }
+  @keyframes poof{to{opacity:0;transform:scale(.8) translateY(8px) rotate(2deg)}}
+  .crow.poof{animation:poof .26s ease-in forwards;pointer-events:none}
+  .list-note{margin:12px 6px 0;font-size:13px;color:var(--muted);line-height:1.45}
+  .empty{text-align:center;padding:30px 24px 26px;margin-bottom:10px;color:var(--muted);font-size:14px;line-height:1.5;background:var(--surface);
+    border:1px dashed rgba(43,42,38,.2);border-radius:22px}
+  .empty[hidden]{display:none}
+  .empty svg{display:block;margin:0 auto 10px;overflow:visible}
+  @keyframes steam{0%{opacity:0;transform:translateY(6px) scaleY(.8)}35%{opacity:.7}100%{opacity:0;transform:translateY(-12px) scaleY(1.15)}}
+  .steam{fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;animation:steam 3.4s ease-in-out infinite;transform-box:fill-box;transform-origin:center bottom}
+  .steam.s2{animation-delay:1.1s}.steam.s3{animation-delay:2.2s}
+
+  /* ---- floating bits ---- */
+  @keyframes bump{0%{transform:scale(1)}38%{transform:scale(1.1) translateY(-2px)}100%{transform:scale(1)}}
+  .bumped{animation:bump .46s var(--spring)}
+  @keyframes floatUp{
+    0%{opacity:0;transform:translate(-50%,4px) scale(.85)}
+    22%{opacity:1;transform:translate(-50%,-6px) scale(1.04)}
+    100%{opacity:0;transform:translate(-50%,-36px) scale(.96)}
+  }
+  .floaty{position:absolute;left:50%;top:30%;z-index:8;pointer-events:none;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;
+    color:var(--good-edge);white-space:nowrap;animation:floatUp 1.1s cubic-bezier(.25,.8,.3,1) forwards}
+
+  /* ---- dock ---- */
+  #dock{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:20;display:flex;align-items:center;gap:10px}
+  #add{display:flex;align-items:center;gap:8px;padding:13px 22px 13px 17px;border:0;border-radius:999px;background:var(--ink);color:var(--surface);
+    font-size:15px;font-weight:500;cursor:pointer;box-shadow:0 8px 20px -10px rgba(43,42,38,.6);white-space:nowrap;
+    transition:transform .22s var(--spring), box-shadow .2s}
+  #add:hover{transform:translateY(-2px);box-shadow:0 12px 24px -10px rgba(43,42,38,.6)}
+  #add:active{transform:translateY(0) scale(.95)}
+  #add svg{transition:transform .35s var(--spring)}
+  #add:hover svg{transform:rotate(90deg)}
+
+  /* ---- sheet ---- */
+  #backdrop{position:fixed;inset:0;z-index:30;background:rgba(43,42,38,.28);opacity:0;pointer-events:none;transition:opacity .25s}
+  #backdrop.open{opacity:1;pointer-events:auto}
+  #sheet{position:fixed;left:50%;bottom:0;z-index:31;width:min(100%,480px);transform:translate(-50%,105%);visibility:hidden;
+    background:var(--surface);border-radius:22px 22px 0 0;padding:10px 20px calc(20px + env(safe-area-inset-bottom));
+    transition:transform .38s var(--spring), visibility 0s .38s;max-height:90vh;overflow-y:auto}
+  #sheet.open{transform:translate(-50%,0);visibility:visible;transition:transform .38s var(--spring), visibility 0s}
+  .grab{width:36px;height:4px;border-radius:4px;background:var(--line);margin:0 auto 14px}
+  #sheet h2{margin:0;font-size:19px;font-weight:600;letter-spacing:-.01em}
+  .sub{margin:4px 0 0;font-size:14px;color:var(--muted)}
+  .section{margin:20px 0 8px;font-size:13px;color:var(--muted)}
+  .name-input{width:100%;border:0;border-bottom:1.5px solid var(--line);background:transparent;font:600 19px var(--font);color:var(--ink);padding:4px 0 8px;outline:none;border-radius:0}
+  .name-input:focus{border-bottom-color:var(--accent)}
+  .amount-field{display:flex;align-items:baseline;gap:4px;margin-top:18px;border-bottom:1.5px solid var(--line);padding-bottom:6px}
+  .amount-field:focus-within{border-bottom-color:var(--accent)}
+  .amount-field span{font-size:30px;font-weight:500;color:var(--muted)}
+  .amount-field input{flex:1;min-width:0;border:0;background:transparent;outline:none;font:600 40px var(--font);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums;padding:0}
+  .amount-field.small{margin-top:10px}
+  .amount-field.small span{font-size:22px}
+  .amount-field.small input{font-size:28px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .chip{padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;
+    transition:transform .18s var(--spring), background .15s, border-color .15s}
+  .chip:hover{transform:translateY(-1px)}
+  .chip:active{background:var(--line);transform:scale(.95)}
+  .chip i{width:10px;height:10px;border-radius:50%;background:var(--cb);border:1.5px solid var(--ce)}
+  .chip.on{background:var(--cb, var(--good-soft));border-color:var(--ce, rgba(92,134,89,.55));font-weight:500}
+  .chip.tog.on{background:var(--good-soft);border-color:rgba(92,134,89,.55);color:var(--good-edge)}
+  .num{font:500 16px var(--font);color:var(--ink);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;background:transparent;outline:none;width:100%}
+  .num:focus{border-color:var(--accent)}
+  .err{min-height:18px;margin:10px 0 8px;font-size:13px;color:var(--danger)}
+  .row{display:flex;gap:10px}
+  .btn{flex:1;height:50px;border-radius:14px;border:0;font-size:16px;font-weight:600;cursor:pointer;transition:transform .18s var(--spring), filter .15s}
+  .btn:active{transform:scale(.97)}
+  .btn.primary{background:var(--accent);color:#fff}
+  .btn.ghost{background:transparent;border:1px solid var(--line)}
+  .btn.good{background:transparent;border:1px solid rgba(92,134,89,.5);color:var(--good-edge)}
+  .btn.danger{background:transparent;border:1px solid var(--line);color:var(--danger)}
+  .btn:disabled{opacity:.4;cursor:default;transform:none}
+  .note-line{margin:12px 0 0;font-size:13px;color:var(--muted);line-height:1.45}
+
+  /* ---- toast ---- */
+  #toast{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom));z-index:40;transform:translate(-50%,14px) scale(.96);opacity:0;
+    display:flex;align-items:center;gap:16px;padding:10px 10px 10px 16px;border-radius:14px;background:var(--ink);color:var(--surface);
+    font-size:14px;pointer-events:none;transition:opacity .22s, transform .32s var(--spring);white-space:nowrap;max-width:calc(100% - 32px)}
+  #toast.show{opacity:1;transform:translate(-50%,0) scale(1);pointer-events:auto}
+  #toast span{overflow:hidden;text-overflow:ellipsis}
+  #toast button{border:0;background:rgba(255,255,255,.1);color:#A8D6DB;font-weight:600;padding:6px 12px;border-radius:9px;cursor:pointer;transition:transform .18s var(--spring), background .15s}
+  #toast button:hover{background:rgba(255,255,255,.18)}
+  #toast button:active{transform:scale(.94)}
+
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important;animation:none !important} }
+
+  /* ---- "leave this page?" — shown when Back is pressed ---- */
+  #leaveBack{position:fixed;inset:0;z-index:60;background:rgba(30,30,28,.3);opacity:0;pointer-events:none;transition:opacity .25s}
+  #leaveBack.open{opacity:1;pointer-events:auto}
+  #leave{position:fixed;left:50%;top:50%;z-index:61;width:min(calc(100% - 40px),340px);padding:22px 20px 18px;border-radius:22px;background:var(--surface);color:var(--ink);
+    font-family:var(--font);box-shadow:0 24px 60px -20px rgba(0,0,0,.45);transform:translate(-50%,-46%) scale(.92);opacity:0;visibility:hidden;
+    transition:transform .38s var(--spring), opacity .22s, visibility 0s .38s}
+  #leave.open{transform:translate(-50%,-50%) scale(1);opacity:1;visibility:visible;transition:transform .38s var(--spring), opacity .22s, visibility 0s}
+  #leave h2{margin:0;font-size:19px;font-weight:600;letter-spacing:-.01em}
+  #leave p{margin:6px 0 18px;font-size:14px;line-height:1.45;color:var(--muted)}
+  #leave .lvrow{display:flex;gap:10px}
+  #leave button{flex:1;height:46px;border-radius:14px;font:600 15px var(--font);cursor:pointer;transition:transform .18s var(--spring)}
+  #leave button:active{transform:scale(.97)}
+  #leave button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  #leaveGo{border:1px solid var(--line);background:transparent;color:var(--ink)}
+  #leaveStay{border:0;background:var(--accent);color:#fff}
+</style>
+</head>
+<body>
+<div id="canvas"></div>
+
+<header>
+  <div class="monthnav">
+    <button class="icon-btn" id="prev" aria-label="Previous month">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="var(--ink)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3.5L5.5 9l5.5 5.5"/></svg>
+    </button>
+    <button class="monthname" id="monthBtn" aria-label="Jump to this month"><span id="monthTxt"></span></button>
+    <button class="icon-btn" id="next" aria-label="Next month">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="var(--ink)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5L12.5 9 7 14.5"/></svg>
+    </button>
+  </div>
+  <div class="tools">
+    <button class="icon-btn" id="eye" aria-label="Hide or show amounts" title="Hide amounts">
+      <svg class="open" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.8 10S5 4.6 10 4.6 18.2 10 18.2 10 15 15.4 10 15.4 1.8 10 1.8 10z"/><circle cx="10" cy="10" r="2.4"/></svg>
+      <svg class="shut" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 11.5C4 13.4 6.6 15 10 15s6-1.6 7.5-3.5M6 14l-1.2 1.8M10 15.2V17M14 14l1.2 1.8"/></svg>
+    </button>
+    <button class="icon-btn" id="menu" aria-label="Options">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="var(--ink)"><circle cx="4" cy="10" r="1.6"/><circle cx="10" cy="10" r="1.6"/><circle cx="16" cy="10" r="1.6"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="page">
+  <div class="flabel settle" style="--i:0"><span>Where it's coming from</span><button id="clearFilter" hidden>Show all</button></div>
+  <section class="frame settle" id="overview" style="--i:1">
+    <div class="swapme">
+      <div class="lbl">Monthly spend</div>
+      <div class="bignum"><span id="spent">$0</span><span class="of" id="of"></span></div>
+      <p class="subline" id="subline"></p>
+      <p class="yearline" id="yearline"></p>
+      <div class="stack" id="stack" aria-hidden="true"></div>
+      <div id="groups"></div>
+    </div>
+  </section>
+
+  <div class="flabel settle" style="--i:2"><span>Charges</span></div>
+  <section class="settle" style="--i:3">
+    <div class="sortbar" id="sortbar" role="group" aria-label="Sort charges">
+      <div class="sortthumb"></div>
+      <button class="sortbtn" data-sort="day">Day</button>
+      <button class="sortbtn" data-sort="amount">Amount</button>
+      <button class="sortbtn" data-sort="name">Source</button>
+    </div>
+    <div class="empty" id="empty" hidden>
+      <svg width="54" height="54" viewBox="0 0 54 54" fill="none" aria-hidden="true">
+        <path class="steam" d="M20 22c-3-4 3-6 0-10"/><path class="steam s2" d="M28 22c-3-4 3-6 0-10"/><path class="steam s3" d="M36 22c-3-4 3-6 0-10"/>
+        <path d="M12 27h30v6a13 13 0 0 1-13 13h-4A13 13 0 0 1 12 33z" fill="var(--honey)" stroke="var(--honey-edge)" stroke-width="1.8" stroke-linejoin="round"/>
+        <path d="M42 29.5h2.5a4.5 4.5 0 0 1 0 9H41" stroke="var(--honey-edge)" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      Nothing here yet.
+    </div>
+    <div id="list" class="swapme"></div>
+  </section>
+  <p class="list-note settle" style="--i:4" id="listNote"></p>
+</main>
+
+<div id="dock">
+  <button id="add"><svg width="18" height="18" viewBox="0 0 18 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 3.5v11M3.5 9h11"/></svg>Add a charge</button>
+</div>
+
+<div id="backdrop"></div>
+<div id="sheet" role="dialog" aria-modal="true"></div>
+<div id="toast" role="status"><span id="toastMsg"></span><button id="toastUndo">Undo</button></div>
+<input type="file" id="restoreFile" accept="application/json,.json" hidden>
+
+<div id="leaveBack"></div>
+<div id="leave" role="alertdialog" aria-modal="true" aria-labelledby="leaveT" aria-describedby="leaveD">
+  <h2 id="leaveT">Leave this page?</h2>
+  <p id="leaveD">What you've entered is saved in this browser.</p>
+  <div class="lvrow"><button type="button" id="leaveGo">Leave</button><button type="button" id="leaveStay">Stay</button></div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtFull = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
+const fmtWhole = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
+const MAXC = 9999999999;
+let state;
+// With amounts hidden, every number in the page (toasts included) turns into dots.
+const money = c => state && state.hide ? '$•••' : (c % 100 === 0 ? fmtWhole : fmtFull).format(c / 100);
+const parseCents = s => { const n = parseFloat(String(s).replace(/[^0-9.]/g,'')); const c = isFinite(n) ? Math.round(n*100) : 0; return c > MAXC ? 0 : c; };
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- sources get a colour the first time you use them, and keep it ---------- */
+const PAL = [
+  {bg:'#CFDFEE', edge:'#7BA0C2'}, {bg:'#F3D3C2', edge:'#C98C6B'}, {bg:'#E6D4E8', edge:'#A57FAB'}, {bg:'#CDE6CE', edge:'#7FAE7C'},
+  {bg:'#F6E7A8', edge:'#C3A55C'}, {bg:'#F0CBD5', edge:'#C47D91'}, {bg:'#C8E3E0', edge:'#6FA8A1'}, {bg:'#E3D2BD', edge:'#B08E64'}
+];
+const NEUTRAL = {bg:'#DDD8CB', edge:'#9A9484'};
+const gkey = g => String(g || '').toLowerCase();
+function colorOf(group){
+  const k = gkey(group);
+  if (!k) return NEUTRAL;
+  if (!(k in state.gc)) state.gc[k] = Object.keys(state.gc).length % PAL.length;
+  return PAL[state.gc[k]];
+}
+
+/* ---------- dates ---------- */
+const p2 = n => String(n).padStart(2, '0');
+const todayKey = () => { const d = new Date(); return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`; };
+const curYm = () => todayKey().slice(0, 7);
+const ymAdd = (ym, n) => { const [y, m] = ym.split('-').map(Number); const d = new Date(y, m - 1 + n, 1); return `${d.getFullYear()}-${p2(d.getMonth()+1)}`; };
+const daysIn = ym => { const [y, m] = ym.split('-').map(Number); return new Date(y, m, 0).getDate(); };
+const monthLabel = ym => { const [y, m] = ym.split('-').map(Number); return new Date(y, m-1, 1).toLocaleDateString('en-US',{month:'long',year:'numeric'}); };
+const monthShort = ym => { const [y, m] = ym.split('-').map(Number); return new Date(y, m-1, 1).toLocaleDateString('en-US',{month:'long'}); };
+const ord = n => { const s = ['th','st','nd','rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
+
+/* ---------- state ---------- */
+const KEY = 'tally-notebook-v1';
+const view = {ym: curYm(), group: null};
+const born = new Set();
+
+// Everything that comes in (storage, a restored backup) is rebuilt field by field,
+// so a mangled save can't put anything odd into the page.
+function clean(raw){
+  const st = {recurring:[], landed:{}, gc:{}, sort:'day', nextId:1, hide:false};
+  if (!raw || typeof raw !== 'object') return st;
+  const okC = c => Number.isInteger(c) && c > 0 && c <= MAXC;
+  const str = (s, n) => String(s == null ? '' : s).replace(/\s+/g, ' ').trim().slice(0, n);
+  const ids = new Set();
+  const mk = id => { id = String(id || ''); if (!/^r\d+$/.test(id) || ids.has(id)) id = 'r' + (st.nextId++); ids.add(id); const n = parseInt(id.slice(1)); if (n >= st.nextId) st.nextId = n + 1; return id; };
+  if (raw.gc && typeof raw.gc === 'object') Object.keys(raw.gc).forEach(k => { const v = raw.gc[k]; if (Number.isInteger(v) && v >= 0 && v < PAL.length) st.gc[k.toLowerCase().slice(0, 30)] = v; });
+  (Array.isArray(raw.recurring) ? raw.recurring : []).forEach(r => {
+    if (!r || !okC(r.cents)) return;
+    const rec = {id:mk(r.id), name:str(r.group || r.name, 30) || 'Charge', cents:r.cents,
+                 day:Math.min(31, Math.max(1, parseInt(r.day) || 1)), start:/^\d{4}-\d{2}$/.test(r.start) ? r.start : curYm()};
+    if (/^\d{4}-\d{2}$/.test(r.end)) rec.end = r.end;
+    st.recurring.push(rec);
+  });
+  if (raw.landed && typeof raw.landed === 'object') Object.keys(raw.landed).forEach(ym => {
+    if (!/^\d{4}-\d{2}$/.test(ym) || !raw.landed[ym] || typeof raw.landed[ym] !== 'object') return;
+    st.recurring.forEach(r => { const v = raw.landed[ym][r.id]; if (v) (st.landed[ym] = st.landed[ym] || {})[r.id] = {c: okC(v.c) ? v.c : r.cents}; });
+  });
+  st.sort = raw.sort === 'group' ? 'name' : (['day','amount','name'].includes(raw.sort) ? raw.sort : 'day');
+  st.hide = raw.hide === true;
+  return st;
+}
+let saveT;
+function save(){ clearTimeout(saveT); saveT = setTimeout(flushSave, 250); }
+function flushSave(){ clearTimeout(saveT); try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){} }
+document.addEventListener('visibilitychange', () => { if (document.hidden && state) flushSave(); });
+window.addEventListener('pagehide', () => state && flushSave());
+function load(){ try { const r = localStorage.getItem(KEY); return r ? JSON.parse(r) : null; } catch(e){ return null; } }
+
+/* ---------- the numbers ---------- */
+const recById = id => state.recurring.find(r => r.id === id);
+const recActive = (r, ym) => ym >= r.start && (!r.end || ym <= r.end);
+const landedOf = (r, ym) => state.landed[ym] && state.landed[ym][r.id];
+const recAmount = (r, ym) => { const l = landedOf(r, ym); return l ? l.c : r.cents; };
+function summary(ym){
+  const map = new Map();
+  let landed = 0, expected = 0, yearly = 0, n = 0;
+  state.recurring.forEach(r => {
+    if (!recActive(r, ym)) return;
+    n++;
+    const amt = recAmount(r, ym), isL = !!landedOf(r, ym), k = gkey(r.name);
+    let g = map.get(k);
+    if (!g){ g = {key:k, name:r.name, exp:0, landed:0, n:0}; map.set(k, g); }
+    g.exp += amt; g.n++; expected += amt; yearly += r.cents * 12;
+    if (isL){ g.landed += amt; landed += amt; }
+  });
+  const groups = [...map.values()].sort((a, b) => b.exp - a.exp || a.name.localeCompare(b.name));
+  return {groups, landed, expected, due: expected - landed, yearly, n};
+}
+const allSources = () => {
+  const seen = new Set(), out = [];
+  state.recurring.forEach(r => { const k = gkey(r.name); if (!seen.has(k)){ seen.add(k); out.push(r.name); } });
+  return out;
+};
+
+/* ---------- small motion helpers ---------- */
+function bump(el){ el.classList.remove('bumped'); void el.offsetWidth; el.classList.add('bumped'); }
+function floaty(el, text){
+  if (!el) return;
+  const f = document.createElement('span');
+  f.className = 'floaty'; f.textContent = text;
+  el.appendChild(f);
+  setTimeout(() => f.remove(), 1150);
+}
+// The big number counts up (or down) to its new value, like a tally being kept.
+function tween(el, to){
+  const from = el._v == null ? 0 : el._v;
+  el._v = to;
+  cancelAnimationFrame(el._r);
+  if (from === to || reduced || state.hide){ el.textContent = money(to); if (from !== to) bump(el); return; }
+  const t0 = performance.now(), D = 560;
+  const step = t => {
+    const k = Math.min(1, (t - t0) / D), e = 1 - Math.pow(1 - k, 3);
+    el.textContent = k < 1 ? money(Math.round((from + (to - from) * e) / 100) * 100) : money(to);
+    if (k < 1) el._r = requestAnimationFrame(step);
+  };
+  el._r = requestAnimationFrame(step);
+  bump(el);
+}
+function setText(el, txt){ if (el.textContent === txt) return; el.textContent = txt; bump(el); }
+
+/* ---------- render: overview ---------- */
+const stack = $('#stack'), groupsBox = $('#groups'), segNodes = {}, gNodes = {};
+function renderOverview(S){
+  tween($('#spent'), S.landed);
+  $('#of').textContent = S.n ? `of ${money(S.expected)}` : '';
+  const sub = $('#subline');
+  sub.innerHTML = !S.n ? '' : S.due ? `<b>${esc(money(S.due))} still on the way</b>` : 'Everything has come through';
+  $('#yearline').textContent = S.n ? `About ${money(S.yearly)} a year` : '';
+
+  const keys = S.groups.map(g => g.key);
+  Object.keys(gNodes).forEach(k => { if (!keys.includes(k)){ gNodes[k].remove(); delete gNodes[k]; segNodes[k].remove(); delete segNodes[k]; } });
+  let sref = stack.firstElementChild, gref = groupsBox.querySelector('.grow');
+  S.groups.forEach(g => {
+    const col = colorOf(g.name);
+    let r = gNodes[g.key], s = segNodes[g.key];
+    if (!r){
+      s = document.createElement('div'); s.className = 'seg';
+      r = document.createElement('button'); r.type = 'button'; r.className = 'grow';
+      r.innerHTML = '<span class="cdot"></span><span class="cname"></span><span class="camt"></span><span class="ctrack"><span class="e"></span><span class="l"></span></span>';
+      r.onclick = () => { view.group = view.group === g.key ? null : g.key; render(); };
+      gNodes[g.key] = r; segNodes[g.key] = s;
+    }
+    s.style.background = col.edge; s.style.opacity = '.85';
+    s.style.width = (S.expected ? g.exp / S.expected * 100 : 0) + '%';
+    r.style.setProperty('--cb', col.bg); r.style.setProperty('--ce', col.edge);
+    r.querySelector('.cname').innerHTML = esc(g.name) + `<small>${g.n} ${g.n === 1 ? 'charge' : 'charges'}</small>`;
+    setText(r.querySelector('.camt'), money(g.exp));
+    r.querySelector('.ctrack .e').style.width = (S.expected ? g.exp / S.expected * 100 : 0) + '%';
+    r.querySelector('.ctrack .l').style.width = (S.expected ? g.landed / S.expected * 100 : 0) + '%';
+    r.classList.toggle('on', view.group === g.key);
+    r.classList.toggle('dim', view.group !== null && view.group !== g.key);
+    r.setAttribute('aria-pressed', view.group === g.key ? 'true' : 'false');
+    if (s !== sref) stack.insertBefore(s, sref); else sref = sref.nextElementSibling;
+    if (r !== gref) groupsBox.insertBefore(r, gref); else gref = gref.nextElementSibling;
+  });
+}
+
+/* ---------- render: the list ---------- */
+const list = $('#list'), rowNodes = {};
+function makeRow(r){
+  const el = document.createElement('div');
+  el.className = 'crow'; el.tabIndex = 0; el.setAttribute('role', 'button'); el.dataset.id = r.id;
+  el.innerHTML = '<div class="wash"></div><span class="cdot"></span>'
+    + '<span class="cinfo"><span class="cn1"></span><span class="cn2"></span></span><span class="cam"></span>'
+    + '<button class="check" type="button"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 7.4l3 3 6-6.4"/></svg></button>';
+  el.addEventListener('click', () => openCharge(r.id));
+  el.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === el){ e.preventDefault(); openCharge(r.id); } });
+  el.querySelector('.check').addEventListener('click', e => { e.stopPropagation(); setLanded(r.id, !landedOf(recById(r.id), view.ym)); });
+  rowNodes[r.id] = el;
+  if (born.delete(r.id)){
+    el.style.animation = 'popIn .62s var(--spring) both';
+    el.addEventListener('animationend', () => el.style.animation = '', {once:true});
+  }
+  return el;
+}
+function updateRow(el, r){
+  const ym = view.ym, landed = !!landedOf(r, ym), col = colorOf(r.name), day = Math.min(r.day, daysIn(ym));
+  const late = !landed && ym === curYm() && day < new Date().getDate();
+  el.style.setProperty('--cb', col.bg); el.style.setProperty('--ce', col.edge);
+  el.classList.toggle('landed', landed);
+  el.classList.toggle('late', late);
+  el.classList.toggle('dim', view.group !== null && view.group !== gkey(r.name));
+  el.querySelector('.cn1').textContent = r.name;
+  setText(el.querySelector('.cam'), money(recAmount(r, ym)));
+  const when = landed ? 'landed' : late ? `was due the ${ord(day)}` : `the ${ord(day)}`;
+  el.querySelector('.cn2').textContent = when;
+  el.setAttribute('aria-label', `${r.name}, ${money(recAmount(r, ym))}, ${landed ? 'landed' : 'not landed yet'}`);
+  el.querySelector('.check').setAttribute('aria-label', landed ? 'Mark as not landed' : 'Mark as landed');
+}
+function renderList(S){
+  const ym = view.ym, mode = state.sort;
+  const recs = state.recurring.filter(r => recActive(r, ym));
+  const byAmt = (a, b) => recAmount(b, ym) - recAmount(a, ym) || a.name.localeCompare(b.name);
+  const seq = [];
+  recs.sort(mode === 'amount' ? byAmt : mode === 'name' ? (a, b) => a.name.localeCompare(b.name) || byAmt(a, b)
+      : (a, b) => Math.min(a.day, daysIn(ym)) - Math.min(b.day, daysIn(ym)) || a.name.localeCompare(b.name))
+    .forEach(r => seq.push({rec:r}));
+  const first = {};
+  Object.keys(rowNodes).forEach(id => first[id] = rowNodes[id].getBoundingClientRect().top);
+  Object.keys(rowNodes).forEach(id => { if (!recs.some(r => r.id === id)){ rowNodes[id].remove(); delete rowNodes[id]; } });
+  let ref = list.firstElementChild;
+  seq.forEach(it => {
+    const el = rowNodes[it.rec.id] || makeRow(it.rec);
+    updateRow(el, it.rec);
+    if (el !== ref) list.insertBefore(el, ref); else ref = ref.nextElementSibling;
+  });
+  // Rows glide to their new places instead of jumping.
+  if (!reduced) Object.keys(rowNodes).forEach(id => {
+    if (first[id] == null) return;
+    const el = rowNodes[id], dy = first[id] - el.getBoundingClientRect().top;
+    if (Math.abs(dy) < 2) return;
+    clearTimeout(el._ft);
+    el.style.transition = 'none'; el.style.transform = `translateY(${dy}px)`;
+    void el.offsetWidth;
+    el.style.transition = 'transform .55s var(--spring)'; el.style.transform = '';
+    el._ft = setTimeout(() => { el.style.transition = ''; }, 600);
+  });
+  $('#empty').hidden = recs.length > 0;
+  $('#sortbar').hidden = recs.length < 2;
+  $('#listNote').textContent = recs.length ? 'Tap the check when a charge lands.' : '';
+}
+
+function render(){
+  document.body.classList.toggle('hide', !!state.hide);
+  const S = summary(view.ym);
+  if (view.group !== null && !S.groups.some(g => g.key === view.group)) view.group = null;
+  renderOverview(S);
+  $('#clearFilter').hidden = view.group === null;
+  setText($('#monthTxt'), monthLabel(view.ym));
+  const k = ['day','amount','name'].indexOf(state.sort);
+  $('#sortbar').style.setProperty('--k', k);
+  document.querySelectorAll('.sortbtn').forEach(b => { const on = b.dataset.sort === state.sort; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+  renderList(S);
+}
+$('#clearFilter').onclick = () => { view.group = null; render(); };
+document.querySelectorAll('.sortbtn').forEach(b => b.onclick = () => { state.sort = b.dataset.sort; render(); save(); });
+
+/* ---------- landing a charge ---------- */
+function setLanded(id, on){
+  const r = recById(id), ym = view.ym;
+  if (!r) return;
+  const prev = landedOf(r, ym);
+  if (on) (state.landed[ym] = state.landed[ym] || {})[id] = {c: r.cents};
+  else if (state.landed[ym]) delete state.landed[ym][id];
+  const el = rowNodes[id];
+  if (on && el){
+    el.classList.remove('celebrate'); void el.offsetWidth; el.classList.add('celebrate');
+    el.addEventListener('animationend', () => el.classList.remove('celebrate'), {once:true});
+    floaty($('.bignum'), '+' + money(r.cents));
+  }
+  navigator.vibrate && navigator.vibrate(10);
+  render(); save();
+  toast(on ? `${r.name} landed — ${money(r.cents)}` : `${r.name} back to “on the way”`, () => {
+    if (prev) (state.landed[ym] = state.landed[ym] || {})[id] = prev; else if (state.landed[ym]) delete state.landed[ym][id];
+    render(); save();
+  });
+}
+
+/* ---------- sheets ---------- */
+const sheet = $('#sheet'), backdrop = $('#backdrop');
+function openSheet(html){
+  sheet.innerHTML = '<div class="grab"></div>' + html;
+  sheet.scrollTop = 0;
+  sheet.classList.add('open'); backdrop.classList.add('open');
+}
+function closeSheet(){
+  sheet.classList.remove('open'); backdrop.classList.remove('open');
+  if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
+}
+backdrop.addEventListener('click', closeSheet);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
+
+// Things fall away softly, and an undo brings them back.
+function exitThen(el, fn){
+  if (!el){ fn(); return null; }
+  el.classList.add('poof');
+  return setTimeout(fn, 240);
+}
+function openCharge(id){
+  const r = id ? recById(id) : null;
+  if (id && !r) return;
+  const ym = view.ym;
+  let already = false;
+  const landed = r ? landedOf(r, ym) : null;
+  const known = allSources();
+  openSheet(`
+    <h2>${r ? 'Charge' : 'New charge'}</h2>
+    <p class="sub">Repeats every month${r && r.end ? `, through ${esc(monthLabel(r.end))}` : ''}.</p>
+    <input class="name-input" id="nm" placeholder="Source (e.g. Streaming service)" maxlength="30" autocomplete="off" required style="margin-top:16px" aria-label="Source">
+    ${known.length ? `<div class="chips">${known.map((g, i) => { const c = colorOf(g); return `<button type="button" class="chip" data-g="${i}" style="--cb:${c.bg};--ce:${c.edge}"><i></i>${esc(g)}</button>`; }).join('')}</div>` : ''}
+    <label class="amount-field"><span>$</span><input id="amt" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="Amount"></label>
+    <p class="section">Comes out on day</p>
+    <input class="num" id="day" type="number" min="1" max="31" inputmode="numeric" aria-label="Day of the month">
+    ${r ? '' : `<div class="chips" style="margin-top:16px"><button type="button" class="chip tog" id="al">Already came through this month</button></div>`}
+    ${r ? `<p class="section">${esc(monthLabel(ym))}</p>
+      ${landed ? `<label class="amount-field small"><span>$</span><input id="la" inputmode="decimal" autocomplete="off" aria-label="What it actually came to"></label>
+        <p class="note-line" style="margin-top:6px">What it actually came to this month.</p>` : ''}
+      <div class="row" style="margin-top:12px"><button class="btn good" id="land">${landed ? 'Not landed yet' : 'Mark landed'}</button>
+      <button class="btn ghost" id="stop">${r.end ? 'Keep going' : `Stop after ${esc(monthShort(ym))}`}</button></div>` : ''}
+    <p class="err"></p>
+    <div class="row">${r ? '<button class="btn danger" id="del">Delete</button>' : ''}<button class="btn primary" id="go" disabled>${r ? 'Save' : 'Add it'}</button></div>`);
+  const nm = $('#nm'), amt = $('#amt'), day = $('#day'), go = $('#go');
+  nm.value = r ? r.name : '';
+  amt.value = r ? (r.cents / 100).toFixed(r.cents % 100 ? 2 : 0) : '';
+  day.value = r ? r.day : Math.min(new Date().getDate(), 28);
+  if (landed) $('#la').value = (landed.c / 100).toFixed(landed.c % 100 ? 2 : 0);
+  const ok = () => !!parseCents(amt.value) && !!nm.value.trim() && parseInt(day.value) >= 1 && parseInt(day.value) <= 31;
+  const refresh = () => {
+    go.disabled = !ok();
+    sheet.querySelectorAll('[data-g]').forEach(b => b.classList.toggle('on', gkey(known[+b.dataset.g]) === gkey(nm.value.trim())));
+  };
+  [nm, amt, day].forEach(i => { i.addEventListener('input', refresh); i.addEventListener('keydown', e => { if (e.key === 'Enter' && !go.disabled) go.click(); }); });
+  sheet.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { nm.value = known[+b.dataset.g]; refresh(); amt.focus(); });
+  if (!r) $('#al').onclick = e => { already = !already; e.currentTarget.classList.toggle('on', already); };
+  if (landed) $('#la').addEventListener('input', () => { const c = parseCents($('#la').value); if (c){ landed.c = c; render(); save(); } });
+  go.onclick = () => {
+    if (!ok()) return;
+    const data = {name:nm.value.replace(/\s+/g, ' ').trim().slice(0, 30), cents:parseCents(amt.value), day:Math.min(31, Math.max(1, parseInt(day.value)))};
+    // Typing a source in different capitals still means the same source.
+    const same = state.recurring.find(x => x !== r && gkey(x.name) === gkey(data.name));
+    if (same) data.name = same.name;
+    if (r) Object.assign(r, data);
+    else {
+      const n = {id:'r' + (state.nextId++), ...data, start:ym};
+      state.recurring.push(n); born.add(n.id);
+      if (already) (state.landed[ym] = state.landed[ym] || {})[n.id] = {c:n.cents};
+    }
+    render(); save(); closeSheet();
+  };
+  if (r){
+    $('#land').onclick = () => { closeSheet(); setLanded(r.id, !landed); };
+    $('#stop').onclick = () => {
+      const was = r.end;
+      if (was) delete r.end; else r.end = ym;
+      render(); save(); closeSheet();
+      toast(was ? `${r.name} will keep going` : `${r.name} stops after ${monthShort(ym)}`, () => { if (was) r.end = was; else delete r.end; render(); save(); });
+    };
+    $('#del').onclick = () => { closeSheet(); deleteCharge(r.id); };
+  }
+  refresh();
+  setTimeout(() => { if (sheet.classList.contains('open') && (!document.activeElement || document.activeElement === document.body)) (r ? amt : nm).focus(); }, 60);
+}
+function deleteCharge(id){
+  const idx = state.recurring.findIndex(r => r.id === id);
+  if (idx < 0) return;
+  const snap = {...state.recurring[idx]};
+  const lands = {};
+  Object.keys(state.landed).forEach(ym => { if (state.landed[ym][id]) lands[ym] = state.landed[ym][id]; });
+  let done = false;
+  const t = exitThen(rowNodes[id], () => {
+    done = true;
+    const i = state.recurring.findIndex(r => r.id === id);
+    if (i >= 0) state.recurring.splice(i, 1);
+    Object.keys(state.landed).forEach(ym => delete state.landed[ym][id]);
+    render(); save();
+  });
+  toast(`Deleted ${snap.name}`, () => {
+    clearTimeout(t);
+    if (!done){ if (rowNodes[id]) rowNodes[id].classList.remove('poof'); return; }
+    state.recurring.splice(Math.min(idx, state.recurring.length), 0, snap);
+    Object.keys(lands).forEach(ym => (state.landed[ym] = state.landed[ym] || {})[id] = lands[ym]);
+    born.add(id);
+    render(); save();
+  });
+}
+
+/* ---------- menu: backup, restore, start over ---------- */
+function openMenu(){
+  let armed = false;
+  openSheet(`
+    <h2>Tally</h2>
+    <p class="sub">A notebook for the charges that slip through, nothing more. It saves as you go, only in this browser — no accounts, no bank link, nothing sent anywhere.</p>
+    <div style="margin-top:20px;display:grid;gap:10px">
+      <button class="btn ghost" id="bk">Download a backup</button>
+      <button class="btn ghost" id="rs">Restore from a backup</button>
+      <button class="btn danger" id="reset">Start over</button>
+    </div>
+    <p class="note-line">Clearing this browser's site data erases the notebook, so a backup now and then is a good habit. The file is plain text on your device — keep it somewhere private.</p>`);
+  $('#bk').onclick = () => {
+    const blob = new Blob([JSON.stringify(state, null, 1)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = `tally-backup-${todayKey()}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+    closeSheet(); toast('Backup saved to your downloads');
+  };
+  $('#rs').onclick = () => $('#restoreFile').click();
+  $('#reset').onclick = e => {
+    if (!armed){ armed = true; e.target.textContent = 'Tap again to erase everything'; return; }
+    const prev = state, hide = state.hide;
+    replaceState(Object.assign(clean(null), {hide}));
+    closeSheet();
+    toast('Fresh notebook', () => replaceState(prev));
+  };
+}
+function replaceState(st){
+  state = st;
+  view.group = null;
+  Object.keys(rowNodes).forEach(id => { rowNodes[id].remove(); delete rowNodes[id]; });
+  render(); save();
+}
+$('#restoreFile').addEventListener('change', e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  if (f.size > 4e6){ toast('That file is too big to be a backup'); return; }
+  const fr = new FileReader();
+  fr.onload = () => {
+    let parsed; try { parsed = JSON.parse(fr.result); } catch(err){ toast("That doesn't look like a Tally backup"); return; }
+    if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.recurring)){ toast("That doesn't look like a Tally backup"); return; }
+    const prev = state;
+    replaceState(clean(parsed));
+    closeSheet();
+    toast('Backup restored', () => replaceState(prev));
+  };
+  fr.readAsText(f);
+});
+
+/* ---------- toast ---------- */
+let toastT, undoFn = null;
+function toast(msg, undo){
+  $('#toastMsg').textContent = msg;
+  undoFn = undo || null;
+  $('#toastUndo').style.display = undo ? '' : 'none';
+  $('#toast').classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => { $('#toast').classList.remove('show'); undoFn = null; }, 5000);
+}
+$('#toastUndo').onclick = () => { const f = undoFn; undoFn = null; $('#toast').classList.remove('show'); if (f) f(); };
+
+/* ---------- month nav & header buttons ---------- */
+function goMonth(ym, dir){
+  if (ym === view.ym) return;
+  view.ym = ym;
+  const page = $('#page'), name = $('#monthBtn');
+  page.classList.remove('swap-n', 'swap-p'); name.classList.remove('n', 'p');
+  void page.offsetWidth;
+  page.classList.add(dir > 0 ? 'swap-n' : 'swap-p'); name.classList.add(dir > 0 ? 'n' : 'p');
+  render();
+}
+$('#prev').onclick = () => goMonth(ymAdd(view.ym, -1), -1);
+$('#next').onclick = () => goMonth(ymAdd(view.ym, 1), 1);
+$('#monthBtn').onclick = () => goMonth(curYm(), curYm() > view.ym ? 1 : -1);
+$('#eye').onclick = () => { state.hide = !state.hide; render(); save(); toast(state.hide ? 'Amounts hidden' : 'Amounts showing'); };
+$('#menu').onclick = openMenu;
+$('#add').onclick = () => openCharge();
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input, textarea, button, [role="button"]') || sheet.classList.contains('open') || e.ctrlKey || e.metaKey) return;
+  if (e.key === 'ArrowLeft') $('#prev').click();
+  else if (e.key === 'ArrowRight') $('#next').click();
+  else if (e.key === 'n') { e.preventDefault(); openCharge(); }
+});
+
+state = clean(load());
+render();
+
+/* ---------- Back button: ask before leaving ---------- */
+// Browsers only honour a history entry that was added after the person touched the page,
+// so the guard goes in on the first tap or key press. Back then lands here instead of leaving.
+(() => {
+  const dlg = document.getElementById('leave'), back = document.getElementById('leaveBack');
+  const stay = document.getElementById('leaveStay'), go = document.getElementById('leaveGo');
+  let armed = !!(history.state && history.state.leaveGuard), leaving = false;
+  const push = () => { try { history.pushState({leaveGuard:1}, ''); armed = true; } catch(e){} };
+  const show = on => { dlg.classList.toggle('open', on); back.classList.toggle('open', on); if (on) stay.focus(); };
+  const first = () => { if (!armed && !dlg.classList.contains('open')) push(); };
+  ['pointerdown', 'keydown'].forEach(t => window.addEventListener(t, first, true));
+  window.addEventListener('popstate', () => {
+    if (leaving) return;
+    if (history.state && history.state.leaveGuard){ armed = true; return; }   // stepped forward onto the guard
+    if (!armed) return;
+    armed = false;                       // the guard entry was just used up
+    show(true);
+  });
+  const stayPut = () => { if (!dlg.classList.contains('open')) return; show(false); if (!armed) push(); };
+  stay.onclick = stayPut; back.onclick = stayPut;
+  go.onclick = () => {
+    leaving = true; show(false);
+    history.back();
+    setTimeout(() => { leaving = false; }, 900);   // nowhere to go back to: just carry on
+  };
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && dlg.classList.contains('open')) stayPut(); });
+})();
+</script>
+</body>
+</html>
