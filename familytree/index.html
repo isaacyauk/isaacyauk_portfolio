@@ -54,8 +54,8 @@ button{cursor:pointer}
 #links .genl{stroke:var(--line);stroke-width:1;stroke-dasharray:2 5}
 #links .yrl{stroke:var(--ink-soft);stroke-width:1;opacity:.35}
 
-.card{position:absolute;left:0;top:0;width:172px;height:80px;outline:none}
-.face{box-sizing:border-box;height:100%;padding:10px 13px 9px;display:flex;flex-direction:column;gap:3px;
+.card{position:absolute;left:0;top:0;width:190px;height:96px;outline:none}
+.face{box-sizing:border-box;height:100%;padding:9px 13px 9px;display:flex;flex-direction:column;justify-content:center;gap:3px;
   background:var(--card);border:1px solid var(--ink-soft);border-radius:10px;cursor:pointer;
   box-shadow:inset 0 0 0 3px var(--card),inset 0 0 0 4px var(--line),0 2px 0 var(--line),0 10px 20px -16px var(--shadow);
   transition:transform .4s var(--spring),box-shadow .25s,border-color .25s}
@@ -63,7 +63,11 @@ button{cursor:pointer}
 .card.sel .face{border-color:var(--accent);transform:translateY(-3px);
   box-shadow:inset 0 0 0 3px var(--card),inset 0 0 0 4px color-mix(in srgb,var(--accent) 40%,transparent),0 0 0 5px color-mix(in srgb,var(--accent) 16%,transparent),0 14px 24px -12px var(--shadow)}
 .card:focus-visible .face{outline:2px solid var(--accent);outline-offset:3px}
-.nm{font-family:var(--display);font-size:17.5px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* long names wrap onto a second line instead of being cut off; very long ones get a smaller face and up to
+   three lines, with the place left for the details sheet */
+.card.long .nm{font-size:15.5px;line-height:1.08;-webkit-line-clamp:3}
+.card.long .pl{display:none}
+.nm{font-family:var(--display);font-size:17px;line-height:1.12;overflow:hidden;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;flex:none}
 .yr{display:flex;gap:12px;font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .yr .sym{font-family:var(--display);color:var(--muted);margin-right:4px;font-size:14px}
 .yr .none{color:var(--muted);font-style:italic;font-family:var(--display);font-size:13px}
@@ -201,7 +205,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(
 #links .dec{font-size:calc(19px * var(--ls,1))}
 #world.far .pl{display:none}
 #world.far .face{justify-content:center;gap:4px;border-width:1.5px;box-shadow:0 3px 0 var(--line),0 10px 20px -16px var(--shadow)}
-#world.far .nm{font-size:23px}
+#world.far .nm{font-size:22px}
 #world.far .yr{font-size:16px}
 #world.far .yr .sym{font-size:18px}
 #world.far .card.sib .face{background:color-mix(in srgb,var(--sib) 12%,var(--card))}
@@ -209,6 +213,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(
 #world.farther .face{align-items:center;text-align:center;border-width:2px}
 #world.farther .nm{font-size:27px;line-height:1.05;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 #world.farther .card.sib .nm{padding-right:0}
+#world.farther .card.long .nm{font-size:21px;-webkit-line-clamp:3}
 .sn{display:none}
 #world.distant .nm,#world.distant .yr,#world.distant .pl,#world.distant .sn{display:none}
 #ruler{position:absolute;left:0;top:0;bottom:0;width:96px;overflow:hidden;pointer-events:none}
@@ -220,7 +225,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(
 #world.distant .card.sib .face{background:color-mix(in srgb,var(--sur) 40%,var(--card))}
 #world.distant .face::after{display:none}
 #world.tiny .sn{display:none}
-#world.tiny .face{--node:min(150px,calc(15px * var(--inv,8)));width:var(--node);height:var(--node);margin-left:calc((172px - var(--node)) / 2);margin-top:calc((80px - var(--node)) / 2);
+#world.tiny .face{--node:min(150px,calc(15px * var(--inv,8)));width:var(--node);height:var(--node);margin-left:calc((190px - var(--node)) / 2);margin-top:calc((96px - var(--node)) / 2);
   border-radius:50%;border:calc(var(--node) * .08) solid var(--card);background:var(--sur);box-shadow:0 0 0 calc(var(--node) * .06) var(--sur)}
 #surLabels{display:none}
 #world.distant #surLabels{display:block}
@@ -258,6 +263,8 @@ a.btn{display:flex;align-items:center;justify-content:center;text-decoration:non
 .checks small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .seg button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px 10px;border-radius:14px;border:1px solid var(--line);background:var(--card);font-weight:500;font-size:14px;transition:transform .3s var(--spring),border-color .2s}
+.seg .eg{font-family:var(--display);font-size:15px;color:var(--ink-soft);height:24px;display:flex;align-items:center;white-space:nowrap}
+.seg button[aria-checked="true"] .eg{color:var(--accent)}
 .seg button svg{width:40px;height:24px;fill:none;stroke:var(--ink-soft);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .seg button[aria-checked="true"]{border:1.5px solid var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 14%,transparent)}
 .seg button[aria-checked="true"] svg{stroke:var(--accent)}
@@ -327,7 +334,7 @@ a.btn{display:flex;align-items:center;justify-content:center;text-decoration:non
 
 <script>
 (() => {
-const CW = 172, CH = 80, CGAP = 44, UGAP = 34, ROW = 150, PADY = (ROW - CH) / 2; // one row = one decade
+const CW = 190, CH = 96, CGAP = 44, UGAP = 34, ROW = 150, PADY = (ROW - CH) / 2; // one row = one decade
 const KEY = 'family-atlas-v1';
 
 /* ---------- site settings ---------- */
@@ -364,6 +371,9 @@ const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const PLUS = '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>';
 
 /* ---------- data ---------- */
+const joinName = (...parts) => parts.map(x => (x || '').trim()).filter(Boolean).join(' ');
+// What the page shows: the full name, or first + last when middle names are hidden
+const shownName = p => (S.hideMiddle ? joinName(p.first, p.last) : p.name) || p.name || 'Unnamed';
 function template() {
   const P = [];
   const add = (id, name, nee, born, died, place, note, parents = [], partner = null) =>
@@ -411,7 +421,9 @@ function template() {
   // 2000s
   add('eli', 'Eli Hale', '', '2008', '', 'Columbus, Ohio', '', ['samuel', 'nora']);
   add('ivy', 'Ivy Hale', '', '2011', '', 'Columbus, Ohio', '', ['samuel', 'nora']);
-  return { people: P, example: true };
+  const middles = { george: 'William', walter: 'James', edith: 'Marie', henry: 'Thomas', thomas: 'Edward', margaret: 'Ann', june: 'Louise', samuel: 'Thomas', clara: 'Jean', ivy: 'Rose' };
+  P.forEach(p => { if (middles[p.id]) p.middle = middles[p.id]; });
+  return clean({ people: P, example: true });
 }
 function clean(raw) {
   if (!raw || !Array.isArray(raw.people)) return null;
@@ -420,7 +432,12 @@ function clean(raw) {
   for (const r of raw.people) {
     if (!r || typeof r.id !== 'string' || !r.id || r.id.length > 40 || ids.has(r.id)) continue;
     ids.add(r.id);
-    out.push({ id: r.id, name: str(r.name, 80).trim() || 'Unnamed', nee: str(r.nee, 60), born: str(r.born, 24), died: str(r.died, 24),
+    const parts = str(r.name, 120).trim().split(/\s+/).filter(Boolean);
+    const hasSplit = typeof r.first === 'string' || typeof r.last === 'string';
+    const first = hasSplit ? str(r.first, 40).trim() : (parts[0] || '');
+    const last = hasSplit ? str(r.last, 40).trim() : (parts.length > 1 ? parts[parts.length - 1] : '');
+    const middle = typeof r.middle === 'string' ? str(r.middle, 60).trim() : (!hasSplit && parts.length > 2 ? parts.slice(1, -1).join(' ') : '');
+    out.push({ id: r.id, first, middle, last, name: joinName(first, middle, last) || 'Unnamed', nee: str(r.nee, 60), born: str(r.born, 24), died: str(r.died, 24),
       place: str(r.place, 80), note: str(r.note, 800), parents: Array.isArray(r.parents) ? r.parents.filter(x => typeof x === 'string') : [],
       partner: typeof r.partner === 'string' ? r.partner : null, share: typeof r.share === 'boolean' ? r.share : undefined, priv: r.priv === true });
   }
@@ -430,7 +447,7 @@ function clean(raw) {
     if (p.partner && (!by[p.partner] || p.partner === p.id)) p.partner = null;
   });
   out.forEach(p => { if (p.partner && by[p.partner].partner !== p.id) p.partner = null; });
-  return { people: out, example: !!raw.example, lineStyle: raw.lineStyle === 'hard' ? 'hard' : 'curved', updated: Number(raw.updated) || 0, dirty: raw.dirty === true };
+  return { people: out, example: !!raw.example, hideMiddle: raw.hideMiddle === true, lineStyle: raw.lineStyle === 'hard' ? 'hard' : 'curved', updated: Number(raw.updated) || 0, dirty: raw.dirty === true };
 }
 function load() { try { return clean(JSON.parse(localStorage.getItem(KEY))); } catch { return null; } }
 // Edits are saved to this browser as a draft and marked unpublished; visitors never save anything.
@@ -725,7 +742,7 @@ function placeRuler() {
   }
 }
 // birth surname: the maiden name if one is set, otherwise the last word of the name
-const surnameOf = p => (p.nee || p.name).trim().split(/\s+/).pop();
+const surnameOf = p => (p.nee || p.last || p.name).trim().split(/\s+/).pop();
 // Only family names shared by two or more people get a color, handed out oldest family first so no two collide.
 // Everyone else (a spouse who married in alone) stays a plain outlined node.
 const FAMS = ['#9a6b45', '#4d7d68', '#5a6d9a', '#a8574a', '#7c5f8c', '#3d8484', '#a8863c', '#6d7f45', '#8f5f72', '#4f6a8a'];
@@ -736,7 +753,8 @@ function famColors() {
   const out = {}; names.forEach((n, i) => out[n] = FAMS[i % FAMS.length]); return out;
 }
 function fillCard(c, p) {
-  c.querySelector('.nm').textContent = p.name;
+  c.querySelector('.nm').textContent = shownName(p);
+  c.classList.toggle('long', shownName(p).length > 26);
   const yr = c.querySelector('.yr'); yr.replaceChildren();
   const part = (sym, v) => { const s = document.createElement('span'); const m = document.createElement('span'); m.className = 'sym'; m.textContent = sym; s.append(m, v); yr.append(s); };
   if (p.born) part('*', p.born);
@@ -745,7 +763,7 @@ function fillCard(c, p) {
   const pl = c.querySelector('.pl');
   if (p.place || !p.nee) pl.textContent = p.place || '';
   else { const n = document.createElement('span'); n.className = 'reg'; n.textContent = p.nee; pl.replaceChildren('Maiden name ', n); }
-  c.setAttribute('aria-label', p.name + (p.born ? ', born ' + p.born : '') + (p.died ? ', died ' + p.died : ''));
+  c.setAttribute('aria-label', shownName(p) + (p.born ? ', born ' + p.born : '') + (p.died ? ', died ' + p.died : ''));
   c.classList.toggle('sel', p.id === sel);
   const sur = surnameOf(p), fc = (fillCard.fam || famColors())[sur];
   const sn = c.querySelector('.sn'); if (sn) sn.textContent = sur;
@@ -926,7 +944,7 @@ function lifespan(p) {
   if (/^\d{4}$/.test(p.born) && /^\d{4}$/.test(p.died) && d >= b) return ` · lived about ${d - b} years`;
   return '';
 }
-function chips(list) { const t = sibTints().tint; return list.map(p => `<button type="button" class="chip" data-go="${esc(p.id)}"${t[p.id] ? ` style="border-color:${t[p.id]}"` : ''}>${esc(p.name)}</button>`).join(''); }
+function chips(list) { const t = sibTints().tint; return list.map(p => `<button type="button" class="chip" data-go="${esc(p.id)}"${t[p.id] ? ` style="border-color:${t[p.id]}"` : ''}>${esc(shownName(p))}</button>`).join(''); }
 function showPerson(id) {
   const by = idx(), p = by[id]; if (!p) return closeSheet();
   const parents = p.parents.map(x => by[x]).filter(Boolean);
@@ -938,14 +956,14 @@ function showPerson(id) {
   const rels = rel('Parents', parents) + rel('Partner', partner ? [partner] : []) + rel('Children', kids) + rel('Siblings', sibs);
   openSheet(`
     <p class="eyebrow">${yearOf(p) ? `Born in the ${Math.floor(yearOf(p) / 10) * 10}s` : "Birth year not known yet"}</p>
-    <h2>${esc(p.name)}</h2>
+    <h2>${esc(shownName(p))}</h2>
     ${p.nee ? `<p class="nee"><span class="lbl">Maiden name</span>${esc(p.nee)}</p>` : ''}
     <p class="dates">${p.priv ? '<span style="color:var(--muted)">Details kept private</span>' : dates || '<span style="color:var(--muted)">Dates unknown</span>'}${esc(lifespan(p))}</p>
     ${p.place ? `<p class="place">${esc(p.place)}</p>` : ''}
     ${p.note ? `<p class="note">${esc(p.note)}</p>` : ''}
     ${rels ? `<dl class="rels">${rels}</dl>` : canEdit() ? '<p class="hint">Not connected to anyone yet. Add a parent, partner or child to place them in the tree.</p>' : ''}
     ${canEdit() && !isShared(p) ? '<p class="hint">Dates, place and notes are held back, even from people with the password.</p>' : ''}
-    ${!canEdit() ? `<button type="button" class="btn ask" data-act="contact">Know something about ${esc(p.name.split(/\s+/)[0])}? Tell ${esc(CONFIG.ownerName)}</button>` : `<div class="acts">
+    ${!canEdit() ? `<button type="button" class="btn ask" data-act="contact">Know something about ${esc(p.first || shownName(p))}? Tell ${esc(CONFIG.ownerName)}</button>` : `<div class="acts">
       <button type="button" class="act" data-act="parent" ${p.parents.length >= 2 ? 'disabled' : ''}>${PLUS}Add parent</button>
       <button type="button" class="act" data-act="partner" ${partner ? 'disabled' : ''}>${PLUS}Add partner</button>
       <button type="button" class="act" data-act="child">${PLUS}Add child</button>
@@ -956,7 +974,7 @@ function showPerson(id) {
 }
 
 function options(list, chosen, blank) {
-  return `<option value="">${blank}</option>` + list.map(p => `<option value="${esc(p.id)}" ${p.id === chosen ? 'selected' : ''}>${esc(p.name)}${p.born ? ' (' + esc(p.born) + ')' : ''}</option>`).join('');
+  return `<option value="">${blank}</option>` + list.map(p => `<option value="${esc(p.id)}" ${p.id === chosen ? 'selected' : ''}>${esc(shownName(p))}${p.born ? ' (' + esc(p.born) + ')' : ''}</option>`).join('');
 }
 let formCtx = null;
 function showForm(ctx) {
@@ -965,9 +983,9 @@ function showForm(ctx) {
   let p;
   if (ctx.id) p = by[ctx.id];
   else {
-    p = { name: '', nee: '', born: '', died: '', place: '', note: '', parents: [], partner: null };
-    if (ctx.rel === 'child') p.parents = [of.id, of.partner].filter(Boolean);
-    if (ctx.rel === 'sibling') p.parents = of.parents.slice();
+    p = { first: '', middle: '', last: '', name: '', nee: '', born: '', died: '', place: '', note: '', parents: [], partner: null };
+    if (ctx.rel === 'child') { p.parents = [of.id, of.partner].filter(Boolean); p.last = of.last || ''; }
+    if (ctx.rel === 'sibling') { p.parents = of.parents.slice(); p.last = (of.nee || of.last) || ''; }
     if (ctx.rel === 'partner') p.partner = of.id;
     if (ctx.rel === 'parent' && of.parents.length === 1 && !by[of.parents[0]].partner) p.partner = of.parents[0];
   }
@@ -975,13 +993,17 @@ function showForm(ctx) {
   const others = S.people.filter(x => x.id !== ctx.id).sort((a, b) => a.name.localeCompare(b.name));
   const banned = ctx.id ? descendants(ctx.id) : ctx.rel === 'parent' ? new Set([of.id, ...descendants(of.id)]) : new Set();
   const parentOpts = others.filter(x => !banned.has(x.id));
-  const title = ctx.id ? `Edit ${esc(p.name)}` : ({ parent: 'A parent of ', partner: 'A partner of ', child: 'A child of ', sibling: 'A sibling of ' }[ctx.rel] || '') + (of ? esc(of.name) : 'Someone new');
+  const title = ctx.id ? `Edit ${esc(shownName(p))}` : ({ parent: 'A parent of ', partner: 'A partner of ', child: 'A child of ', sibling: 'A sibling of ' }[ctx.rel] || '') + (of ? esc(of.name) : 'Someone new');
   openSheet(`
     <p class="eyebrow">${ctx.id ? 'Edit entry' : 'New entry'}</p>
     <h2>${title}</h2>
     <form id="pform" novalidate>
-      <label>Name<input id="f-name" maxlength="80" autocomplete="off" value="${esc(p.name)}" placeholder="First and last name"></label>
-      <p class="err" id="f-err" hidden>Give this person a name, even a placeholder like "Grandpa Hale".</p>
+      <div class="two">
+        <label>First name<input id="f-first" maxlength="40" autocomplete="off" value="${esc(p.first || '')}" placeholder="Walter"></label>
+        <label>Middle name<input id="f-middle" maxlength="60" autocomplete="off" value="${esc(p.middle || '')}" placeholder="If known"></label>
+      </div>
+      <label>Last name<input id="f-last" maxlength="40" autocomplete="off" value="${esc(p.last || '')}" placeholder="Hale"></label>
+      <p class="err" id="f-err" hidden>Give this person a first or last name, even a placeholder like "Grandpa".</p>
       <label>Maiden name<input id="f-nee" maxlength="60" autocomplete="off" value="${esc(p.nee)}" placeholder="If it changed"></label>
       <div class="two">
         <label>Born<input id="f-born" maxlength="24" autocomplete="off" value="${esc(p.born)}" placeholder="1921 or c. 1880"></label>
@@ -1007,12 +1029,12 @@ function setPartner(p, qid, by) {
 function submitForm() {
   if (!canEdit()) return;
   const v = id => $(id).value.trim();
-  const name = v('f-name');
-  if (!name) { $('f-err').hidden = false; $('f-name').focus(); return; }
+  const first = v('f-first'), middle = v('f-middle'), last = v('f-last'), name = joinName(first, middle, last);
+  if (!first && !last) { $('f-err').hidden = false; $('f-first').focus(); return; }
   const by = idx(), ctx = formCtx, isNew = !ctx.id;
   const p = isNew ? { id: newId(), parents: [], partner: null } : by[ctx.id];
   if (isNew) { S.people.push(p); by[p.id] = p; }
-  Object.assign(p, { name, nee: v('f-nee'), born: v('f-born'), died: v('f-died'), place: v('f-place'), note: $('f-note').value.trim(), share: $('f-share').checked });
+  Object.assign(p, { first, middle, last, name, nee: v('f-nee'), born: v('f-born'), died: v('f-died'), place: v('f-place'), note: $('f-note').value.trim(), share: $('f-share').checked });
   delete p.priv;
   p.parents = [...new Set([v('f-p1'), v('f-p2')].filter(Boolean))].filter(x => x !== p.id && by[x]);
   const pid = v('f-partner');
@@ -1051,7 +1073,7 @@ function removePerson(id) {
   S.people = S.people.filter(x => x.id !== id);
   S.people.forEach(x => { x.parents = x.parents.filter(y => y !== id); if (x.partner === id) x.partner = null; });
   save(); closeSheet(); render({ animate: true });
-  toast(`Removed ${p.name}`, () => { S = JSON.parse(snap); save(); render({ animate: true }); });
+  toast(`Removed ${shownName(p)}`, () => { S = JSON.parse(snap); save(); render({ animate: true }); });
 }
 
 /* ---------- menu, backup ---------- */
@@ -1064,6 +1086,11 @@ function showMenu() {
     <div class="seg" role="radiogroup" aria-label="Branch style">
       <button type="button" role="radio" data-act="m-curved" aria-checked="${S.lineStyle !== 'hard'}"><svg viewBox="0 0 40 24"><path d="M20 2C20 12 6 10 6 22M20 2C20 12 34 10 34 22"/></svg>Curved</button>
       <button type="button" role="radio" data-act="m-hard" aria-checked="${S.lineStyle === 'hard'}"><svg viewBox="0 0 40 24"><path d="M20 2V11M6 11H34M6 11V22M34 11V22"/></svg>Straight</button>
+    </div>
+    <p class="eyebrow" style="margin-top:20px">Middle names</p>
+    <div class="seg names" role="radiogroup" aria-label="Middle names">
+      <button type="button" role="radio" data-act="m-midshow" aria-checked="${!S.hideMiddle}"><span class="eg">Walter James Hale</span>Show</button>
+      <button type="button" role="radio" data-act="m-midhide" aria-checked="${!!S.hideMiddle}"><span class="eg">Walter Hale</span>Hide</button>
     </div>`;
   if (!canEdit()) {
     openSheet(`
@@ -1162,10 +1189,10 @@ async function submitPassword() {
 
 /* ---------- saving tree.json, contact ---------- */
 function publicCopy() {
-  return { app: 'family-atlas', v: 1, updated: S.updated || Date.now(), lineStyle: S.lineStyle,
+  return { app: 'family-atlas', v: 1, updated: S.updated || Date.now(), lineStyle: S.lineStyle, hideMiddle: !!S.hideMiddle,
     people: S.people.map(p => isShared(p)
-      ? { id: p.id, name: p.name, nee: p.nee, born: p.born, died: p.died, place: p.place, note: p.note, parents: p.parents, partner: p.partner, share: true }
-      : { id: p.id, name: p.name, nee: '', born: '', died: '', place: '', note: '', parents: p.parents, partner: p.partner, priv: true }) };
+      ? { id: p.id, first: p.first, middle: p.middle, last: p.last, name: p.name, nee: p.nee, born: p.born, died: p.died, place: p.place, note: p.note, parents: p.parents, partner: p.partner, share: true }
+      : { id: p.id, first: p.first, middle: p.middle, last: p.last, name: p.name, nee: '', born: '', died: '', place: '', note: '', parents: p.parents, partner: p.partner, priv: true }) };
 }
 let fileHandle = null;
 function markSaved(msg) { S.dirty = false; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} renderRibbon(); toast(msg); }
@@ -1198,11 +1225,11 @@ async function saveTreeFile() {
 }
 function showContact(id) {
   const p = id && idx()[id], owner = esc(CONFIG.ownerName), mail = CONFIG.contactEmail.trim();
-  const subject = encodeURIComponent(p ? `Family Atlas: about ${p.name}` : 'Family Atlas');
+  const subject = encodeURIComponent(p ? `Family Atlas: about ${shownName(p)}` : 'Family Atlas');
   openSheet(`
     <p class="eyebrow">Get in touch</p>
     <h2>Write to ${owner}</h2>
-    <p class="small">This tree is ${owner}'s own project, filled in as he learns. If you know a name, a date or a story${p ? ` about ${esc(p.name)}` : ''}, or you spot a mistake, he'd love to hear it.</p>
+    <p class="small">This tree is ${owner}'s own project, filled in as he learns. If you know a name, a date or a story${p ? ` about ${esc(shownName(p))}` : ''}, or you spot a mistake, he'd love to hear it.</p>
     ${mail ? `<div class="mailbox"><span>${esc(mail)}</span><button type="button" class="btn" data-act="m-copymail">Copy</button></div>
     <a class="btn primary wide" href="mailto:${esc(mail)}?subject=${subject}">Open email app</a>`
            : `<a class="btn primary wide" href="${esc(CONFIG.contactUrl)}">Find ${owner}'s contact details</a>`}`);
@@ -1236,7 +1263,7 @@ function replaceTree(next, msg) {
   toast(msg, () => { S = JSON.parse(snap); save(); for (const id in cur) delete cur[id]; render({ animate: true }); setTimeout(() => fit(), 60); });
 }
 function startFresh() {
-  const p = { id: newId(), name: 'You', nee: '', born: '', died: '', place: '', note: '', parents: [], partner: null };
+  const p = { id: newId(), first: 'You', middle: '', last: '', name: 'You', nee: '', born: '', died: '', place: '', note: '', parents: [], partner: null };
   replaceTree({ people: [p], example: false }, 'Started a fresh tree');
   setTimeout(() => { sel = p.id; showForm({ id: p.id }); }, 120);
 }
@@ -1258,6 +1285,14 @@ function menuAction(act) {
   if (act === 'm-lock') { forgetKey(); closeSheet(); boot('Locked. This device will ask for the password next time.'); return; }
   if (act === 'm-copytree') { const t = $('f-treejson'); try { navigator.clipboard.writeText(t.value).then(() => markSaved('Copied. Paste it into familytree/tree.json, then commit and push.'), () => { t.focus(); t.select(); }); } catch { t.focus(); t.select(); } return; }
   if (act === 'm-copymail') { const m = CONFIG.contactEmail.trim(); try { navigator.clipboard.writeText(m).then(() => toast('Email address copied'), () => toast('Press and hold the address to copy it')); } catch { toast('Press and hold the address to copy it'); } return; }
+  if (act === 'm-midshow' || act === 'm-midhide') {
+    S.hideMiddle = act === 'm-midhide';
+    if (canEdit()) save(); else { prefs.hideMiddle = S.hideMiddle; savePrefs(); }
+    Object.values(els).forEach(c => { const p = idx()[c.dataset.id]; if (p) fillCard(c, p); });
+    if (L) drawLines(cur);
+    body.querySelectorAll('.seg.names [role=radio]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.act === act)));
+    return;
+  }
   if (act === 'm-curved' || act === 'm-hard') {
     S.lineStyle = act === 'm-hard' ? 'hard' : 'curved';
     if (canEdit()) save(); else { prefs.lineStyle = S.lineStyle; savePrefs(); }
@@ -1336,6 +1371,11 @@ async function runChecks() {
     const wrong = labels.filter(l => want[l.sn] && want[l.sn] !== l.id);
     check('Family names sit over their founders', !off.length && !wrong.length && labels.length === 6,
       [...off, ...wrong].map(l => `${l.sn} over ${by[l.id].name}`).join('; ') || `${labels.length} labels`);
+    const old = clean({ people: [{ id: 'a', name: 'Mary Ellen Kay Smith' }, { id: 'b', name: 'Cher' }] }).people;
+    const hidden = (() => { const h = S.hideMiddle; S.hideMiddle = true; const out = shownName(old[0]); S.hideMiddle = h; return out; })();
+    check('Names split into first, middle and last, and middle names can be hidden',
+      old[0].first === 'Mary' && old[0].middle === 'Ellen Kay' && old[0].last === 'Smith' && old[1].first === 'Cher' && !old[1].last && hidden === 'Mary Smith',
+      `${old[0].first} | ${old[0].middle} | ${old[0].last} → ${hidden}`);
     const cols = Object.values(famColors());
     check('Every family has its own color', new Set(cols).size === cols.length);
     const hosts = { 'yauk.dev': true, 'www.yauk.dev': true, 'isaacyauk.github.io': true, 'localhost': false, '127.0.0.1': false, '': false };
@@ -1427,6 +1467,7 @@ function finishBoot(published, msg) {
   else if (published && published.people.length) S = published;
   else S = template();
   if (!canEdit() && prefs.lineStyle) S.lineStyle = prefs.lineStyle;
+  if (!canEdit() && typeof prefs.hideMiddle === 'boolean') S.hideMiddle = prefs.hideMiddle;
   loading = false; sel = null;
   for (const id in cur) delete cur[id];
   render(); applyRole();
