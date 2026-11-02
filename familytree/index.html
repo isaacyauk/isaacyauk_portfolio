@@ -342,12 +342,18 @@ const CONFIG = {
   ownerName: 'Isaac',
   contactEmail: 'yauk.isaac@gmail.com', // shown to visitors under "Contact Isaac" (the same address as the site's Contact links)
   contactUrl: '/',                 // used if contactEmail is ever left empty
-  dataUrl: 'tree.json',            // the published tree, next to this page (familytree/tree.json in the repo)
+  dataFile: 'tree.json',           // the published tree, next to this page (familytree/tree.json in the repo)
   siteHost: 'yauk.dev'             // the live site
 };
 // Who can edit: nobody on the live site. Editing only switches on when this page is opened anywhere else, which in
 // practice means Isaac's own computer (a local copy of the repo). The site only changes when he saves tree.json
 // into the repo and pushes, so only someone who can push to the repo can change what visitors see.
+// tree.json sits in the same folder as this page. Work that folder out from the address, so yauk.dev/familytree,
+// yauk.dev/familytree/ and yauk.dev/familytree/index.html all find it (a plain relative link breaks on the first).
+function dataUrl(path = location.pathname) {
+  const dir = path.endsWith('/') ? path : /\.[a-z0-9]+$/i.test(path.split('/').pop()) ? path.slice(0, path.lastIndexOf('/') + 1) : path + '/';
+  return dir + CONFIG.dataFile;
+}
 const isLiveHost = h => h === CONFIG.siteHost || h === 'www.' + CONFIG.siteHost || h.endsWith('.github.io');
 const canEdit = () => !isLiveHost(location.hostname);
 const PREF_KEY = 'family-atlas-prefs';
@@ -1378,6 +1384,9 @@ async function runChecks() {
       `${old[0].first} | ${old[0].middle} | ${old[0].last} → ${hidden}`);
     const cols = Object.values(famColors());
     check('Every family has its own color', new Set(cols).size === cols.length);
+    const paths = { '/familytree': '/familytree/tree.json', '/familytree/': '/familytree/tree.json', '/familytree/index.html': '/familytree/tree.json', '/': '/tree.json' };
+    const badPath = Object.entries(paths).filter(([p, want]) => dataUrl(p) !== want).map(([p]) => p);
+    check('The tree is found with or without a trailing slash', !badPath.length, badPath.join(', '));
     const hosts = { 'yauk.dev': true, 'www.yauk.dev': true, 'isaacyauk.github.io': true, 'localhost': false, '127.0.0.1': false, '': false };
     const wrongHost = Object.entries(hosts).filter(([h, live]) => isLiveHost(h) !== live).map(([h]) => h || 'a local file');
     check('Editing is off on the live site and on locally everywhere else', !wrongHost.length, wrongHost.join(', '));
@@ -1447,7 +1456,7 @@ function revealField() {
 async function boot(msg) {
   let file = null, published = null;
   treeIsLocked = false; lockFile = null;
-  try { const res = await fetch(`${CONFIG.dataUrl}?t=${Date.now()}`, { cache: 'no-store' }); if (res.ok) file = await res.json(); } catch {}
+  try { const res = await fetch(`${dataUrl()}?t=${Date.now()}`, { cache: 'no-store' }); if (res.ok) file = await res.json(); } catch {}
   if (file && file.enc) {
     treeIsLocked = true;
     if (cryptoReady()) {
