@@ -1,0 +1,1345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; img-src 'self' data: blob:; base-uri 'none'; form-action 'none'">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Family Atlas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Schibsted+Grotesk:wght@400;500;600&display=swap">
+<style>
+/* Layout: one full-screen parchment map you pan and pinch. People are ink-ruled cards joined by
+   genealogy lines (* born, † died, rings for a marriage); details slide up in a cozy sheet. */
+:root{
+  /* one deliberate light look: pale map paper, soft sepia ink */
+  --paper:#f6eedb; --paper-edge:#e6d5ad; --card:#fcf8ee; --sheet:#fbf6ea;
+  --ink:#4d3f30; --ink-soft:#a99172; --muted:#93806a; --line:rgba(77,63,48,.15);
+  --dot:rgba(140,110,70,.12); --dot2:rgba(140,110,70,.07);
+  --accent:#a2614a; --accent-ink:#fdf8ee; --shadow:rgba(110,85,50,.28);
+  --display:"IM Fell English","Iowan Old Style","Palatino Linotype",Georgia,serif;
+  --font:"Schibsted Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --spring:cubic-bezier(.34,1.56,.64,1); --ease:cubic-bezier(.22,1,.36,1);
+  color-scheme:light;
+}
+
+html,body{height:100%;overflow:hidden;overflow:clip;overscroll-behavior:none}
+/* body is pinned so the browser can't scroll the whole app to reveal a text field */
+body{position:fixed;left:0;right:0;top:env(safe-area-inset-top,0px);bottom:env(safe-area-inset-bottom,0px);height:auto;
+  background:var(--paper);color:var(--ink);font-family:var(--font);-webkit-tap-highlight-color:transparent}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+#app{position:relative;height:100%;overflow:hidden;overflow:clip}
+
+/* ---- the map ---- */
+#view{position:absolute;inset:0;touch-action:none;cursor:grab;
+  background-color:var(--paper);
+  background-image:radial-gradient(circle,var(--dot) 1.1px,transparent 1.7px),radial-gradient(circle,var(--dot2) 1.4px,transparent 2.3px);
+  background-size:16px 16px,37px 37px;background-position:0 0,7px 11px}
+#view.dragging{cursor:grabbing}
+#world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+#world.glide{transition:transform .65s var(--ease)}
+#links{position:absolute;left:0;top:0;width:1px;height:1px;overflow:visible;pointer-events:none}
+#links .ln{fill:none;stroke:var(--ink-soft);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+#links .wed{fill:none;stroke:var(--accent);stroke-width:1.3;stroke-linecap:round}
+#links .rings circle{fill:var(--card);stroke:var(--accent);stroke-width:1.7}
+#links .sibl{fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+#links .yrs{fill:var(--muted);font-family:var(--font);font-size:11.5px;letter-spacing:.05em;font-variant-numeric:tabular-nums;opacity:.85}
+#links .dec{fill:var(--muted);font-family:var(--display);font-size:19px;letter-spacing:.02em}
+#links .decl{stroke:var(--ink-soft);stroke-width:1;opacity:.4}
+#links .genl{stroke:var(--line);stroke-width:1;stroke-dasharray:2 5}
+#links .yrl{stroke:var(--ink-soft);stroke-width:1;opacity:.35}
+
+.card{position:absolute;left:0;top:0;width:172px;height:80px;outline:none}
+.face{box-sizing:border-box;height:100%;padding:10px 13px 9px;display:flex;flex-direction:column;gap:3px;
+  background:var(--card);border:1px solid var(--ink-soft);border-radius:10px;cursor:pointer;
+  box-shadow:inset 0 0 0 3px var(--card),inset 0 0 0 4px var(--line),0 2px 0 var(--line),0 10px 20px -16px var(--shadow);
+  transition:transform .4s var(--spring),box-shadow .25s,border-color .25s}
+.card:hover .face{transform:translateY(-2px)}
+.card.sel .face{border-color:var(--accent);transform:translateY(-3px);
+  box-shadow:inset 0 0 0 3px var(--card),inset 0 0 0 4px color-mix(in srgb,var(--accent) 40%,transparent),0 0 0 5px color-mix(in srgb,var(--accent) 16%,transparent),0 14px 24px -12px var(--shadow)}
+.card:focus-visible .face{outline:2px solid var(--accent);outline-offset:3px}
+.nm{font-family:var(--display);font-size:17.5px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.yr{display:flex;gap:12px;font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.yr .sym{font-family:var(--display);color:var(--muted);margin-right:4px;font-size:14px}
+.yr .none{color:var(--muted);font-style:italic;font-family:var(--display);font-size:13px}
+.face{position:relative}
+.card.sib .face{background:linear-gradient(170deg,color-mix(in srgb,var(--sib) 9%,var(--card)),var(--card) 60%)}
+.card.sib .face::after{content:"";position:absolute;top:10px;right:11px;width:7px;height:7px;border-radius:1.5px;background:var(--sib);transform:rotate(45deg);opacity:.85}
+.card.sib .nm{padding-right:14px}
+.pl{font-family:var(--display);font-style:italic;font-size:13.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card.pop .face{animation:pop .6s var(--spring) both}
+.card.leaving .face{animation:leave .28s ease forwards}
+@keyframes pop{from{transform:scale(.45);opacity:0}}
+@keyframes leave{to{transform:scale(.7);opacity:0}}
+
+/* ---- old-map dressing ---- */
+.vignette{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 110px 6px color-mix(in srgb,var(--paper-edge) 60%,transparent)}
+.frame{position:absolute;inset:8px;pointer-events:none;border:1px solid var(--line);border-radius:6px;outline:1px solid var(--line);outline-offset:-5px}
+.compass{position:absolute;width:86px;height:86px;left:max(22px,calc(env(safe-area-inset-left,0px) + 14px));bottom:22px;opacity:.4;pointer-events:none}
+.compass .a{fill:var(--ink-soft)} .compass .b{fill:var(--card)} .compass .r{fill:none;stroke:var(--ink-soft);stroke-width:1.2}
+.compass text{fill:var(--ink-soft);font-family:var(--display);font-size:13px;text-anchor:middle}
+
+/* ---- header ---- */
+.bar{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+  padding-top:16px;padding-left:max(18px,calc(env(safe-area-inset-left,0px) + 14px));padding-right:max(18px,calc(env(safe-area-inset-right,0px) + 14px));pointer-events:none}
+.bar>*{pointer-events:auto}
+.cartouche{background:var(--card);border:1px solid var(--ink-soft);border-radius:12px;padding:8px 18px 9px;min-width:0;
+  box-shadow:inset 0 0 0 3px var(--card),inset 0 0 0 4px var(--line),0 8px 18px -12px var(--shadow)}
+.cartouche h1{margin:0;font-family:var(--display);font-weight:400;font-size:25px;line-height:1.1;letter-spacing:.01em}
+.cartouche p{margin:2px 0 0;font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-variant-numeric:tabular-nums}
+.round{width:46px;height:46px;flex:none;display:grid;place-items:center;border-radius:50%;border:1px solid var(--ink-soft);background:var(--card);
+  box-shadow:0 2px 0 var(--line),0 8px 16px -12px var(--shadow);transition:transform .3s var(--spring)}
+.round:active{transform:scale(.9)}
+.round svg{width:20px;height:20px;stroke:var(--ink);fill:none;stroke-width:1.8;stroke-linecap:round}
+.round:focus-visible,.btn:focus-visible,.chip:focus-visible,.act:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.ribbon{position:absolute;top:94px;left:max(18px,calc(env(safe-area-inset-left,0px) + 14px));display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  max-width:calc(100% - 36px);padding:7px 8px 7px 14px;border-radius:999px;background:color-mix(in srgb,var(--card) 88%,transparent);
+  border:1px dashed var(--line);font-size:13px;color:var(--ink);transition:opacity .3s,transform .4s var(--spring)}
+.ribbon i{font-family:var(--display);font-size:15px}
+.ribbon button{border:0;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:600}
+.ribbon .dismiss{background:transparent;color:var(--muted);padding:5px 8px;font-size:15px;line-height:1}
+
+/* ---- controls ---- */
+.zoom{position:absolute;right:max(18px,calc(env(safe-area-inset-right,0px) + 14px));bottom:24px;display:flex;flex-direction:column;gap:10px;transition:right .45s var(--ease)}
+.fab{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);display:flex;align-items:center;gap:8px;height:50px;padding:0 22px 0 18px;
+  border-radius:999px;border:0;background:var(--ink);color:var(--card);font-weight:600;font-size:15px;
+  box-shadow:0 3px 0 color-mix(in srgb,var(--ink) 60%,#000),0 14px 24px -14px var(--shadow);transition:transform .45s var(--spring)}
+.fab svg{width:18px;height:18px;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+.fab:active{transform:translateX(-50%) scale(.94)}
+.sheet-open .fab{transform:translateX(-50%) translateY(170%)}
+
+.empty{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(calc(100% - 48px),320px);text-align:center;
+  padding:26px 22px;background:var(--card);border:1px solid var(--ink-soft);border-radius:16px;box-shadow:inset 0 0 0 3px var(--card),inset 0 0 0 4px var(--line)}
+.empty h2{margin:0 0 6px;font-family:var(--display);font-weight:400;font-size:24px}
+.empty p{margin:0 0 16px;color:var(--muted);line-height:1.45}
+
+/* ---- sheet ---- */
+#sheet{position:absolute;left:0;right:0;bottom:0;max-height:76%;overflow:auto;overscroll-behavior:contain;box-sizing:border-box;
+  padding:10px max(20px,env(safe-area-inset-right,0px)) calc(22px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px));
+  background:var(--sheet);border-top:1px solid var(--line);border-radius:22px 22px 0 0;box-shadow:0 -18px 40px -24px var(--shadow);
+  transform:translateY(105%);visibility:hidden;transition:transform .5s var(--spring),visibility 0s .5s}
+#sheet.open{transform:none;visibility:visible;transition:transform .5s var(--spring),visibility 0s}
+.grab{width:42px;height:5px;border-radius:5px;background:var(--line);margin:0 auto 6px}
+.x{position:absolute;top:12px;right:max(14px,env(safe-area-inset-right,0px));width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:transparent;display:grid;place-items:center}
+.x svg{width:14px;height:14px;stroke:var(--ink);stroke-width:2;stroke-linecap:round}
+/* on phones the form takes the full height, so the keyboard only shortens it instead of shoving it around */
+@media (max-width:759px){#sheet.tall{top:12px;max-height:none;padding-bottom:calc(22px + env(safe-area-inset-bottom,0px) + var(--kb,0px))}}
+@media (min-width:760px){
+  #sheet{left:auto;top:14px;right:14px;bottom:14px;width:380px;max-height:none;border:1px solid var(--line);border-radius:20px;padding:20px 22px;transform:translateX(112%)}
+  .grab{display:none}
+  .sheet-open .zoom{right:412px}
+  .sheet-open .fab{transform:translateX(calc(-50% - 197px)) translateY(170%)}
+}
+.eyebrow{margin:0;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+#sheet h2{margin:4px 44px 4px 0;font-family:var(--display);font-weight:400;font-size:30px;line-height:1.1;text-wrap:balance}
+.nee{font-size:15px;color:var(--ink);margin:0 0 6px;display:flex;align-items:baseline;gap:8px}
+.nee .lbl{font-family:var(--display);font-style:italic;font-size:17px;color:var(--muted)}
+.pl .reg{font-family:var(--font);font-style:normal;font-size:12.5px;color:var(--ink)}
+.dates{margin:0;font-size:15px;font-variant-numeric:tabular-nums}
+.dates .sym{font-family:var(--display);color:var(--muted);margin-right:4px}
+.place{margin:4px 0 0;font-family:var(--display);font-style:italic;font-size:16px;color:var(--muted)}
+.note{margin:14px 0 0;padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--card) 70%,transparent);border:1px solid var(--line);line-height:1.5;font-size:14.5px;white-space:pre-wrap}
+.rels{margin:16px 0 0;display:grid;gap:10px}
+.rels>div{display:grid;grid-template-columns:78px 1fr;gap:8px;align-items:start}
+.rels dt{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding-top:7px}
+.rels dd{margin:0;display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 11px;font-family:var(--display);font-size:15px;transition:transform .3s var(--spring)}
+.chip:active{transform:scale(.94)}
+.hint{color:var(--muted);font-size:13.5px;margin:14px 0 0;line-height:1.45}
+.acts{margin-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.act{display:flex;align-items:center;gap:8px;height:46px;padding:0 12px;border-radius:14px;border:1px solid var(--line);background:var(--card);font-weight:500;font-size:14.5px;transition:transform .3s var(--spring)}
+.act svg{width:16px;height:16px;stroke:var(--accent);stroke-width:2.2;stroke-linecap:round;flex:none}
+.act:active{transform:scale(.96)}
+.act:disabled{opacity:.4;cursor:default}
+.row2{margin-top:10px;display:flex;gap:8px}
+.btn{flex:1;height:46px;border-radius:14px;border:1px solid var(--line);background:transparent;font-weight:600;font-size:15px;transition:transform .25s var(--spring)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border:0}
+.btn.danger{color:var(--accent)}
+
+form{display:grid;gap:12px;margin-top:12px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:grid;gap:5px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);min-width:0}
+input,select,textarea{box-sizing:border-box;width:100%;min-width:0;height:44px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-size:15px;letter-spacing:0;text-transform:none;color:var(--ink)}
+textarea{height:auto;min-height:84px;padding:10px 12px;line-height:1.45;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(--accent) 60%,transparent);outline-offset:1px}
+.err{color:var(--accent);font-size:13px;margin:-4px 0 0}
+.menu{display:grid;gap:8px;margin-top:14px}
+.menu .act{justify-content:flex-start}
+.small{font-size:13px;color:var(--muted);line-height:1.45;margin:4px 0 0}
+
+/* ---- toast + leave dialog ---- */
+#toast{position:absolute;left:50%;bottom:calc(88px + env(safe-area-inset-bottom,0px));transform:translate(-50%,30px);opacity:0;pointer-events:none;
+  display:flex;align-items:center;gap:14px;padding:10px 10px 10px 16px;border-radius:14px;background:var(--ink);color:var(--card);font-size:14px;max-width:calc(100% - 40px);
+  box-shadow:0 14px 30px -14px var(--shadow);transition:transform .45s var(--spring),opacity .25s}
+#toast.show{transform:translate(-50%,0);opacity:1;pointer-events:auto}
+#toast button{border:0;background:var(--card);color:var(--ink);border-radius:10px;padding:6px 12px;font-weight:600}
+#leaveBack{position:absolute;inset:0;z-index:60;background:rgba(77,63,48,.22);opacity:0;pointer-events:none;transition:opacity .25s}
+#leaveBack.open{opacity:1;pointer-events:auto}
+#leave{position:absolute;left:50%;top:50%;z-index:61;width:min(calc(100% - 40px),340px);box-sizing:border-box;padding:22px 20px 18px;border-radius:20px;background:var(--sheet);
+  border:1px solid var(--line);box-shadow:0 24px 60px -20px rgba(0,0,0,.45);transform:translate(-50%,-46%) scale(.92);opacity:0;visibility:hidden;
+  transition:transform .38s var(--spring),opacity .22s,visibility 0s .38s}
+#leave.open{transform:translate(-50%,-50%) scale(1);opacity:1;visibility:visible;transition:transform .38s var(--spring),opacity .22s,visibility 0s}
+#leave h2{margin:0;font-family:var(--display);font-weight:400;font-size:24px}
+#leave p{margin:6px 0 18px;font-size:14px;line-height:1.45;color:var(--muted)}
+#leave .row2{margin:0}
+
+#links .brn{fill:var(--ink-soft);stroke:none;opacity:.92}
+#links .knots circle{fill:var(--ink-soft)}
+/* ---- zooming out: lines thicken, cards simplify to what reads at a distance ---- */
+#links .ln{stroke-width:calc(1.4px * var(--ls,1))}
+#links .sibl{stroke-width:calc(1.6px * var(--ls,1))}
+#links .wed{stroke-width:calc(1.3px * var(--ls,1))}
+#links .rings circle{stroke-width:calc(1.7px * var(--ls,1))}
+#links .decl{stroke-width:calc(1px * var(--ls,1))}
+#links .dec{font-size:calc(19px * var(--ls,1))}
+#world.far .pl{display:none}
+#world.far .face{justify-content:center;gap:4px;border-width:1.5px;box-shadow:0 3px 0 var(--line),0 10px 20px -16px var(--shadow)}
+#world.far .nm{font-size:23px}
+#world.far .yr{font-size:16px}
+#world.far .yr .sym{font-size:18px}
+#world.far .card.sib .face{background:color-mix(in srgb,var(--sib) 12%,var(--card))}
+#world.farther .yr{display:none}
+#world.farther .face{align-items:center;text-align:center;border-width:2px}
+#world.farther .nm{font-size:27px;line-height:1.05;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+#world.farther .card.sib .nm{padding-right:0}
+.sn{display:none}
+#world.distant .nm,#world.distant .yr,#world.distant .pl,#world.distant .sn{display:none}
+#ruler{position:absolute;left:0;top:0;bottom:0;width:96px;overflow:hidden;pointer-events:none}
+#ruler span{position:absolute;top:0;left:max(18px,calc(env(safe-area-inset-left,0px) + 14px));padding:0 6px 3px 2px;font-family:var(--display);font-size:16px;line-height:1.2;color:var(--muted);font-variant-numeric:tabular-nums;
+  border-bottom:1px solid color-mix(in srgb,var(--ink-soft) 45%,transparent);background:color-mix(in srgb,var(--paper) 85%,transparent)}
+#ruler.glide span{transition:transform .65s var(--ease)}
+#world.distant .sn{display:none;font-family:var(--display);font-size:58px;line-height:1;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+#world.distant .face{border:4px solid var(--sur);background:color-mix(in srgb,var(--sur) 40%,var(--card));box-shadow:none}
+#world.distant .card.sib .face{background:color-mix(in srgb,var(--sur) 40%,var(--card))}
+#world.distant .face::after{display:none}
+#world.tiny .sn{display:none}
+#world.tiny .face{--node:min(150px,calc(15px * var(--inv,8)));width:var(--node);height:var(--node);margin-left:calc((172px - var(--node)) / 2);margin-top:calc((80px - var(--node)) / 2);
+  border-radius:50%;border:calc(var(--node) * .08) solid var(--card);background:var(--sur);box-shadow:0 0 0 calc(var(--node) * .06) var(--sur)}
+#surLabels{display:none}
+#world.distant #surLabels{display:block}
+#surLabels text{font-family:var(--display);text-anchor:middle;paint-order:stroke;stroke:var(--paper);stroke-linejoin:round}
+#world.tiny .card.sib .face{background:var(--sur)}
+#world.distant .card.nofam .face,#world.tiny .card.nofam .face{background:var(--card)}
+#world.tiny .card.sel .face{box-shadow:0 0 0 4px var(--sur),0 0 0 14px color-mix(in srgb,var(--accent) 45%,transparent)}
+.check{display:flex;gap:12px;align-items:flex-start;text-transform:none;letter-spacing:0;font-size:14.5px;color:var(--ink);cursor:pointer}
+.check input{width:20px;height:20px;flex:none;margin:1px 0 0;accent-color:var(--accent)}
+.check small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+.btn.ask{display:block;width:100%;flex:none;margin-top:18px;padding:0 14px;height:auto;min-height:48px;line-height:1.3;background:var(--card);border-color:var(--ink-soft)}
+a.btn{display:flex;align-items:center;justify-content:center;text-decoration:none;box-sizing:border-box}
+.btn.wide{width:100%;margin-top:12px;flex:none}
+.mailbox{display:flex;align-items:center;gap:10px;margin-top:16px;padding:8px 8px 8px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.mailbox span{flex:1;min-width:0;overflow-wrap:anywhere;user-select:all;-webkit-user-select:all;font-size:15px}
+.mailbox .btn{flex:none;height:38px;padding:0 14px}
+.linkbtn{border:0;background:none;padding:0;color:var(--accent);font:inherit;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.foot{margin-top:18px}
+.how{margin-top:16px;font-size:13.5px;color:var(--muted);line-height:1.5}
+.how summary{cursor:pointer;color:var(--ink)}
+.how ol{margin:8px 0 0;padding-left:20px;display:grid;gap:4px}
+.checks{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:8px}
+.checks li{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-size:14.5px;line-height:1.4}
+.checks li span{font-weight:600;width:16px;flex:none}
+.checks li.ok span{color:#4d7d68}
+.checks li.no span{color:var(--accent)}
+.checks small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.seg button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px 10px;border-radius:14px;border:1px solid var(--line);background:var(--card);font-weight:500;font-size:14px;transition:transform .3s var(--spring),border-color .2s}
+.seg button svg{width:40px;height:24px;fill:none;stroke:var(--ink-soft);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.seg button[aria-checked="true"]{border:1.5px solid var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 14%,transparent)}
+.seg button[aria-checked="true"] svg{stroke:var(--accent)}
+.seg button:active{transform:scale(.96)}
+.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="view" aria-label="Family tree map. Drag to move, pinch or scroll to zoom.">
+    <div id="world">
+      <svg id="links" aria-hidden="true"><g id="gens"></g><path class="brn" id="linkPath"/><path class="ln" id="hardPath"/><g id="sibLines"></g><g class="knots" id="knotG"></g><path class="wed" id="wedPath"/><g class="rings" id="rings"></g><g id="surLabels"></g></svg>
+      <div id="cards"></div>
+    </div>
+  </div>
+  <div class="vignette"></div>
+  <div class="frame"></div>
+  <div id="ruler" aria-hidden="true"></div>
+  <svg class="compass" viewBox="-50 -50 100 100" aria-hidden="true">
+    <circle class="r" r="34"/><circle class="r" r="29"/>
+    <path class="a" d="M0-44 5-5 0 0Z M44 0 5 5 0 0Z M0 44-5 5 0 0Z M-44 0-5-5 0 0Z"/>
+    <path class="b" d="M0-44-5-5 0 0Z M44 0 5-5 0 0Z M0 44 5 5 0 0Z M-44 0-5 5 0 0Z"/>
+    <path class="a" d="M24-24 3 0 0 0Z M24 24 0 3 0 0Z M-24 24-3 0 0 0Z M-24-24 0-3 0 0Z" opacity=".6"/>
+    <text y="-46" dy="-1">N</text>
+  </svg>
+
+  <header class="bar">
+    <div class="cartouche"><h1>Family Atlas</h1><p id="sub"></p></div>
+    <button class="round" id="menuBtn" aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
+  </header>
+
+  <div class="ribbon" id="ribbon" hidden></div>
+
+  <div class="empty" id="empty" hidden><h2>Every tree starts with one name</h2><p>Add yourself or the oldest relative you know, then branch out from there.</p><button class="btn primary" id="firstBtn" type="button">Add the first person</button></div>
+
+  <div class="zoom">
+    <button class="round" id="zin" aria-label="Zoom in"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></button>
+    <button class="round" id="zout" aria-label="Zoom out"><svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button>
+    <button class="round" id="zfit" aria-label="Show the whole tree"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></button>
+  </div>
+  <button class="fab" id="addBtn" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add person</button>
+
+  <aside id="sheet" aria-label="Person details"><div class="grab"></div><button class="x" id="sheetX" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button><div id="sheetBody"></div></aside>
+  <div id="toast" role="status"><span id="toastMsg"></span><button type="button" id="toastUndo">Undo</button></div>
+
+  <div id="leaveBack"></div>
+  <div id="leave" role="alertdialog" aria-modal="true" aria-labelledby="leaveT" aria-describedby="leaveD">
+    <h2 id="leaveT">Leave the atlas?</h2>
+    <p id="leaveD">Your tree is saved in this browser and will be here when you come back.</p>
+    <div class="row2"><button type="button" class="btn" id="leaveGo">Leave</button><button type="button" class="btn primary" id="leaveStay">Stay</button></div>
+  </div>
+</div>
+
+<script>
+(() => {
+const CW = 172, CH = 80, CGAP = 44, UGAP = 34, ROW = 150, PADY = (ROW - CH) / 2; // one row = one decade
+const KEY = 'family-atlas-v1';
+
+/* ---------- site settings ---------- */
+const CONFIG = {
+  ownerName: 'Isaac',
+  contactEmail: 'yauk.isaac@gmail.com', // shown to visitors under "Contact Isaac" (the same address as the site's Contact links)
+  contactUrl: '/',                 // used if contactEmail is ever left empty
+  dataUrl: 'tree.json',            // the published tree, next to this page (family/tree.json in the repo)
+  siteHost: 'yauk.dev'             // the live site
+};
+// Who can edit: nobody on the live site. Editing only switches on when this page is opened anywhere else, which in
+// practice means Isaac's own computer (a local copy of the repo). The site only changes when he saves tree.json
+// into the repo and pushes, so only someone who can push to the repo can change what visitors see.
+const isLiveHost = h => h === CONFIG.siteHost || h === 'www.' + CONFIG.siteHost || h.endsWith('.github.io');
+const canEdit = () => !isLiveHost(location.hostname);
+const PREF_KEY = 'family-atlas-prefs';
+const prefs = (() => { try { return JSON.parse(localStorage.getItem(PREF_KEY)) || {}; } catch { return {}; } })();
+const savePrefs = () => { try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch {} };
+// living people's dates, place and notes stay off the public site unless switched on for that person
+const isShared = p => typeof p.share === 'boolean' ? p.share : !!p.died;
+const $ = id => document.getElementById(id);
+const app = $('app'), view = $('view'), world = $('world'), cardsEl = $('cards');
+const linkPath = $('linkPath'), ringsG = $('rings'), gensG = $('gens'), wedPath = $('wedPath'), sibG = $('sibLines'), knotG = $('knotG'), hardPath = $('hardPath');
+const TINTS = ['#7f9672', '#6d839c', '#b48c4a', '#8f6e88', '#5c8f89', '#a86f58', '#8a8a5a', '#6f7fa8', '#a07a8e'];
+function sibTints() {
+  const m = new Map();
+  for (const c of S.people) { if (!c.parents.length) continue; const k = c.parents.slice().sort().join('|'); if (!m.has(k)) m.set(k, []); m.get(k).push(c.id); }
+  const tint = {}, byKey = {}; let i = 0;
+  for (const [k, ids] of m) { if (ids.length < 2) continue; const col = TINTS[i++ % TINTS.length]; byKey[k] = col; ids.forEach(id => tint[id] = col); }
+  return { tint, byKey };
+}
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const PLUS = '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>';
+
+/* ---------- data ---------- */
+function template() {
+  const P = [];
+  const add = (id, name, nee, born, died, place, note, parents = [], partner = null) =>
+    P.push({ id, name, nee, born, died, place, note, parents, partner });
+  // Lang side (Ruth's family)
+  add('otto', 'Otto Lang', '', '1899', '1970', 'Moorhead, Minnesota', 'Emigrated from Bremen in 1921.', [], 'greta');
+  add('greta', 'Greta Lang', 'Vogel', '1901', '1988', 'Moorhead, Minnesota', '', [], 'otto');
+  add('karl', 'Karl Lang', '', '1926', '2003', 'Moorhead, Minnesota', '', ['otto', 'greta']);
+  add('arthur', 'Arthur Price', '', '1925', '2001', 'Fargo, North Dakota', 'Wheat farmer. Married Ruth in 1949.', [], 'ruth');
+  add('ruth', 'Ruth Price', 'Lang', '1928', '2015', 'Moorhead, Minnesota', '', ['otto', 'greta'], 'arthur');
+  // Hale side
+  add('george', 'George Hale', '', '1893', '1958', 'Scranton, Pennsylvania', 'Railroad brakeman. Came over from Wales as a boy.', [], 'mae');
+  add('mae', 'Mae Hale', 'Dunn', '1896', '1972', 'Scranton, Pennsylvania', '', [], 'george');
+  add('frank', 'Frank Hale', '', '1919', '1987', 'Scranton, Pennsylvania', 'Served in the Army in Italy. Never married.', ['george', 'mae']);
+  add('walter', 'Walter Hale', '', '1921', '1998', 'Scranton, Pennsylvania', 'Worked the rail yards for 31 years. Played fiddle at every wedding in this tree.', ['george', 'mae'], 'edith');
+  // Moore side (Edith's family)
+  add('henry', 'Henry Moore', '', '1894', '1961', 'Wilkes-Barre, Pennsylvania', 'Coal miner, later a grocer.', [], 'lillian');
+  add('lillian', 'Lillian Moore', 'Ward', '1897', '1979', 'Wilkes-Barre, Pennsylvania', '', [], 'henry');
+  add('robert', 'Robert Moore', '', '1922', '1990', 'Wilkes-Barre, Pennsylvania', '', ['henry', 'lillian'], 'alice');
+  add('alice', 'Alice Moore', 'Grant', '1925', '2008', 'Allentown, Pennsylvania', '', [], 'robert');
+  add('edith', 'Edith Hale', 'Moore', '1924', '2010', 'Wilkes-Barre, Pennsylvania', 'Kept the family Bible where most of these dates came from.', ['henry', 'lillian'], 'walter');
+  add('dorothy', 'Dorothy Moore', '', '1927', '2012', 'Wilkes-Barre, Pennsylvania', 'Taught piano for forty years.', ['henry', 'lillian']);
+  add('diane', 'Diane Moore', '', '1950', '', 'Allentown, Pennsylvania', 'Has the Moore family photo albums.', ['robert', 'alice']);
+  // Carter side (Leon's family)
+  add('harold', 'Harold Carter', '', '1922', '1995', 'Hartford, Connecticut', 'Insurance clerk for Travelers.', [], 'rose');
+  add('rose', 'Rose Carter', 'Fiore', '1926', '2014', 'New Haven, Connecticut', '', [], 'harold');
+  // 1950s
+  add('peter', 'Peter Price', '', '1955', '', 'Fargo, North Dakota', 'Took over the farm.', ['arthur', 'ruth'], 'linda');
+  add('linda', 'Linda Price', 'Ross', '1957', '', 'Bismarck, North Dakota', '', [], 'peter');
+  add('margaret', 'Margaret Hale', 'Price', '1952', '', 'Fargo, North Dakota', '', ['arthur', 'ruth'], 'thomas');
+  add('thomas', 'Thomas Hale', '', '1950', '', 'Scranton, Pennsylvania', '', ['walter', 'edith'], 'margaret');
+  add('june', 'June Carter', 'Hale', '1953', '', 'Albany, New York', '', ['walter', 'edith'], 'leon');
+  add('leon', 'Leon Carter', '', '1951', '2019', 'Hartford, Connecticut', '', ['harold', 'rose'], 'june');
+  add('teresa', 'Teresa Carter', '', '1955', '', 'Hartford, Connecticut', '', ['harold', 'rose']);
+  // Bell side (Nora's family)
+  add('james', 'James Bell', '', '1949', '', 'Dayton, Ohio', '', [], 'susan');
+  add('susan', 'Susan Bell', 'Park', '1951', '', 'Dayton, Ohio', '', [], 'james');
+  // 1970s–80s
+  add('samuel', 'Samuel Hale', '', '1979', '', 'Columbus, Ohio', '', ['thomas', 'margaret'], 'nora');
+  add('nora', 'Nora Hale', 'Bell', '1980', '', 'Dayton, Ohio', '', ['james', 'susan'], 'samuel');
+  add('clara', 'Clara Hale', '', '1983', '', 'Madison, Wisconsin', 'Ask her about the photo box in the attic.', ['thomas', 'margaret']);
+  add('owen', 'Owen Carter', '', '1981', '', 'Albany, New York', '', ['june', 'leon']);
+  add('emma', 'Emma Price', '', '1984', '', 'Fargo, North Dakota', '', ['peter', 'linda']);
+  add('daniel', 'Daniel Bell', '', '1983', '', 'Cincinnati, Ohio', '', ['james', 'susan']);
+  // 2000s
+  add('eli', 'Eli Hale', '', '2008', '', 'Columbus, Ohio', '', ['samuel', 'nora']);
+  add('ivy', 'Ivy Hale', '', '2011', '', 'Columbus, Ohio', '', ['samuel', 'nora']);
+  return { people: P, example: true };
+}
+function clean(raw) {
+  if (!raw || !Array.isArray(raw.people)) return null;
+  const str = (v, n) => typeof v === 'string' ? v.slice(0, n) : '';
+  const out = [], ids = new Set();
+  for (const r of raw.people) {
+    if (!r || typeof r.id !== 'string' || !r.id || r.id.length > 40 || ids.has(r.id)) continue;
+    ids.add(r.id);
+    out.push({ id: r.id, name: str(r.name, 80).trim() || 'Unnamed', nee: str(r.nee, 60), born: str(r.born, 24), died: str(r.died, 24),
+      place: str(r.place, 80), note: str(r.note, 800), parents: Array.isArray(r.parents) ? r.parents.filter(x => typeof x === 'string') : [],
+      partner: typeof r.partner === 'string' ? r.partner : null, share: typeof r.share === 'boolean' ? r.share : undefined, priv: r.priv === true });
+  }
+  const by = Object.fromEntries(out.map(p => [p.id, p]));
+  out.forEach(p => {
+    p.parents = [...new Set(p.parents)].filter(x => by[x] && x !== p.id).slice(0, 2);
+    if (p.partner && (!by[p.partner] || p.partner === p.id)) p.partner = null;
+  });
+  out.forEach(p => { if (p.partner && by[p.partner].partner !== p.id) p.partner = null; });
+  return { people: out, example: !!raw.example, lineStyle: raw.lineStyle === 'hard' ? 'hard' : 'curved', updated: Number(raw.updated) || 0, dirty: raw.dirty === true };
+}
+function load() { try { return clean(JSON.parse(localStorage.getItem(KEY))); } catch { return null; } }
+// Edits are saved to this browser as a draft and marked unpublished; visitors never save anything.
+function save() {
+  if (!canEdit()) return;
+  S.updated = Date.now(); S.dirty = true;
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {}
+  renderRibbon();
+}
+
+let S = { people: [], example: false, lineStyle: 'curved', updated: 0, dirty: false }, loading = true;
+let sel = null, L = null;
+const els = {}, cur = {};
+let T = { x: 0, y: 0, k: 1 };
+
+const idx = () => Object.fromEntries(S.people.map(p => [p.id, p]));
+const newId = () => 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const roman = n => { let s = ''; for (const [v, r] of [[10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']]) while (n >= v) { s += r; n -= v; } return s; };
+const kidsOf = id => S.people.filter(c => c.parents.includes(id));
+function descendants(id) {
+  const out = new Set(), q = [id];
+  while (q.length) { const x = q.shift(); for (const c of kidsOf(x)) if (!out.has(c.id)) { out.add(c.id); q.push(c.id); } }
+  return out;
+}
+
+/* ---------- layout: decade rows, couples, barycentre passes ---------- */
+const yearOf = p => { const m = /\d{4}/.exec(p.born || ''); return m ? +m[0] : null; };
+function estimateYears(people, by) {
+  const y = {}, est = {};
+  people.forEach(p => y[p.id] = yearOf(p));
+  for (let it = 0; it < 12; it++) {
+    let changed = false;
+    for (const p of people) {
+      if (y[p.id] != null) continue;
+      let v = null;
+      const q = p.partner && by[p.partner];
+      if (q && y[q.id] != null) v = y[q.id];
+      if (v == null) { const ps = p.parents.map(id => y[id]).filter(x => x != null); if (ps.length) v = Math.max(...ps) + 28; }
+      if (v == null) { const ks = kidsOf(p.id).map(c => y[c.id]).filter(x => x != null); if (ks.length) v = Math.min(...ks) - 28; }
+      if (v != null) { y[p.id] = v; est[p.id] = true; changed = true; }
+    }
+    if (!changed) break;
+  }
+  const known = Object.values(y).filter(x => x != null);
+  const base = known.length ? Math.min(...known) : new Date().getFullYear() - 30;
+  people.forEach(p => { if (y[p.id] == null) { y[p.id] = base; est[p.id] = true; } });
+  return { y, est };
+}
+function layout() {
+  const people = S.people, by = idx(), g = {};
+  const { y: yr, est } = estimateYears(people, by);
+  // Siblings and partners share one row. People are joined into "households" (siblings, plus anyone married
+  // to one of them, plus that person's siblings); each household sits in the decade of its median birth year,
+  // and always at least one decade below the parents of anyone in it.
+  const uf = {}, find = x => uf[x] === x ? x : (uf[x] = find(uf[x]));
+  people.forEach(p => uf[p.id] = p.id);
+  const join = (a, b) => { uf[find(a)] = find(b); };
+  const sibs = {};
+  people.forEach(p => { if (p.parents.length) (sibs[p.parents.slice().sort().join('|')] ||= []).push(p.id); });
+  Object.values(sibs).forEach(ids => ids.slice(1).forEach(id => join(id, ids[0])));
+  people.forEach(p => { if (p.partner && by[p.partner]) join(p.id, p.partner); });
+  const comps = {};
+  people.forEach(p => (comps[find(p.id)] ||= []).push(p.id));
+  const dec = {};
+  Object.values(comps).forEach(ids => {
+    const ys = ids.map(id => yr[id]).sort((a, b) => a - b);
+    const med = ys.length % 2 ? ys[(ys.length - 1) / 2] : (ys[ys.length / 2 - 1] + ys[ys.length / 2]) / 2;
+    const d = Math.floor(med / 10) * 10; ids.forEach(id => dec[id] = d);
+  });
+  for (let it = 0; it < 12; it++) {
+    let moved = false;
+    for (const p of people) for (const q of p.parents) if (by[q] && dec[p.id] <= dec[q]) {
+      const d = dec[q] + 10; comps[find(p.id)].forEach(id => dec[id] = d); moved = true;
+    }
+    if (!moved) break;
+  }
+  const ds = people.map(p => dec[p.id]);
+  const minDec = ds.length ? Math.min(...ds) : 1950, maxDec = ds.length ? Math.max(...ds) : 1950;
+  // generations decide left-to-right order (so lines never cut through cards); decades decide height
+  people.forEach(p => g[p.id] = 0);
+  for (let it = 0; it < 60; it++) {
+    let changed = false;
+    for (const p of people) {
+      let v = g[p.id];
+      for (const q of p.parents) if (by[q]) v = Math.max(v, g[q] + 1);
+      if (p.partner && by[p.partner]) v = Math.max(v, g[p.partner]);
+      v = Math.min(v, 40);
+      if (v !== g[p.id]) { g[p.id] = v; changed = true; }
+    }
+    if (!changed) break;
+  }
+  const maxG = people.length ? Math.max(...people.map(p => g[p.id])) : 0;
+  const rows = Array.from({ length: maxG + 1 }, () => []);
+  const seen = new Set();
+  for (const p of people) {
+    if (seen.has(p.id)) continue; seen.add(p.id);
+    const m = [p], q = p.partner && by[p.partner];
+    if (q && g[q.id] === g[p.id] && dec[q.id] === dec[p.id] && !seen.has(q.id)) { m.push(q); seen.add(q.id); }
+    rows[g[p.id]].push({ m, x: 0, w: m.length * CW + (m.length - 1) * CGAP, d: 0 });
+  }
+  const cx = {};
+  const place = r => r.forEach(u => u.m.forEach((p, i) => cx[p.id] = u.x + i * (CW + CGAP) + CW / 2));
+  rows.forEach(r => { let x = 0; r.forEach(u => { u.x = x; u.d = x + u.w / 2; x += u.w + UGAP; }); place(r); });
+  // Siblings stay together. Units are grouped by their members' parents; a couple whose partners both have
+  // parents in the tree joins those two sibling sets into one block (so Thomas sits by June and Margaret by Peter).
+  // Each block is packed shoulder to shoulder around its average target, and only whole blocks are ordered.
+  const resolve = r => {
+    const parent = {}, find = k => parent[k] === k ? k : (parent[k] = find(parent[k]));
+    const keysOf = u => { const ks = u.m.filter(p => p.parents.length).map(p => p.parents.slice().sort().join('|')); return ks.length ? ks : ['solo:' + u.m[0].id]; };
+    r.forEach(u => { const ks = keysOf(u); ks.forEach(k => parent[k] ??= k); ks.slice(1).forEach(k => parent[find(k)] = find(ks[0])); });
+    const groups = new Map();
+    r.forEach(u => { const k = find(keysOf(u)[0]); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(u); });
+    const blocks = [...groups.values()].map(g => {
+      g.sort((a, b) => a.d - b.d);
+      const d = g.reduce((t, u) => t + u.d, 0) / g.length, W = g.reduce((t, u) => t + u.w, 0) + UGAP * (g.length - 1);
+      let x = d - W / 2; g.forEach(u => { u.x = x; x += u.w + UGAP; });
+      return { g, d };
+    }).sort((a, b) => a.d - b.d);
+    r.length = 0; blocks.forEach(b => r.push(...b.g));
+    for (let it = 0; it < 80; it++) {
+      let ok = true;
+      for (let i = 1; i < r.length; i++) { const a = r[i - 1], b = r[i], o = a.x + a.w + UGAP - b.x; if (o > .5) { a.x -= o / 2; b.x += o / 2; ok = false; } }
+      if (ok) break;
+    }
+    for (let i = 1; i < r.length; i++) { const a = r[i - 1], b = r[i], o = a.x + a.w + UGAP - b.x; if (o > 0) b.x += o; }
+  };
+  const anchor = p => { const ps = p.parents.filter(id => cx[id] != null); return ps.length ? ps.reduce((s, id) => s + cx[id], 0) / ps.length : null; };
+  const down = () => { for (let gi = 1; gi < rows.length; gi++) { const r = rows[gi];
+    r.forEach(u => {
+      if (u.m.length === 2) { const a0 = anchor(u.m[0]), a1 = anchor(u.m[1]);
+        if ((a0 == null && a1 != null) || (a0 != null && a1 != null && a1 < a0)) u.m.reverse(); }
+      const as = u.m.map(anchor).filter(v => v != null);
+      u.d = as.length ? as.reduce((s, v) => s + v, 0) / as.length : u.x + u.w / 2;
+      u.x = u.d - u.w / 2;
+    });
+    resolve(r); place(r); } };
+  const up = () => { for (let gi = rows.length - 2; gi >= 0; gi--) { const r = rows[gi];
+    r.forEach(u => {
+      const kids = people.filter(c => g[c.id] > gi && c.parents.some(id => u.m.some(m => m.id === id)));
+      u.d = kids.length ? kids.reduce((s, c) => s + cx[c.id], 0) / kids.length : u.x + u.w / 2;
+      u.x = u.d - u.w / 2;
+    });
+    resolve(r); place(r); } };
+  down(); up(); down(); up();
+  // two units from different generations can land in the same decade: nudge them apart
+  const byDec = {};
+  rows.flat().forEach(u => (byDec[dec[u.m[0].id]] ||= []).push(u));
+  Object.values(byDec).forEach(list => { list.forEach(u => u.d = u.x + u.w / 2); resolve(list); });
+  rows.forEach(place);
+  const minX = Math.min(0, ...rows.flat().map(u => u.x));
+  const pos = {};
+  rows.forEach((r, gi) => r.forEach(u => u.m.forEach((p, i) => pos[p.id] = { x: u.x - minX + i * (CW + CGAP), y: (dec[p.id] - minDec) / 10 * ROW + PADY })));
+  return { pos, g, gens: (maxDec - minDec) / 10 + 1, minDec, maxDec, est };
+}
+
+/* ---------- drawing ---------- */
+// far zoom: one label per family name (two or more people), over the family's earliest row, nudged up if it collides
+// Far zoom: one label per family, centred over that family's founder (the earliest person with the name whose
+// parents don't carry it). Labels that would collide move straight up, never sideways, so they stay over their founder.
+function surLabelLayout(P, inv) {
+  const fam = famColors(), fs = 14 * inv, by = idx(), roots = {};
+  for (const p of S.people) {
+    const sn = surnameOf(p), q = P[p.id];
+    if (!q || !fam[sn] || p.parents.some(id => by[id] && surnameOf(by[id]) === sn)) continue;
+    const r0 = roots[sn];
+    if (!r0 || q.y < r0.q.y || (q.y === r0.q.y && q.x < r0.q.x)) roots[sn] = { id: p.id, q };
+  }
+  const labels = Object.entries(roots).map(([sn, { id, q }]) => ({ sn, id, color: fam[sn], x: q.x + CW / 2, y: q.y - 6 * inv, w: sn.length * fs * .52 }));
+  labels.sort((a, b) => a.y - b.y || a.x - b.x);
+  const placed = [];
+  for (const l of labels) {
+    for (let i = 0; i < 12; i++) {
+      const hit = placed.find(q => Math.abs(q.x - l.x) < (q.w + l.w) / 2 + fs * .3 && Math.abs(q.y - l.y) < fs * 1.05);
+      if (!hit) break; l.y = hit.y - fs * 1.1;
+    }
+    placed.push(l);
+  }
+  return { labels: placed, fs };
+}
+function drawSurLabels(P) {
+  const el = $('surLabels');
+  if ((apply.lvl || 0) < 3) { el.innerHTML = ''; return; }
+  const inv = apply.inv || 5, { labels, fs } = surLabelLayout(P, inv);
+  el.innerHTML = labels.map(l => `<text x="${l.x.toFixed(1)}" y="${l.y.toFixed(1)}" style="fill:${l.color};font-size:${fs}px;stroke-width:${4 * inv}px">${esc(l.sn)}</text>`).join('');
+}
+// a cubic S-curve from (x0,y0) to (x1,y1), filled as a ribbon that tapers from width w0 to w1
+function branch(x0, y0, x1, y1, w0, w1) {
+  const dy = y1 - y0, c1x = x0, c1y = y0 + dy * .55, c2x = x1, c2y = y1 - dy * .5, N = 20, Lp = [], Rp = [];
+  for (let i = 0; i <= N; i++) {
+    const t = i / N, m = 1 - t;
+    const x = m * m * m * x0 + 3 * m * m * t * c1x + 3 * m * t * t * c2x + t * t * t * x1;
+    const y = m * m * m * y0 + 3 * m * m * t * c1y + 3 * m * t * t * c2y + t * t * t * y1;
+    const tx = 3 * m * m * (c1x - x0) + 6 * m * t * (c2x - c1x) + 3 * t * t * (x1 - c2x);
+    const ty = 3 * m * m * (c1y - y0) + 6 * m * t * (c2y - c1y) + 3 * t * t * (y1 - c2y);
+    const len = Math.hypot(tx, ty) || 1, nx = -ty / len, ny = tx / len, w = (w0 + (w1 - w0) * Math.pow(t, .75)) / 2;
+    Lp.push(`${(x + nx * w).toFixed(1)} ${(y + ny * w).toFixed(1)}`);
+    Rp.push(`${(x - nx * w).toFixed(1)} ${(y - ny * w).toFixed(1)}`);
+  }
+  return 'M' + Lp.join('L') + 'L' + Rp.reverse().join('L') + 'Z';
+}
+let drawCount = 0;
+function drawLines(P) {
+  drawCount++;
+  const by = idx(), tints = sibTints().byKey; let d = '', wed = '', rings = '', sib = '', knots = '';
+  const done = new Set();
+  for (const p of S.people) {
+    const q = p.partner && by[p.partner];
+    if (!q || !P[p.id] || !P[q.id]) continue;
+    const k = [p.id, q.id].sort().join('|'); if (done.has(k)) continue; done.add(k);
+    const [A, B] = P[p.id].x < P[q.id].x ? [P[p.id], P[q.id]] : [P[q.id], P[p.id]];
+    const y1 = A.y + CH / 2, y2 = B.y + CH / 2;
+    wed += `M${A.x + CW + 1} ${y1 - 2.5}L${B.x - 1} ${y2 - 2.5}M${A.x + CW + 1} ${y1 + 2.5}L${B.x - 1} ${y2 + 2.5}`;
+    const mx = (A.x + CW + B.x) / 2, my = (y1 + y2) / 2;
+    rings += `<circle cx="${mx - 4}" cy="${my}" r="5.6"/><circle cx="${mx + 4}" cy="${my}" r="5.6" fill="none"/>`;
+  }
+  const groups = new Map();
+  for (const c of S.people) {
+    const ps = c.parents.filter(id => P[id]); if (!ps.length || !P[c.id]) continue;
+    const k = ps.slice().sort().join('|');
+    if (!groups.has(k)) groups.set(k, { ps, kids: [] });
+    groups.get(k).kids.push(c.id);
+  }
+  // branches: a tapered trunk drops from the couple's rings, then forks into one curved limb per child
+  const ls = Math.min(5, apply.ls || 1), hard = S.lineStyle === 'hard';
+  // zoomed far out, branches take the family color of the children they lead to, matching the nodes
+  const farView = (apply.lvl || 0) >= 3, fam = farView ? famColors() : {};
+  let hd = '', n = 0;
+  for (const { ps, kids } of groups.values()) {
+    const col = farView ? fam[surnameOf(by[kids[0]])] : tints[ps.slice().sort().join('|')];
+    let shape = '', ax, sy;
+    const top = Math.min(...kids.map(id => P[id].y));
+    if (hard) {
+      // traditional: drop from the rings, a horizontal bar above the children, a short drop to each child
+      let g = '';
+      if (ps.length === 2 && by[ps[0]].partner === ps[1]) {
+        const a = P[ps[0]], b = P[ps[1]];
+        ax = (Math.min(a.x, b.x) + CW + Math.max(a.x, b.x)) / 2; sy = (a.y + b.y) / 2 + CH / 2 + 6;
+      } else if (ps.length === 2) {
+        const a = P[ps[0]], b = P[ps[1]], jy = Math.max(a.y, b.y) + CH + 16;
+        ax = (a.x + b.x) / 2 + CW / 2; sy = jy;
+        g += `M${a.x + CW / 2} ${a.y + CH}V${jy}M${b.x + CW / 2} ${b.y + CH}V${jy}M${a.x + CW / 2} ${jy}H${b.x + CW / 2}`;
+      } else { const a = P[ps[0]]; ax = a.x + CW / 2; sy = a.y + CH; }
+      const busY = Math.max(sy + 12, top - PADY + 8 + ((n++ % 3) - 1) * 6);
+      const xs = kids.map(id => P[id].x + CW / 2).concat(ax);
+      g += `M${ax} ${sy}V${busY}M${Math.min(...xs)} ${busY}H${Math.max(...xs)}`;
+      for (const id of kids) g += `M${P[id].x + CW / 2} ${busY}V${P[id].y}`;
+      if (col) sib += `<path class="sibl" style="stroke:${col}" d="${g}"/>`; else hd += g;
+      continue;
+    }
+    if (ps.length === 2 && by[ps[0]].partner === ps[1]) {
+      const a = P[ps[0]], b = P[ps[1]];
+      ax = (Math.min(a.x, b.x) + CW + Math.max(a.x, b.x)) / 2; sy = (a.y + b.y) / 2 + CH / 2 + 6;
+    } else if (ps.length === 2) {
+      const a = P[ps[0]], b = P[ps[1]];
+      ax = (a.x + b.x) / 2 + CW / 2; sy = Math.max(a.y, b.y) + CH + 22;
+      shape += branch(a.x + CW / 2, a.y + CH, ax, sy, 1.3 * ls, 2.6 * ls) + branch(b.x + CW / 2, b.y + CH, ax, sy, 1.3 * ls, 2.6 * ls);
+    } else { const a = P[ps[0]]; ax = a.x + CW / 2; sy = a.y + CH; }
+    let fx = ax, fy = sy;
+    if (kids.length > 1) {
+      fy = sy + Math.min(44, Math.max(12, (top - sy) * .3));
+      shape += branch(ax, sy, ax, fy, 3.6 * ls, 3.2 * ls);
+      knots += `<circle cx="${fx}" cy="${fy}" r="${2.1 * ls}"${col ? ` style="fill:${col}"` : ''}/>`;
+    }
+    for (const id of kids) shape += branch(fx, fy, P[id].x + CW / 2, P[id].y + 1, (kids.length > 1 ? 2.8 : 3.4) * ls, 1.25 * ls);
+    if (col) sib += `<path class="brn" style="fill:${col}" d="${shape}"/>`; else d += shape;
+  }
+  linkPath.setAttribute('d', d);
+  hardPath.setAttribute('d', hd);
+  drawSurLabels(P);
+  knotG.innerHTML = knots;
+  wedPath.setAttribute('d', wed);
+  sibG.innerHTML = sib;
+  ringsG.innerHTML = rings;
+}
+function drawBands() {
+  gensG.innerHTML = '';
+  const ruler = $('ruler');
+  if (!L || !S.people.length) { ruler.innerHTML = ''; return; }
+  let h = '';
+  for (let i = 0; i < L.gens; i++) h += `<span data-row="${i}" data-year="${L.minDec + i * 10}">${L.minDec + i * 10}</span>`;
+  ruler.innerHTML = h; placeRuler();
+}
+// decade labels live outside the map at a fixed size; zoomed out, they thin to every 20, 50 or 100 years
+function placeRuler() {
+  if (!L) return;
+  const gap = ROW * T.k, step = [1, 2, 5, 10].find(n => n * gap >= 26) || 10;
+  for (const sp of $('ruler').children) {
+    const show = (+sp.dataset.year / 10) % step === 0;
+    if (sp.hidden === show) sp.hidden = !show;
+    if (show) sp.style.transform = `translateY(${(T.y + (+sp.dataset.row * ROW + ROW / 2) * T.k - 10).toFixed(1)}px)`;
+  }
+}
+// birth surname: the maiden name if one is set, otherwise the last word of the name
+const surnameOf = p => (p.nee || p.name).trim().split(/\s+/).pop();
+// Only family names shared by two or more people get a color, handed out oldest family first so no two collide.
+// Everyone else (a spouse who married in alone) stays a plain outlined node.
+const FAMS = ['#9a6b45', '#4d7d68', '#5a6d9a', '#a8574a', '#7c5f8c', '#3d8484', '#a8863c', '#6d7f45', '#8f5f72', '#4f6a8a'];
+function famColors() {
+  const by = {}, firstY = {};
+  for (const p of S.people) { const sn = surnameOf(p), y = yearOf(p) ?? 9999; (by[sn] ||= 0); by[sn]++; firstY[sn] = Math.min(firstY[sn] ?? 9999, y); }
+  const names = Object.keys(by).filter(n => by[n] >= 2).sort((a, b) => firstY[a] - firstY[b] || a.localeCompare(b));
+  const out = {}; names.forEach((n, i) => out[n] = FAMS[i % FAMS.length]); return out;
+}
+function fillCard(c, p) {
+  c.querySelector('.nm').textContent = p.name;
+  const yr = c.querySelector('.yr'); yr.replaceChildren();
+  const part = (sym, v) => { const s = document.createElement('span'); const m = document.createElement('span'); m.className = 'sym'; m.textContent = sym; s.append(m, v); yr.append(s); };
+  if (p.born) part('*', p.born);
+  if (p.died) part('†', p.died);
+  if (p.priv || (!p.born && !p.died)) { const s = document.createElement('span'); s.className = 'none'; s.textContent = p.priv ? 'details private' : 'dates unknown'; yr.append(s); }
+  const pl = c.querySelector('.pl');
+  if (p.place || !p.nee) pl.textContent = p.place || '';
+  else { const n = document.createElement('span'); n.className = 'reg'; n.textContent = p.nee; pl.replaceChildren('Maiden name ', n); }
+  c.setAttribute('aria-label', p.name + (p.born ? ', born ' + p.born : '') + (p.died ? ', died ' + p.died : ''));
+  c.classList.toggle('sel', p.id === sel);
+  const sur = surnameOf(p), fc = (fillCard.fam || famColors())[sur];
+  const sn = c.querySelector('.sn'); if (sn) sn.textContent = sur;
+  c.style.setProperty('--sur', fc || '#a99172'); c.classList.toggle('nofam', !fc);
+  const t = sibTints().tint[p.id];
+  c.classList.toggle('sib', !!t);
+  t ? c.style.setProperty('--sib', t) : c.style.removeProperty('--sib');
+}
+function setCard(id) { const c = els[id], p = cur[id]; if (c && p) c.style.transform = `translate(${p.x}px,${p.y}px)`; }
+
+let raf = 0;
+const easeBack = t => { const c1 = .9, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
+function render(opts = {}) {
+  const by = idx();
+  for (const id in els) if (!by[id]) {
+    const c = els[id]; delete els[id]; delete cur[id];
+    c.classList.add('leaving'); setTimeout(() => c.remove(), 300);
+  }
+  fillCard.fam = famColors();
+  for (const p of S.people) {
+    let c = els[p.id];
+    if (!c) {
+      c = document.createElement('div'); c.className = 'card'; c.dataset.id = p.id; c.tabIndex = 0; c.setAttribute('role', 'button');
+      c.innerHTML = '<div class="face"><div class="nm"></div><div class="yr"></div><div class="pl"></div><div class="sn"></div></div>';
+      cardsEl.append(c); els[p.id] = c;
+      if (opts.animate) { c.classList.add('pop'); setTimeout(() => c.classList.remove('pop'), 650); }
+    }
+    fillCard(c, p);
+  }
+  L = layout();
+  const start = {};
+  for (const id in L.pos) start[id] = cur[id] ? { ...cur[id] } : (opts.from && opts.from[id]) ? { ...opts.from[id] } : { ...L.pos[id] };
+  cancelAnimationFrame(raf);
+  const t0 = performance.now(), dur = opts.animate && !reduced ? 640 : 0;
+  const step = now => {
+    const t = dur ? Math.min(1, (now - t0) / dur) : 1, e = easeBack(t);
+    for (const id in L.pos) { const s = start[id], g = L.pos[id]; cur[id] = { x: s.x + (g.x - s.x) * e, y: s.y + (g.y - s.y) * e }; setCard(id); }
+    drawLines(cur);
+    if (t < 1) raf = requestAnimationFrame(step);
+  };
+  step(t0);
+  if (dur) raf = requestAnimationFrame(step);
+  drawBands();
+  const n = S.people.length;
+  $('sub').textContent = n ? `${n} ${n === 1 ? 'person' : 'people'} · ${L.minDec === L.maxDec ? L.minDec + 's' : L.minDec + 's – ' + L.maxDec + 's'}` : 'No one yet';
+  renderRibbon();
+  $('empty').hidden = n > 0 || loading;
+}
+
+/* ---------- camera ---------- */
+// Per frame only the map's transform and the decade labels move. Everything heavier (detail level, line
+// thickness, redrawing branches and family labels) waits until the zoom has paused, so pinching stays smooth.
+let zoomT = 0;
+function apply() {
+  world.style.transform = `translate(${T.x}px,${T.y}px) scale(${T.k})`;
+  placeRuler();
+  clearTimeout(zoomT);
+  zoomT = setTimeout(refreshZoom, apply.lvl == null ? 0 : 140);
+}
+// Detail levels. Line weight and node/label size are fixed per level, so the map is only redrawn when a
+// threshold is crossed, never on ordinary zooming (redrawing a large, scaled layer is what flashed on phones).
+const LEVELS = [{ ls: 1, inv: 1 }, { ls: 1.4, inv: 2 }, { ls: 2, inv: 3 }, { ls: 3.2, inv: 5 }, { ls: 5, inv: 9 }];
+const levelFor = k => k < .13 ? 4 : k < .28 ? 3 : k < .42 ? 2 : k < .64 ? 1 : 0;
+function refreshZoom() {
+  const lvl = levelFor(T.k);
+  if (lvl === apply.lvl) return;
+  apply.lvl = lvl; apply.ls = LEVELS[lvl].ls; apply.inv = LEVELS[lvl].inv;
+  ['far', 'farther', 'distant', 'tiny'].forEach((c, i) => world.classList.toggle(c, lvl > i));
+  world.style.setProperty('--ls', apply.ls); world.style.setProperty('--inv', apply.inv);
+  if (L) drawLines(cur);
+}
+function glide(next) {
+  world.classList.add('glide'); $('ruler').classList.add('glide'); T = next; apply();
+  clearTimeout(glide.t); glide.t = setTimeout(() => { world.classList.remove('glide'); $('ruler').classList.remove('glide'); }, 680);
+}
+const clampK = k => Math.min(2.2, Math.max(.06, k));
+function visibleArea() {
+  const r = view.getBoundingClientRect(), open = $('sheet').classList.contains('open');
+  const wide = innerWidth >= 760;
+  return { w: r.width - (open && wide ? 408 : 0), h: r.height - (open && !wide ? $('sheet').offsetHeight : 0), top: 0 };
+}
+function fit(smooth = true, minK = .06) {
+  if (!L || !S.people.length) return;
+  const ps = Object.values(L.pos);
+  const minX = Math.min(...ps.map(p => p.x)), maxX = Math.max(...ps.map(p => p.x)) + CW;
+  const minY = Math.min(...ps.map(p => p.y)), maxY = Math.max(...ps.map(p => p.y)) + CH;
+  const a = visibleArea(), topPad = $('ribbon').hidden ? 110 : 150, botPad = 96, left = 72;
+  const k = clampK(Math.max(minK, Math.min((a.w - left - 32) / (maxX - minX), (a.h - topPad - botPad) / (maxY - minY), 1.1)));
+  const next = { k, x: left + (a.w - left - (maxX - minX) * k) / 2 - minX * k, y: topPad + Math.max(10, (a.h - topPad - botPad - (maxY - minY) * k) / 2) - minY * k };
+  smooth ? glide(next) : (T = next, apply());
+}
+function focusOn(id) {
+  const p = L && L.pos[id]; if (!p) return;
+  const a = visibleArea();
+  const k = Math.max(T.k, innerWidth < 760 ? .7 : .8);
+  glide({ k, x: a.w / 2 - (p.x + CW / 2) * k, y: Math.max(110, a.h / 2) - (p.y + CH / 2) * k });
+}
+function zoomAt(f, sx, sy) {
+  const k = clampK(T.k * f), wx = (sx - T.x) / T.k, wy = (sy - T.y) / T.k;
+  T = { k, x: sx - wx * k, y: sy - wy * k };
+}
+
+/* ---------- pointer: pan, pinch, tap ---------- */
+const pts = new Map(); let drag = null;
+view.addEventListener('pointerdown', e => {
+  world.classList.remove('glide');
+  pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  try { view.setPointerCapture(e.pointerId); } catch {}
+  if (pts.size === 1) drag = { x: e.clientX, y: e.clientY, tx: T.x, ty: T.y, moved: false, card: e.target.closest('.card') };
+  else if (pts.size === 2) {
+    const [a, b] = [...pts.values()];
+    drag = { pinch: true, d: Math.hypot(a.x - b.x, a.y - b.y), cx: (a.x + b.x) / 2, cy: (a.y + b.y) / 2, k: T.k, tx: T.x, ty: T.y, moved: true };
+  }
+});
+view.addEventListener('pointermove', e => {
+  if (!pts.has(e.pointerId) || !drag) return;
+  pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (drag.pinch && pts.size >= 2) {
+    const [a, b] = [...pts.values()], r = view.getBoundingClientRect();
+    const k = clampK(drag.k * Math.hypot(a.x - b.x, a.y - b.y) / drag.d);
+    const cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2;
+    const wx = (drag.cx - r.left - drag.tx) / drag.k, wy = (drag.cy - r.top - drag.ty) / drag.k;
+    T = { k, x: cx - r.left - wx * k, y: cy - r.top - wy * k }; apply();
+  } else if (!drag.pinch) {
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (!drag.moved && Math.hypot(dx, dy) > 5) { drag.moved = true; view.classList.add('dragging'); }
+    if (drag.moved) { T.x = drag.tx + dx; T.y = drag.ty + dy; apply(); }
+  }
+});
+const endPtr = e => {
+  if (!pts.has(e.pointerId)) return;
+  pts.delete(e.pointerId);
+  if (drag && !drag.moved && !drag.pinch && e.type === 'pointerup') {
+    if (drag.card) select(drag.card.dataset.id); else if (sel || $('sheet').classList.contains('open')) closeSheet();
+  }
+  if (pts.size === 1) { const [p] = [...pts.values()]; drag = { x: p.x, y: p.y, tx: T.x, ty: T.y, moved: true }; }
+  else if (!pts.size) { drag = null; view.classList.remove('dragging'); }
+};
+view.addEventListener('pointerup', endPtr);
+view.addEventListener('pointercancel', endPtr);
+view.addEventListener('wheel', e => {
+  e.preventDefault(); world.classList.remove('glide');
+  const r = view.getBoundingClientRect();
+  const mouseWheel = e.deltaMode !== 0 || (e.deltaX === 0 && Number.isInteger(e.deltaY) && Math.abs(e.deltaY) >= 40);
+  if (e.ctrlKey || mouseWheel)
+    zoomAt(Math.exp(-e.deltaY * (e.ctrlKey ? .01 : .0018)), e.clientX - r.left, e.clientY - r.top);
+  else { T.x -= e.deltaX; T.y -= e.deltaY; }
+  apply();
+}, { passive: false });
+cardsEl.addEventListener('keydown', e => { const c = e.target.closest('.card'); if (c && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); select(c.dataset.id); } });
+const zoomBtn = f => { const r = view.getBoundingClientRect(); world.classList.add('glide'); zoomAt(f, r.width / 2, r.height / 2); apply(); clearTimeout(glide.t); glide.t = setTimeout(() => world.classList.remove('glide'), 680); };
+$('zin').onclick = () => zoomBtn(1.3);
+$('zout').onclick = () => zoomBtn(1 / 1.3);
+$('zfit').onclick = () => fit();
+
+/* ---------- sheet ---------- */
+const sheet = $('sheet'), body = $('sheetBody');
+function openSheet(html, tall = false) {
+  body.innerHTML = html; sheet.scrollTop = 0;
+  sheet.classList.toggle('tall', tall);
+  sheet.classList.add('open'); app.classList.add('sheet-open');
+}
+function closeSheet() {
+  sheet.classList.remove('open'); app.classList.remove('sheet-open');
+  sel = null; Object.values(els).forEach(c => c.classList.remove('sel'));
+}
+$('sheetX').onclick = closeSheet;
+addEventListener('keydown', e => { if (e.key === 'Escape' && sheet.classList.contains('open')) closeSheet(); });
+
+function select(id) {
+  sel = id;
+  Object.entries(els).forEach(([k, c]) => c.classList.toggle('sel', k === id));
+  showPerson(id);
+  requestAnimationFrame(() => focusOn(id));
+}
+function lifespan(p) {
+  const b = parseInt(p.born, 10), d = parseInt(p.died, 10);
+  if (/^\d{4}$/.test(p.born) && /^\d{4}$/.test(p.died) && d >= b) return ` · lived about ${d - b} years`;
+  return '';
+}
+function chips(list) { const t = sibTints().tint; return list.map(p => `<button type="button" class="chip" data-go="${esc(p.id)}"${t[p.id] ? ` style="border-color:${t[p.id]}"` : ''}>${esc(p.name)}</button>`).join(''); }
+function showPerson(id) {
+  const by = idx(), p = by[id]; if (!p) return closeSheet();
+  const parents = p.parents.map(x => by[x]).filter(Boolean);
+  const partner = p.partner && by[p.partner];
+  const kids = kidsOf(id);
+  const sibs = p.parents.length ? S.people.filter(s => s.id !== id && s.parents.some(x => p.parents.includes(x))) : [];
+  const rel = (label, list) => list.length ? `<div><dt>${label}</dt><dd>${chips(list)}</dd></div>` : '';
+  const dates = [p.born && `<span class="sym">*</span>Born ${esc(p.born)}`, p.died && `<span class="sym">†</span>Died ${esc(p.died)}`].filter(Boolean).join(' &nbsp;·&nbsp; ');
+  const rels = rel('Parents', parents) + rel('Partner', partner ? [partner] : []) + rel('Children', kids) + rel('Siblings', sibs);
+  openSheet(`
+    <p class="eyebrow">${yearOf(p) ? `Born in the ${Math.floor(yearOf(p) / 10) * 10}s` : "Birth year not known yet"}</p>
+    <h2>${esc(p.name)}</h2>
+    ${p.nee ? `<p class="nee"><span class="lbl">Maiden name</span>${esc(p.nee)}</p>` : ''}
+    <p class="dates">${p.priv ? '<span style="color:var(--muted)">Details kept private</span>' : dates || '<span style="color:var(--muted)">Dates unknown</span>'}${esc(lifespan(p))}</p>
+    ${p.place ? `<p class="place">${esc(p.place)}</p>` : ''}
+    ${p.note ? `<p class="note">${esc(p.note)}</p>` : ''}
+    ${rels ? `<dl class="rels">${rels}</dl>` : canEdit() ? '<p class="hint">Not connected to anyone yet. Add a parent, partner or child to place them in the tree.</p>' : ''}
+    ${canEdit() && !isShared(p) ? '<p class="hint">Dates, place and notes are hidden on the public site.</p>' : ''}
+    ${!canEdit() ? `<button type="button" class="btn ask" data-act="contact">Know something about ${esc(p.name.split(/\s+/)[0])}? Tell ${esc(CONFIG.ownerName)}</button>` : `<div class="acts">
+      <button type="button" class="act" data-act="parent" ${p.parents.length >= 2 ? 'disabled' : ''}>${PLUS}Add parent</button>
+      <button type="button" class="act" data-act="partner" ${partner ? 'disabled' : ''}>${PLUS}Add partner</button>
+      <button type="button" class="act" data-act="child">${PLUS}Add child</button>
+      <button type="button" class="act" data-act="sibling" ${p.parents.length ? '' : 'disabled'}>${PLUS}Add sibling</button>
+    </div>
+    <div class="row2"><button type="button" class="btn" data-act="edit">Edit details</button><button type="button" class="btn danger" data-act="remove">Remove</button></div>`}`);
+  body.dataset.id = id;
+}
+
+function options(list, chosen, blank) {
+  return `<option value="">${blank}</option>` + list.map(p => `<option value="${esc(p.id)}" ${p.id === chosen ? 'selected' : ''}>${esc(p.name)}${p.born ? ' (' + esc(p.born) + ')' : ''}</option>`).join('');
+}
+let formCtx = null;
+function showForm(ctx) {
+  const by = idx();
+  const of = ctx.of && by[ctx.of];
+  let p;
+  if (ctx.id) p = by[ctx.id];
+  else {
+    p = { name: '', nee: '', born: '', died: '', place: '', note: '', parents: [], partner: null };
+    if (ctx.rel === 'child') p.parents = [of.id, of.partner].filter(Boolean);
+    if (ctx.rel === 'sibling') p.parents = of.parents.slice();
+    if (ctx.rel === 'partner') p.partner = of.id;
+    if (ctx.rel === 'parent' && of.parents.length === 1 && !by[of.parents[0]].partner) p.partner = of.parents[0];
+  }
+  formCtx = ctx;
+  const others = S.people.filter(x => x.id !== ctx.id).sort((a, b) => a.name.localeCompare(b.name));
+  const banned = ctx.id ? descendants(ctx.id) : ctx.rel === 'parent' ? new Set([of.id, ...descendants(of.id)]) : new Set();
+  const parentOpts = others.filter(x => !banned.has(x.id));
+  const title = ctx.id ? `Edit ${esc(p.name)}` : ({ parent: 'A parent of ', partner: 'A partner of ', child: 'A child of ', sibling: 'A sibling of ' }[ctx.rel] || '') + (of ? esc(of.name) : 'Someone new');
+  openSheet(`
+    <p class="eyebrow">${ctx.id ? 'Edit entry' : 'New entry'}</p>
+    <h2>${title}</h2>
+    <form id="pform" novalidate>
+      <label>Name<input id="f-name" maxlength="80" autocomplete="off" value="${esc(p.name)}" placeholder="First and last name"></label>
+      <p class="err" id="f-err" hidden>Give this person a name, even a placeholder like "Grandpa Hale".</p>
+      <label>Maiden name<input id="f-nee" maxlength="60" autocomplete="off" value="${esc(p.nee)}" placeholder="If it changed"></label>
+      <div class="two">
+        <label>Born<input id="f-born" maxlength="24" autocomplete="off" value="${esc(p.born)}" placeholder="1921 or c. 1880"></label>
+        <label>Died<input id="f-died" maxlength="24" autocomplete="off" value="${esc(p.died)}" placeholder="Leave blank if living"></label>
+      </div>
+      <label>Place<input id="f-place" maxlength="80" autocomplete="off" value="${esc(p.place)}" placeholder="Where they were born or lived"></label>
+      <label>Notes<textarea id="f-note" maxlength="800" placeholder="Stories, sources, things to ask about">${esc(p.note)}</textarea></label>
+      <label class="check"><input type="checkbox" id="f-share" ${isShared(p) ? 'checked' : ''}><span>Show dates, place and notes on the public site<small>Off by default for living relatives. Their name and place in the tree still show.</small></span></label>
+      <div class="two">
+        <label>Parent<select id="f-p1">${options(parentOpts, p.parents[0], 'Unknown')}</select></label>
+        <label>Parent<select id="f-p2">${options(parentOpts, p.parents[1], 'Unknown')}</select></label>
+      </div>
+      <label>Partner<select id="f-partner">${options(others, p.partner, 'None')}</select></label>
+      <div class="row2"><button type="button" class="btn" data-act="cancel">Cancel</button><button type="submit" class="btn primary">${ctx.id ? 'Save' : 'Add to tree'}</button></div>
+    </form>`, true);
+
+}
+function setPartner(p, qid, by) {
+  if (p.partner && p.partner !== qid && by[p.partner] && by[p.partner].partner === p.id) by[p.partner].partner = null;
+  if (qid) { const q = by[qid]; if (q.partner && q.partner !== p.id && by[q.partner]) by[q.partner].partner = null; q.partner = p.id; }
+  p.partner = qid || null;
+}
+function submitForm() {
+  if (!canEdit()) return;
+  const v = id => $(id).value.trim();
+  const name = v('f-name');
+  if (!name) { $('f-err').hidden = false; $('f-name').focus(); return; }
+  const by = idx(), ctx = formCtx, isNew = !ctx.id;
+  const p = isNew ? { id: newId(), parents: [], partner: null } : by[ctx.id];
+  if (isNew) { S.people.push(p); by[p.id] = p; }
+  Object.assign(p, { name, nee: v('f-nee'), born: v('f-born'), died: v('f-died'), place: v('f-place'), note: $('f-note').value.trim(), share: $('f-share').checked });
+  delete p.priv;
+  p.parents = [...new Set([v('f-p1'), v('f-p2')].filter(Boolean))].filter(x => x !== p.id && by[x]);
+  const pid = v('f-partner');
+  setPartner(p, pid && by[pid] ? pid : null, by);
+  const of = ctx.of && by[ctx.of];
+  if (isNew && of) {
+    if (ctx.rel === 'parent' && of.parents.length < 2 && !of.parents.includes(p.id)) of.parents.push(p.id);
+    if (ctx.rel === 'partner' && p.partner === of.id)
+      kidsOf(of.id).forEach(k => { if (k.parents.length === 1) k.parents.push(p.id); });
+  }
+  save();
+  sel = p.id;
+  const from = isNew ? { [p.id]: of && cur[of.id] ? { ...cur[of.id] } : null } : null;
+  if (from && !from[p.id]) delete from[p.id];
+  render({ animate: true, from });
+  showPerson(p.id);
+  setTimeout(() => focusOn(p.id), 80);
+}
+body.addEventListener('submit', e => { e.preventDefault(); if (e.target.id === 'pform') submitForm(); });
+body.addEventListener('click', e => {
+  const go = e.target.closest('[data-go]');
+  if (go) return select(go.dataset.go);
+  const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
+  const id = body.dataset.id, act = b.dataset.act;
+  if (['parent', 'partner', 'child', 'sibling', 'edit', 'remove'].includes(act) && !canEdit()) return;
+  if (act === 'contact') return showContact(id);
+  if (['parent', 'partner', 'child', 'sibling'].includes(act)) showForm({ rel: act, of: id });
+  else if (act === 'edit') showForm({ id });
+  else if (act === 'cancel') formCtx && formCtx.id ? showPerson(formCtx.id) : formCtx && formCtx.of ? showPerson(formCtx.of) : closeSheet();
+  else if (act === 'remove') removePerson(id);
+  else menuAction(act);
+});
+function removePerson(id) {
+  if (!canEdit()) return;
+  const snap = JSON.stringify(S), by = idx(), p = by[id];
+  S.people = S.people.filter(x => x.id !== id);
+  S.people.forEach(x => { x.parents = x.parents.filter(y => y !== id); if (x.partner === id) x.partner = null; });
+  save(); closeSheet(); render({ animate: true });
+  toast(`Removed ${p.name}`, () => { S = JSON.parse(snap); save(); render({ animate: true }); });
+}
+
+/* ---------- menu, backup ---------- */
+function showMenu() {
+  sel = null; Object.values(els).forEach(c => c.classList.remove('sel'));
+  body.dataset.id = '';
+  const owner = esc(CONFIG.ownerName);
+  const style = `
+    <p class="eyebrow" style="margin-top:20px">Branch style</p>
+    <div class="seg" role="radiogroup" aria-label="Branch style">
+      <button type="button" role="radio" data-act="m-curved" aria-checked="${S.lineStyle !== 'hard'}"><svg viewBox="0 0 40 24"><path d="M20 2C20 12 6 10 6 22M20 2C20 12 34 10 34 22"/></svg>Curved</button>
+      <button type="button" role="radio" data-act="m-hard" aria-checked="${S.lineStyle === 'hard'}"><svg viewBox="0 0 40 24"><path d="M20 2V11M6 11H34M6 11V22M34 11V22"/></svg>Straight</button>
+    </div>`;
+  if (!canEdit()) {
+    openSheet(`
+      <p class="eyebrow">Family Atlas</p>
+      <h2>About this tree</h2>
+      <p class="small">A family tree ${owner} fills in as he learns more. Tap anyone to see what's known about them. Living relatives' details are kept private.</p>
+      <div class="menu">
+        <button type="button" class="act" data-act="m-contact">Contact ${owner}</button>
+        <button type="button" class="act" data-act="m-checks">Run layout checks</button>
+      </div>${style}`);
+    return;
+  }
+  openSheet(`
+    <p class="eyebrow">Family Atlas</p>
+    <h2>The ledger</h2>
+    <p class="small">You're editing on your own computer. On ${esc(CONFIG.siteHost)}, visitors can look but not change anything. To update the site, save <b>tree.json</b> into the repo's family folder, then commit and push.</p>
+    <div class="menu">
+      <button type="button" class="act" data-act="m-savefile">${S.dirty ? 'Save tree.json for the site' : 'Save tree.json again'}</button>
+      <button type="button" class="act" data-act="m-copy">Copy backup</button>
+      <button type="button" class="act" data-act="m-restore">Restore from a backup</button>
+      <button type="button" class="act" data-act="m-fresh">Start a fresh tree</button>
+      <button type="button" class="act" data-act="m-example">Bring back the example family</button>
+      <button type="button" class="act" data-act="m-checks">Run layout checks</button>
+    </div>${style}
+    <div id="restoreBox" hidden>
+      <form id="rform" style="margin-top:14px">
+        <label>Backup text<textarea id="f-restore" placeholder="Paste a backup here"></textarea></label>
+        <label>Or choose a backup file<input id="f-file" type="file" accept=".json,application/json,text/plain" style="padding-top:10px"></label>
+        <p class="err" id="r-err" hidden>That doesn't look like a Family Atlas backup.</p>
+        <div class="row2"><button type="button" class="btn primary" data-act="m-apply">Replace my tree</button></div>
+      </form>
+    </div>
+    <p class="small foot">Copy backup keeps everything, including living relatives' details. tree.json leaves those out.</p>`);
+}
+
+/* ---------- saving tree.json, contact ---------- */
+function publicCopy() {
+  return { app: 'family-atlas', v: 1, updated: S.updated || Date.now(), lineStyle: S.lineStyle,
+    people: S.people.map(p => isShared(p)
+      ? { id: p.id, name: p.name, nee: p.nee, born: p.born, died: p.died, place: p.place, note: p.note, parents: p.parents, partner: p.partner, share: true }
+      : { id: p.id, name: p.name, nee: '', born: '', died: '', place: '', note: '', parents: p.parents, partner: p.partner, priv: true }) };
+}
+let fileHandle = null;
+function markSaved(msg) { S.dirty = false; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} renderRibbon(); toast(msg); }
+// Writes the public copy of the tree. Chrome and Edge can save straight into the repo folder (and remember it for
+// next time); other browsers download tree.json; inside a preview frame the text is shown to copy instead.
+async function saveTreeFile() {
+  const txt = JSON.stringify(publicCopy(), null, 1) + '\n';
+  const framed = window.top !== window;
+  if (!framed && window.showSaveFilePicker) {
+    try {
+      const h = fileHandle || await showSaveFilePicker({ suggestedName: 'tree.json', types: [{ description: 'Family Atlas tree', accept: { 'application/json': ['.json'] } }] });
+      const w = await h.createWritable(); await w.write(txt); await w.close(); fileHandle = h;
+      return markSaved('Saved tree.json. Commit and push it to update the site.');
+    } catch (e) { if (e && e.name === 'AbortError') return; fileHandle = null; }
+  }
+  if (!framed) {
+    try {
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], { type: 'application/json' })); a.download = 'tree.json';
+      document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      return markSaved('Downloaded tree.json. Move it into the family folder, then commit and push.');
+    } catch {}
+  }
+  body.dataset.id = '';
+  openSheet(`<p class="eyebrow">tree.json</p><h2>Copy into the repo</h2>
+    <p class="small">Saving files is blocked here. Copy this text into <b>family/tree.json</b> in the repo, then commit and push.</p>
+    <form style="margin-top:12px"><label>tree.json<textarea id="f-treejson" readonly style="min-height:220px;font:12px ui-monospace,monospace">${esc(txt)}</textarea></label>
+    <div class="row2"><button type="button" class="btn primary" data-act="m-copytree">Copy text</button></div></form>`);
+}
+function showContact(id) {
+  const p = id && idx()[id], owner = esc(CONFIG.ownerName), mail = CONFIG.contactEmail.trim();
+  const subject = encodeURIComponent(p ? `Family Atlas: about ${p.name}` : 'Family Atlas');
+  openSheet(`
+    <p class="eyebrow">Get in touch</p>
+    <h2>Write to ${owner}</h2>
+    <p class="small">This tree is ${owner}'s own project, filled in as he learns. If you know a name, a date or a story${p ? ` about ${esc(p.name)}` : ''}, or you spot a mistake, he'd love to hear it.</p>
+    ${mail ? `<div class="mailbox"><span>${esc(mail)}</span><button type="button" class="btn" data-act="m-copymail">Copy</button></div>
+    <a class="btn primary wide" href="mailto:${esc(mail)}?subject=${subject}">Open email app</a>`
+           : `<a class="btn primary wide" href="${esc(CONFIG.contactUrl)}">Find ${owner}'s contact details</a>`}`);
+  body.dataset.id = id || '';
+}
+function renderRibbon() {
+  const rb = $('ribbon'), ed = canEdit();
+  let h = '';
+  if (ed && S.dirty && !S.example) h = '<i>Not saved to tree.json yet.</i><button type="button" data-rb="save">Save</button>';
+  else if (S.example) h = '<i>An example family.</i>' + (ed ? '<button type="button" data-rb="own">Start my own tree</button><button type="button" class="dismiss" data-rb="hide" aria-label="Keep the example and hide this note">×</button>' : '');
+  if (rb.innerHTML !== h) rb.innerHTML = h;
+  rb.hidden = !h;
+}
+const PLUS_ICON = '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>';
+const MAIL_ICON = '<svg viewBox="0 0 24 24"><path d="M4 6.5h16v11H4z M4.5 7l7.5 6 7.5-6"/></svg>';
+function applyRole() {
+  const ed = canEdit();
+  $('addBtn').innerHTML = ed ? PLUS_ICON + 'Add person' : MAIL_ICON + 'Contact ' + esc(CONFIG.ownerName);
+  $('firstBtn').hidden = !ed;
+  $('empty').querySelector('h2').textContent = ed ? 'Every tree starts with one name' : 'This tree is still being planted';
+  $('empty').querySelector('p').textContent = ed ? 'Add yourself or the oldest relative you know, then branch out from there.' : 'Check back soon.';
+  renderRibbon();
+}
+function replaceTree(next, msg) {
+  if (!canEdit()) return;
+  next.lineStyle = next.lineStyle || S.lineStyle;
+  const snap = JSON.stringify(S);
+  S = next; save();
+  for (const id in cur) delete cur[id];
+  closeSheet(); render({ animate: true }); setTimeout(() => fit(), 60);
+  toast(msg, () => { S = JSON.parse(snap); save(); for (const id in cur) delete cur[id]; render({ animate: true }); setTimeout(() => fit(), 60); });
+}
+function startFresh() {
+  const p = { id: newId(), name: 'You', nee: '', born: '', died: '', place: '', note: '', parents: [], partner: null };
+  replaceTree({ people: [p], example: false }, 'Started a fresh tree');
+  setTimeout(() => { sel = p.id; showForm({ id: p.id }); }, 120);
+}
+function menuAction(act) {
+  if (['m-copy', 'm-restore', 'm-fresh', 'm-example', 'm-apply', 'm-savefile'].includes(act) && !canEdit()) return;
+  if (act === 'm-close') return closeSheet();
+  if (act === 'm-contact') return showContact();
+  if (act === 'm-savefile') return saveTreeFile();
+  if (act === 'm-copytree') { const t = $('f-treejson'); try { navigator.clipboard.writeText(t.value).then(() => markSaved('Copied. Paste it into family/tree.json, then commit and push.'), () => { t.focus(); t.select(); }); } catch { t.focus(); t.select(); } return; }
+  if (act === 'm-copymail') { const m = CONFIG.contactEmail.trim(); try { navigator.clipboard.writeText(m).then(() => toast('Email address copied'), () => toast('Press and hold the address to copy it')); } catch { toast('Press and hold the address to copy it'); } return; }
+  if (act === 'm-curved' || act === 'm-hard') {
+    S.lineStyle = act === 'm-hard' ? 'hard' : 'curved';
+    if (canEdit()) save(); else { prefs.lineStyle = S.lineStyle; savePrefs(); }
+    drawLines(cur);
+    body.querySelectorAll('.seg [role=radio]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.act === act)));
+  }
+  if (act === 'm-example') replaceTree(template(), 'Example family is back');
+  if (act === 'm-apply') {
+    let next = null; try { next = clean(JSON.parse($('f-restore').value)); } catch {}
+    if (!next || !next.people.length) { $('r-err').hidden = false; return; }
+    next.example = false; replaceTree(next, `Restored ${next.people.length} people`);
+  }
+}
+body.addEventListener('change', e => {
+  if (e.target.id !== 'f-file' || !e.target.files[0]) return;
+  const r = new FileReader(); r.onload = () => { $('f-restore').value = String(r.result || ''); }; r.readAsText(e.target.files[0]);
+});
+$('menuBtn').onclick = showMenu;
+$('addBtn').onclick = () => {
+  sel = null; Object.values(els).forEach(c => c.classList.remove('sel')); body.dataset.id = '';
+  canEdit() ? showForm({ rel: 'loose' }) : showContact();
+};
+$('firstBtn').onclick = () => { if (canEdit()) showForm({ rel: 'loose' }); };
+$('ribbon').addEventListener('click', e => {
+  const b = e.target.closest('[data-rb]'); if (!b) return;
+  if (b.dataset.rb === 'save') saveTreeFile();
+  if (b.dataset.rb === 'own') startFresh();
+  if (b.dataset.rb === 'hide') { S.example = false; save(); }
+});
+
+/* ---------- built-in checks (menu → Run layout checks, or open the page with #tests) ---------- */
+function runChecks() {
+  const out = [], check = (name, pass, detail = '') => out.push({ name, pass: !!pass, detail });
+  // zoom: nothing heavy per frame, and redraws only when a level is crossed
+  const savedT = { ...T };
+  try {
+    T.k = .5; refreshZoom();
+    let c = drawCount;
+    for (const k of [.52, .48, .46, .58]) { T.k = k; apply(); }
+    clearTimeout(zoomT);
+    check('Zoom frames never redraw the tree', drawCount === c, `${drawCount - c} redraws during 4 frames`);
+    c = drawCount;
+    for (const k of [.45, .5, .55, .6]) { T.k = k; refreshZoom(); }
+    check('Zooming within one detail level never redraws', drawCount === c, `${drawCount - c} redraws`);
+    c = drawCount; T.k = .2; refreshZoom();
+    check('Crossing a detail level redraws exactly once', drawCount - c === 1, `${drawCount - c} redraws`);
+    check('Detail levels step at the right zooms', [1, .6, .4, .2, .1].map(levelFor).join() === '0,1,2,3,4');
+  } finally { T = savedT; apply.lvl = null; refreshZoom(); apply(); }
+  // layout, on the example family so results don't depend on your own tree
+  const savedS = S;
+  try {
+    S = template();
+    const { pos } = layout(), by = idx();
+    const sets = {};
+    S.people.forEach(p => { if (p.parents.length) (sets[p.parents.slice().sort().join('|')] ||= []).push(p.id); });
+    const lists = Object.values(sets).filter(l => l.length > 1);
+    const split = lists.filter(l => new Set(l.map(id => pos[id].y)).size > 1);
+    check('Siblings share a row', !split.length, split.map(l => l.map(id => by[id].name).join(' / ')).join('; '));
+    const apart = [];
+    lists.forEach(l => {
+      const row = S.people.filter(p => pos[p.id].y === pos[l[0]].y).sort((a, b) => pos[a.id].x - pos[b.id].x).map(p => p.id);
+      const ix = l.map(id => row.indexOf(id)), lo = Math.min(...ix), hi = Math.max(...ix);
+      const ok = new Set([...l, ...l.map(id => by[id].partner).filter(Boolean)]);
+      const strays = row.slice(lo, hi + 1).filter(id => !ok.has(id));
+      if (strays.length) apart.push(l.map(id => by[id].name).join(' / ') + ' split by ' + strays.map(id => by[id].name).join(', '));
+    });
+    check('Siblings sit together, with only their partners between them', !apart.length, apart.join('; '));
+    const overlaps = [];
+    S.people.forEach(a => S.people.forEach(b => { if (a.id < b.id && pos[a.id].y === pos[b.id].y && Math.abs(pos[a.id].x - pos[b.id].x) < CW) overlaps.push(a.name + ' & ' + b.name); }));
+    check('No two cards overlap', !overlaps.length, overlaps.join('; '));
+    const above = S.people.filter(p => p.parents.some(q => pos[q].y >= pos[p.id].y));
+    check('Everyone sits below their parents', !above.length, above.map(p => p.name).join(', '));
+    const { labels } = surLabelLayout(pos, 5);
+    const off = labels.filter(l => Math.abs(l.x - (pos[l.id].x + CW / 2)) > .5 || l.y >= pos[l.id].y || by[l.id].parents.some(q => surnameOf(by[q]) === l.sn));
+    const want = { Hale: 'george', Moore: 'henry', Lang: 'otto', Price: 'arthur', Carter: 'harold', Bell: 'james' };
+    const wrong = labels.filter(l => want[l.sn] && want[l.sn] !== l.id);
+    check('Family names sit over their founders', !off.length && !wrong.length && labels.length === 6,
+      [...off, ...wrong].map(l => `${l.sn} over ${by[l.id].name}`).join('; ') || `${labels.length} labels`);
+    const cols = Object.values(famColors());
+    check('Every family has its own color', new Set(cols).size === cols.length);
+    const hosts = { 'yauk.dev': true, 'www.yauk.dev': true, 'isaacyauk.github.io': true, 'localhost': false, '127.0.0.1': false, '': false };
+    const wrongHost = Object.entries(hosts).filter(([h, live]) => isLiveHost(h) !== live).map(([h]) => h || 'a local file');
+    check('Editing is off on the live site and on locally everywhere else', !wrongHost.length, wrongHost.join(', '));
+  } finally { S = savedS; }
+  return out;
+}
+function showChecks() {
+  const res = runChecks(), bad = res.filter(r => !r.pass).length;
+  body.dataset.id = '';
+  openSheet(`<p class="eyebrow">Layout checks</p><h2>${bad ? `${bad} of ${res.length} failed` : `All ${res.length} passed`}</h2>
+    <ul class="checks">${res.map(r => `<li class="${r.pass ? 'ok' : 'no'}"><span>${r.pass ? '✓' : '✗'}</span><div>${esc(r.name)}${!r.pass && r.detail ? `<small>${esc(r.detail)}</small>` : ''}</div></li>`).join('')}</ul>`);
+}
+
+/* ---------- toast ---------- */
+let toastT = 0, undoFn = null;
+function toast(msg, undo) {
+  $('toastMsg').textContent = msg; undoFn = undo || null;
+  $('toastUndo').hidden = !undo;
+  $('toast').classList.add('show'); clearTimeout(toastT);
+  toastT = setTimeout(() => $('toast').classList.remove('show'), undo ? 6000 : 2800);
+}
+$('toastUndo').onclick = () => { const f = undoFn; undoFn = null; $('toast').classList.remove('show'); f && f(); };
+
+/* ---------- Back button: close the sheet, or ask before leaving ---------- */
+(() => {
+  const dlg = $('leave'), back = $('leaveBack');
+  let armed = false;
+  const arm = () => { if (armed || !canEdit()) return; armed = true; try { history.pushState({ atlas: 1 }, ''); } catch {} };
+  addEventListener('pointerdown', arm, { capture: true });
+  addEventListener('keydown', arm, { capture: true });
+  const show = on => { dlg.classList.toggle('open', on); back.classList.toggle('open', on); if (on) $('leaveStay').focus(); };
+  addEventListener('popstate', () => {
+    if (!armed) return;
+    if (sheet.classList.contains('open')) { closeSheet(); try { history.pushState({ atlas: 1 }, ''); } catch {} return; }
+    show(true);
+  });
+  $('leaveStay').onclick = () => { show(false); try { history.pushState({ atlas: 1 }, ''); } catch {} };
+  back.onclick = $('leaveStay').onclick;
+  $('leaveGo').onclick = () => { armed = false; show(false); history.back(); };
+})();
+
+/* ---------- keyboard: keep the app still, scroll only inside the sheet ---------- */
+// overflow: clip on html, body and #app means the browser has nothing to scroll except the sheet,
+// so there's no scroll-then-snap-back fight when a field is focused.
+function revealField() {
+  const el = document.activeElement;
+  if (!el || !sheet.contains(el) || !/INPUT|TEXTAREA|SELECT/.test(el.tagName)) return;
+  const r = el.getBoundingClientRect(), sr = sheet.getBoundingClientRect();
+  const bottom = Math.min(sr.bottom, window.visualViewport ? visualViewport.height + visualViewport.offsetTop : innerHeight);
+  if (r.bottom > bottom - 16) sheet.scrollTop += r.bottom - bottom + 28;
+  else if (r.top < sr.top + 16) sheet.scrollTop -= sr.top + 16 - r.top;
+}
+// the browser scrolls the sheet to the focused field on its own; scrolling it here too made it jump twice
+
+/* ---------- start ---------- */
+// Visitors see the published tree.json. The owner (or a preview) works from this browser's draft whenever it's
+// at least as new as what's published; otherwise the published tree wins (it was edited on another device).
+async function boot(msg) {
+  let published = null;
+  try { const res = await fetch(`${CONFIG.dataUrl}?t=${Date.now()}`, { cache: 'no-store' }); if (res.ok) published = clean(await res.json()); } catch {}
+  const draft = canEdit() ? load() : null;
+  if (draft && (!published || draft.dirty || draft.updated >= published.updated)) S = draft;
+  else if (published && published.people.length) S = published;
+  else S = template();
+  if (!canEdit() && prefs.lineStyle) S.lineStyle = prefs.lineStyle;
+  loading = false; sel = null;
+  for (const id in cur) delete cur[id];
+  render(); applyRole();
+  requestAnimationFrame(() => fit(false, innerWidth < 760 ? .55 : .06));
+  if (msg) toast(msg);
+  if (location.hash === '#tests') setTimeout(showChecks, 300);
+}
+applyRole();
+boot();
+// Only refit when the width changes (rotation, window resize). A phone keyboard only changes the height,
+// and refitting then made the whole map jump while typing.
+// The app's height is frozen in pixels. When the keyboard opens, the frame gets shorter but nothing inside
+// re-lays out; the keyboard simply covers the bottom, and the sheet gains extra scroll room to match.
+let rz = 0, kbT = 0, lastW = innerWidth, baseH = innerHeight;
+function freezeHeight() {
+  app.style.height = '';
+  app.style.height = app.getBoundingClientRect().height + 'px';
+  baseH = innerHeight;
+  app.style.setProperty('--kb', '0px');
+}
+freezeHeight();
+addEventListener('resize', () => {
+  if (Math.abs(innerWidth - lastW) < 2) {
+    // wait for the keyboard to finish sliding before adding scroll room, so the form reflows once
+    clearTimeout(kbT);
+    kbT = setTimeout(() => app.style.setProperty('--kb', Math.max(0, baseH - innerHeight) + 'px'), 180);
+    return;
+  }
+  lastW = innerWidth; clearTimeout(rz);
+  rz = setTimeout(() => { freezeHeight(); fit(false); }, 150);
+});
+})();
+</script>
+</body>
+</html>
