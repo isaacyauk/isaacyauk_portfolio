@@ -219,7 +219,9 @@ input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(
 #ruler{position:absolute;left:0;top:0;bottom:0;width:96px;overflow:hidden;pointer-events:none}
 #ruler span{position:absolute;top:0;left:max(18px,calc(env(safe-area-inset-left,0px) + 14px));padding:0 6px 3px 2px;font-family:var(--display);font-size:16px;line-height:1.2;color:var(--muted);font-variant-numeric:tabular-nums;
   border-bottom:1px solid color-mix(in srgb,var(--ink-soft) 45%,transparent);background:color-mix(in srgb,var(--paper) 85%,transparent)}
-#ruler.glide span{transition:transform .65s var(--ease)}
+#ruler.glide span,#view.glide #yearLines i{transition:transform .65s var(--ease)}
+#yearLines{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+#yearLines i{position:absolute;left:0;right:0;top:0;height:1px;background:color-mix(in srgb,var(--ink-soft) 16%,transparent)}
 #world.distant .sn{display:none;font-family:var(--display);font-size:58px;line-height:1;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 #world.distant .face{border:4px solid var(--sur);background:color-mix(in srgb,var(--sur) 40%,var(--card));box-shadow:none}
 #world.distant .card.sib .face{background:color-mix(in srgb,var(--sur) 40%,var(--card))}
@@ -255,6 +257,7 @@ a.btn{display:flex;align-items:center;justify-content:center;text-decoration:non
 .lockcard .small{margin:0}
 .lockcard .btn{flex:none;width:100%}
 .locked .bar,.locked .zoom,.locked .fab,.locked #ruler,.locked .ribbon,.locked #view{visibility:hidden}
+.fieldnote{display:block;text-transform:none;letter-spacing:0;font-size:12.5px;color:var(--muted)}
 .checks{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:8px}
 .checks li{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-size:14.5px;line-height:1.4}
 .checks li span{font-weight:600;width:16px;flex:none}
@@ -277,6 +280,7 @@ a.btn{display:flex;align-items:center;justify-content:center;text-decoration:non
 <body>
 <div id="app">
   <div id="view" aria-label="Family tree map. Drag to move, pinch or scroll to zoom.">
+    <div id="yearLines" aria-hidden="true"></div>
     <div id="world">
       <svg id="links" aria-hidden="true"><g id="gens"></g><path class="brn" id="linkPath"/><path class="ln" id="hardPath"/><g id="sibLines"></g><g class="knots" id="knotG"></g><path class="wed" id="wedPath"/><g class="rings" id="rings"></g><g id="surLabels"></g></svg>
       <div id="cards"></div>
@@ -335,6 +339,13 @@ a.btn{display:flex;align-items:center;justify-content:center;text-decoration:non
 <script>
 (() => {
 const CW = 190, CH = 96, CGAP = 44, UGAP = 34, ROW = 150, PADY = (ROW - CH) / 2; // one row = one decade
+// Stacked couples: every spouse sits just below their partner, nudged right by SOFF; that decade row grows to fit.
+const SOFF = 36, SGAP = 20;
+// Row heights follow their content: a row is as tall as its cards (two cards where couples stack) plus room
+// below for branches. Empty decades stay as a short band so the years still read in order.
+const ROW_GAP = 168, EMPTY_ROW = 64;
+// a line that passes through a row in between gets this much clear space either side
+const CHANNEL = 18;
 const KEY = 'family-atlas-v1';
 
 /* ---------- site settings ---------- */
@@ -379,7 +390,24 @@ const PLUS = '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>';
 /* ---------- data ---------- */
 const joinName = (...parts) => parts.map(x => (x || '').trim()).filter(Boolean).join(' ');
 // What the page shows: the full name, or first + last when middle names are hidden
-const shownName = p => (S.hideMiddle ? joinName(p.first, p.last) : p.name) || p.name || 'Unnamed';
+// Full name with its suffix after it, e.g. "Walter James Hale Jr."
+// Suffix style: every suffix follows a comma. Jr. and Sr. also get a period ("Hale, Jr."), numerals are capitalised
+// ("Hale, III"), and anything else typed (Esq., PhD) is kept as written.
+function formatSuffix(raw) {
+  const t = (raw || '').trim().replace(/^,\s*/, '').replace(/,$/, '');
+  if (!t) return '';
+  const js = /^(jr|sr)\.?$/i.exec(t);
+  if (js) return ', ' + js[1][0].toUpperCase() + js[1][1].toLowerCase() + '.';
+  if (/^[ivx]+$/i.test(t)) return ', ' + t.toUpperCase();
+  if (SUFFIX_RE.test(t)) return ', ' + t;
+  return ' ' + t;
+}
+const withSuffix = (base, suffix) => base ? base + formatSuffix(suffix) : '';
+const fullName = p => withSuffix(joinName(p.first, p.middle, p.last), p.suffix);
+// What the page shows: the full name, or the same without middle names when those are hidden
+const shownName = p => { const base = S.hideMiddle ? joinName(p.first, p.last) : joinName(p.first, p.middle, p.last); return (S.hideSuffix ? base : withSuffix(base, p.suffix)) || p.name || 'Unnamed'; };
+// Suffixes recognised when an older single-line name is split up
+const SUFFIX_RE = /^(jr|sr|ii|iii|iv|v|vi|vii|viii|ix|x|esq|phd|md|dds)\.?,?$/i;
 function template() {
   const P = [];
   const add = (id, name, nee, born, died, place, note, parents = [], partner = null) =>
@@ -401,7 +429,9 @@ function template() {
   add('robert', 'Robert Moore', '', '1922', '1990', 'Wilkes-Barre, Pennsylvania', '', ['henry', 'lillian'], 'alice');
   add('alice', 'Alice Moore', 'Grant', '1925', '2008', 'Allentown, Pennsylvania', '', [], 'robert');
   add('edith', 'Edith Hale', 'Moore', '1924', '2010', 'Wilkes-Barre, Pennsylvania', 'Kept the family Bible where most of these dates came from.', ['henry', 'lillian'], 'walter');
-  add('dorothy', 'Dorothy Moore', '', '1927', '2012', 'Wilkes-Barre, Pennsylvania', 'Taught piano for forty years.', ['henry', 'lillian']);
+  // Edith, Robert and Dorothy are all married: three marriages in one set of siblings, so their couples stack
+  add('dorothy', 'Dorothy Shaw', 'Moore', '1927', '2012', 'Wilkes-Barre, Pennsylvania', 'Taught piano for forty years.', ['henry', 'lillian'], 'paul');
+  add('paul', 'Paul Shaw', '', '1925', '1999', 'Scranton, Pennsylvania', '', [], 'dorothy');
   add('diane', 'Diane Moore', '', '1950', '', 'Allentown, Pennsylvania', 'Has the Moore family photo albums.', ['robert', 'alice']);
   // Carter side (Leon's family)
   add('harold', 'Harold Carter', '', '1922', '1995', 'Hartford, Connecticut', 'Insurance clerk for Travelers.', [], 'rose');
@@ -422,13 +452,17 @@ function template() {
   add('nora', 'Nora Hale', 'Bell', '1980', '', 'Dayton, Ohio', '', ['james', 'susan'], 'samuel');
   add('clara', 'Clara Hale', '', '1983', '', 'Madison, Wisconsin', 'Ask her about the photo box in the attic.', ['thomas', 'margaret']);
   add('owen', 'Owen Carter', '', '1981', '', 'Albany, New York', '', ['june', 'leon']);
-  add('emma', 'Emma Price', '', '1984', '', 'Fargo, North Dakota', '', ['peter', 'linda']);
-  add('daniel', 'Daniel Bell', '', '1983', '', 'Cincinnati, Ohio', '', ['james', 'susan']);
+  // the Bells marry into two families on this row (Nora into the Hales, Daniel into the Prices), like the Hales did in the 1950s
+  add('emma', 'Emma Bell', 'Price', '1984', '', 'Fargo, North Dakota', '', ['peter', 'linda'], 'daniel');
+  add('daniel', 'Daniel Bell', '', '1983', '', 'Cincinnati, Ohio', '', ['james', 'susan'], 'emma');
   // 2000s
   add('eli', 'Eli Hale', '', '2008', '', 'Columbus, Ohio', '', ['samuel', 'nora']);
   add('ivy', 'Ivy Hale', '', '2011', '', 'Columbus, Ohio', '', ['samuel', 'nora']);
   const middles = { george: 'William', walter: 'James', edith: 'Marie', henry: 'Thomas', thomas: 'Edward', margaret: 'Ann', june: 'Louise', samuel: 'Thomas', clara: 'Jean', ivy: 'Rose' };
   P.forEach(p => { if (middles[p.id]) p.middle = middles[p.id]; });
+  // a senior and junior pair
+  P.find(p => p.id === 'samuel').name = 'Samuel Hale Sr.';
+  Object.assign(P.find(p => p.id === 'eli'), { name: 'Samuel Hale Jr.', middle: 'Thomas' });
   return clean({ people: P, example: true });
 }
 function clean(raw) {
@@ -440,10 +474,20 @@ function clean(raw) {
     ids.add(r.id);
     const parts = str(r.name, 120).trim().split(/\s+/).filter(Boolean);
     const hasSplit = typeof r.first === 'string' || typeof r.last === 'string';
-    const first = hasSplit ? str(r.first, 40).trim() : (parts[0] || '');
-    const last = hasSplit ? str(r.last, 40).trim() : (parts.length > 1 ? parts[parts.length - 1] : '');
+    let suffix = typeof r.suffix === 'string' ? str(r.suffix, 20).trim() : '';
+    // the short-lived Title field: a "Sr"/"Jr" typed there belongs in the suffix; anything else goes back in front of the first name
+    const oldTitle = typeof r.title === 'string' ? str(r.title, 30).trim() : '';
+    if (!hasSplit) {
+      while (parts.length > 1 && SUFFIX_RE.test(parts[parts.length - 1])) suffix = joinName(parts.pop().replace(/,$/, ''), suffix);
+      if (parts.length > 1) parts[parts.length - 1] = parts[parts.length - 1].replace(/,$/, '');
+    }
+    let first = hasSplit ? str(r.first, 40).trim() : (parts[0] || '');
+    if (oldTitle) { if (SUFFIX_RE.test(oldTitle)) suffix = joinName(suffix, oldTitle); else first = joinName(oldTitle, first); }
+    let last = hasSplit ? str(r.last, 40).trim() : (parts.length > 1 ? parts[parts.length - 1] : '');
+    // a surname typed into Suffix (with Last name left empty) is really the last name
+    if (!last && suffix && !SUFFIX_RE.test(suffix)) { last = suffix; suffix = ''; }
     const middle = typeof r.middle === 'string' ? str(r.middle, 60).trim() : (!hasSplit && parts.length > 2 ? parts.slice(1, -1).join(' ') : '');
-    out.push({ id: r.id, first, middle, last, name: joinName(first, middle, last) || 'Unnamed', nee: str(r.nee, 60), born: str(r.born, 24), died: str(r.died, 24),
+    out.push({ id: r.id, first, middle, last, suffix, name: withSuffix(joinName(first, middle, last), suffix) || 'Unnamed', nee: str(r.nee, 60), born: str(r.born, 24), died: str(r.died, 24),
       place: str(r.place, 80), note: str(r.note, 800), parents: Array.isArray(r.parents) ? r.parents.filter(x => typeof x === 'string') : [],
       partner: typeof r.partner === 'string' ? r.partner : null, share: typeof r.share === 'boolean' ? r.share : undefined, priv: r.priv === true });
   }
@@ -453,7 +497,7 @@ function clean(raw) {
     if (p.partner && (!by[p.partner] || p.partner === p.id)) p.partner = null;
   });
   out.forEach(p => { if (p.partner && by[p.partner].partner !== p.id) p.partner = null; });
-  return { people: out, example: !!raw.example, hideMiddle: raw.hideMiddle === true, lineStyle: raw.lineStyle === 'hard' ? 'hard' : 'curved', updated: Number(raw.updated) || 0, dirty: raw.dirty === true };
+  return { people: out, example: !!raw.example, hideMiddle: raw.hideMiddle === true, hideSuffix: raw.hideSuffix === true, lineStyle: raw.lineStyle === 'hard' ? 'hard' : 'curved', updated: Number(raw.updated) || 0, dirty: raw.dirty === true };
 }
 function load() { try { return clean(JSON.parse(localStorage.getItem(KEY))); } catch { return null; } }
 // Edits are saved to this browser as a draft and marked unpublished; visitors never save anything.
@@ -535,12 +579,17 @@ function layout() {
   const minDec = ds.length ? Math.min(...ds) : 1950, maxDec = ds.length ? Math.max(...ds) : 1950;
   // generations decide left-to-right order (so lines never cut through cards); decades decide height
   people.forEach(p => g[p.id] = 0);
+  // Generation decides left-to-right grouping, so partners and siblings must always share one, even when one
+  // family has grandparents in the tree and the family it married into doesn't.
+  const sibsOf = {};
+  people.forEach(p => { if (p.parents.length) (sibsOf[p.parents.slice().sort().join('|')] ||= []).push(p); });
   for (let it = 0; it < 60; it++) {
     let changed = false;
     for (const p of people) {
       let v = g[p.id];
       for (const q of p.parents) if (by[q]) v = Math.max(v, g[q] + 1);
       if (p.partner && by[p.partner]) v = Math.max(v, g[p.partner]);
+      if (p.parents.length) for (const q of sibsOf[p.parents.slice().sort().join('|')]) v = Math.max(v, g[q.id]);
       v = Math.min(v, 40);
       if (v !== g[p.id]) { g[p.id] = v; changed = true; }
     }
@@ -548,35 +597,108 @@ function layout() {
   }
   const maxG = people.length ? Math.max(...people.map(p => g[p.id])) : 0;
   const rows = Array.from({ length: maxG + 1 }, () => []);
+  // every married couple stacks: the partner born into the tree sits in the row, their spouse just below
+  const ancestors = (id, seenA = new Set()) => { for (const q of (by[id] ? by[id].parents : [])) if (!seenA.has(q)) { seenA.add(q); ancestors(q, seenA); } return seenA.size; };
   const seen = new Set();
+  let anyStack = false;
   for (const p of people) {
     if (seen.has(p.id)) continue; seen.add(p.id);
     const m = [p], q = p.partner && by[p.partner];
     if (q && g[q.id] === g[p.id] && dec[q.id] === dec[p.id] && !seen.has(q.id)) { m.push(q); seen.add(q.id); }
-    rows[g[p.id]].push({ m, x: 0, w: m.length * CW + (m.length - 1) * CGAP, d: 0 });
+    let stack = false;
+    if (m.length === 2) {
+      stack = anyStack = true;
+      // who stays in the row: whoever has parents in the tree; if both do, whoever has more siblings here (that keeps
+      // the bigger family together); then whoever has more ancestors in the tree
+      const a = m[0], b = m[1], ha = a.parents.length > 0, hb = b.parents.length > 0;
+      const sibs = p => p.parents.length ? (sibsOf[p.parents.slice().sort().join('|')] || []).length : 0;
+      const aTop = ha !== hb ? ha : sibs(a) !== sibs(b) ? sibs(a) > sibs(b) : ancestors(a.id) >= ancestors(b.id);
+      if (!aTop) m.reverse();
+    }
+    rows[g[p.id]].push({ m, x: 0, w: stack ? CW + SOFF : m.length * CW + (m.length - 1) * CGAP, d: 0, stack });
   }
+
   const cx = {};
-  const place = r => r.forEach(u => u.m.forEach((p, i) => cx[p.id] = u.x + i * (CW + CGAP) + CW / 2));
+  const offX = (u, i) => u.stack ? i * SOFF : i * (CW + CGAP);
+  const place = r => r.forEach(u => u.m.forEach((p, i) => cx[p.id] = u.x + offX(u, i) + CW / 2));
   rows.forEach(r => { let x = 0; r.forEach(u => { u.x = x; u.d = x + u.w / 2; x += u.w + UGAP; }); place(r); });
   // Siblings stay together. Units are grouped by their members' parents; a couple whose partners both have
   // parents in the tree joins those two sibling sets into one block (so Thomas sits by June and Margaret by Peter).
   // Each block is packed shoulder to shoulder around its average target, and only whole blocks are ordered.
+  // Inside one block: each sibling set is laid out as its own unbroken run, oldest on the left. A couple that joins
+  // two sets sits where the runs meet (its member from the left set first), so a spouse never splits siblings.
+  const orderBlock = (g, keysOf) => {
+    const sets = new Map(), bridges = [];
+    const setOf = k => { if (!sets.has(k)) sets.set(k, { k, units: [], ds: [] }); return sets.get(k); };
+    g.forEach(u => {
+      const ks = [...new Set(keysOf(u))];
+      ks.forEach(k => setOf(k).ds.push(u.d));
+      if (ks.length === 1) setOf(ks[0]).units.push(u); else bridges.push({ u, ks });
+    });
+    sets.forEach(st => st.d = st.ds.reduce((t, v) => t + v, 0) / st.ds.length);
+    const linked = k => bridges.filter(b => b.ks.includes(k)).flatMap(b => b.ks).filter(x => x !== k);
+    // walk along marriages so sets joined by a couple end up side by side. Start from an end of the chain (a set that
+    // married into at most one other set here), so a family that married into two others lands in the middle.
+    const order = [], seen = new Set(), byD = [...sets.values()].sort((a, b) => a.d - b.d);
+    const degree = k => new Set(linked(k)).size;
+    const start = byD.find(st => degree(st.k) <= 1) || byD[0];
+    for (let cur = start; cur; ) {
+      order.push(cur); seen.add(cur.k);
+      const next = linked(cur.k).filter(k => !seen.has(k)).map(k => sets.get(k)).sort((a, b) => a.d - b.d)[0];
+      // dead end: carry on with a family that married into one already placed, before unrelated ones
+      cur = next || byD.find(st => !seen.has(st.k) && linked(st.k).some(k => seen.has(k))) || byD.find(st => !seen.has(st.k));
+    }
+    const pos = new Map(order.map((st, i) => [st.k, i]));
+    const born = (u, k) => { const p = u.m.find(m => m.parents.length && m.parents.slice().sort().join('|') === k) || u.m[0]; const y = yearOf(p); return y == null ? Infinity : y; };
+    const out = [], placed = new Set();
+    order.forEach((st, i) => {
+      const toLeft = bridges.filter(b => !placed.has(b.u) && b.ks.includes(st.k) && b.ks.some(k => pos.get(k) < i));
+      // couples into families further right; the one into the very next family goes last so it touches that family.
+      // A couple into a family that can't be beside this one still sits with this run, and the spouse's siblings
+      // stay together in their own run, joined by a branch.
+      const far = b => Math.max(...b.ks.filter(k => k !== st.k).map(k => pos.get(k)));
+      const toRight = bridges.filter(b => !placed.has(b.u) && b.ks.includes(st.k) && !toLeft.includes(b))
+        .sort((a, b) => (far(a) === i + 1) - (far(b) === i + 1) || far(b) - far(a));
+      const own = st.units.slice().sort((a, b) => born(a, st.k) - born(b, st.k) || a.d - b.d);
+      const memberOf = (u, k) => u.m.find(m => m.parents.length && m.parents.slice().sort().join('|') === k);
+      toLeft.forEach(b => { placed.add(b.u); const mine = memberOf(b.u, st.k); if (!b.u.stack && mine && b.u.m[0] === mine) b.u.m.reverse(); out.push(b.u); });
+      out.push(...own);
+      toRight.forEach(b => { placed.add(b.u); const mine = memberOf(b.u, st.k); if (!b.u.stack && mine && b.u.m[1] === mine) b.u.m.reverse(); out.push(b.u); });
+    });
+    g.length = 0; g.push(...out);
+  };
   const resolve = r => {
     const parent = {}, find = k => parent[k] === k ? k : (parent[k] = find(parent[k]));
-    const keysOf = u => { const ks = u.m.filter(p => p.parents.length).map(p => p.parents.slice().sort().join('|')); return ks.length ? ks : ['solo:' + u.m[0].id]; };
+    const keysOf = u => { if (u.phantom) return ['phantom:' + u.pid]; const ks = u.m.filter(p => p.parents.length).map(p => p.parents.slice().sort().join('|')); return ks.length ? ks : ['solo:' + u.m[0].id]; };
     r.forEach(u => { const ks = keysOf(u); ks.forEach(k => parent[k] ??= k); ks.slice(1).forEach(k => parent[find(k)] = find(ks[0])); });
     const groups = new Map();
     r.forEach(u => { const k = find(keysOf(u)[0]); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(u); });
     const blocks = [...groups.values()].map(g => {
-      g.sort((a, b) => a.d - b.d);
+      orderBlock(g, keysOf);
       const d = g.reduce((t, u) => t + u.d, 0) / g.length, W = g.reduce((t, u) => t + u.w, 0) + UGAP * (g.length - 1);
       let x = d - W / 2; g.forEach(u => { u.x = x; x += u.w + UGAP; });
       return { g, d };
     }).sort((a, b) => a.d - b.d);
     r.length = 0; blocks.forEach(b => r.push(...b.g));
+    // With channels in the row: channels stay put. Family blocks keep their left-to-right order and are laid out
+    // left to right; a block that would cover a channel (or doesn't fit before it) jumps, whole, to just past it.
+    if (blocks.some(b => b.g[0].phantom)) {
+      const span = b => [b.g[0].x, b.g[b.g.length - 1].x + b.g[b.g.length - 1].w];
+      const shift = (b, dx) => b.g.forEach(u => u.x += dx);
+      const zones = blocks.filter(b => b.g[0].phantom).map(b => [b.g[0].x - UGAP, b.g[0].x + b.g[0].w + UGAP]).sort((p, q) => p[0] - q[0]);
+      let cur = -Infinity;
+      blocks.filter(b => !b.g[0].phantom).forEach(b => {
+        const [x0, x1] = span(b), W = x1 - x0;
+        let nx = Math.max(x0, cur);
+        for (let z = zones.find(([a, c]) => nx < c && nx + W > a); z; z = zones.find(([a, c]) => nx < c && nx + W > a)) nx = z[1];
+        shift(b, nx - x0); cur = nx + W + UGAP;
+      });
+      return;
+    }
     for (let it = 0; it < 80; it++) {
       let ok = true;
-      for (let i = 1; i < r.length; i++) { const a = r[i - 1], b = r[i], o = a.x + a.w + UGAP - b.x; if (o > .5) { a.x -= o / 2; b.x += o / 2; ok = false; } }
+      // a channel (a line passing through from a row above) holds its place; cards move out of its way
+      for (let i = 1; i < r.length; i++) { const a = r[i - 1], b = r[i], o = a.x + a.w + UGAP - b.x; if (o > .5) { if (a.phantom && !b.phantom) b.x += o; else if (b.phantom && !a.phantom) a.x -= o; else { a.x -= o / 2; b.x += o / 2; } ok = false; } }
       if (ok) break;
     }
     for (let i = 1; i < r.length; i++) { const a = r[i - 1], b = r[i], o = a.x + a.w + UGAP - b.x; if (o > 0) b.x += o; }
@@ -584,7 +706,7 @@ function layout() {
   const anchor = p => { const ps = p.parents.filter(id => cx[id] != null); return ps.length ? ps.reduce((s, id) => s + cx[id], 0) / ps.length : null; };
   const down = () => { for (let gi = 1; gi < rows.length; gi++) { const r = rows[gi];
     r.forEach(u => {
-      if (u.m.length === 2) { const a0 = anchor(u.m[0]), a1 = anchor(u.m[1]);
+      if (u.m.length === 2 && !u.stack) { const a0 = anchor(u.m[0]), a1 = anchor(u.m[1]);
         if ((a0 == null && a1 != null) || (a0 != null && a1 != null && a1 < a0)) u.m.reverse(); }
       const as = u.m.map(anchor).filter(v => v != null);
       u.d = as.length ? as.reduce((s, v) => s + v, 0) / as.length : u.x + u.w / 2;
@@ -604,10 +726,47 @@ function layout() {
   rows.flat().forEach(u => (byDec[dec[u.m[0].id]] ||= []).push(u));
   Object.values(byDec).forEach(list => { list.forEach(u => u.d = u.x + u.w / 2); resolve(list); });
   rows.forEach(place);
+  const nRows = (maxDec - minDec) / 10 + 1, ri = {};
+  people.forEach(p => ri[p.id] = (dec[p.id] - minDec) / 10);
+  const unitsByRow = Array.from({ length: nRows }, () => []);
+  rows.flat().forEach(u => unitsByRow[ri[u.m[0].id]].push(u));
+  // Lines that skip past a row (parents two or more rows up) drop straight through it. Give each one a clear
+  // channel there, so no card sits on the line. Two passes, since moving one row can move another's channel.
+  const unitOf = {}; rows.flat().forEach(u => u.m.forEach((p, i) => unitOf[p.id] = { u, i }));
+  const rootX = ps => {
+    const [a, b] = ps.map(id => unitOf[id]);
+    if (b && a.u === b.u && a.u.stack) return cx[a.u.m[1].id];
+    return b ? (cx[ps[0]] + cx[ps[1]]) / 2 : cx[ps[0]];
+  };
+  const families = new Map();
+  people.forEach(c => { const ps = c.parents.filter(id => by[id] && unitOf[id]); if (!ps.length) return; const k = ps.slice().sort().join('|'); if (!families.has(k)) families.set(k, { ps, kids: [] }); families.get(k).kids.push(c.id); });
+  let pid = 0;
+  for (let rr = 0; rr < nRows; rr++) {
+    if (!unitsByRow[rr].length) continue;
+    // channels for lines from rows above that pass straight through this one (worked out after those rows settled)
+    const ph = [];
+    families.forEach(({ ps, kids }) => {
+      const from = Math.max(...ps.map(id => ri[id])), to = Math.min(...kids.map(id => ri[id]));
+      if (from < rr && rr < to) { const x = rootX(ps); ph.push({ m: [], phantom: true, pid: pid++, w: 2, x: x - 1, d: x }); }
+    });
+    if (!ph.length) continue;
+    const list = [...unitsByRow[rr], ...ph];
+    list.forEach(u => { if (!u.phantom) u.d = u.x + u.w / 2; });
+    resolve(list); place(unitsByRow[rr]);
+  }
   const minX = Math.min(0, ...rows.flat().map(u => u.x));
+  const stackRow = new Array(nRows).fill(false), filled = new Array(nRows).fill(false);
+  rows.flat().forEach(u => { filled[ri[u.m[0].id]] = true; if (u.stack) stackRow[ri[u.m[0].id]] = true; });
+  const rowTop = [0];
+  for (let i = 0; i < nRows; i++) rowTop.push(rowTop[i] + (filled[i] ? (stackRow[i] ? CH * 2 + SGAP : CH) + ROW_GAP : EMPTY_ROW));
   const pos = {};
-  rows.forEach((r, gi) => r.forEach(u => u.m.forEach((p, i) => pos[p.id] = { x: u.x - minX + i * (CW + CGAP), y: (dec[p.id] - minDec) / 10 * ROW + PADY })));
-  return { pos, g, gens: (maxDec - minDec) / 10 + 1, minDec, maxDec, est };
+  const lower = new Set();
+  rows.forEach(r => r.forEach(u => u.m.forEach((p, i) => {
+    const y = rowTop[ri[p.id]] + (u.stack && i ? CH + SGAP : 0);
+    if (u.stack && i) lower.add(p.id);
+    pos[p.id] = { x: u.x - minX + offX(u, i), y };
+  })));
+  return { pos, g, gens: nRows, minDec, maxDec, est, lower, ri, rowTop, filled };
 }
 
 /* ---------- drawing ---------- */
@@ -658,12 +817,35 @@ function branch(x0, y0, x1, y1, w0, w1) {
 let drawCount = 0;
 function drawLines(P) {
   drawCount++;
+  const lowerSet = (L && L.lower) || new Set();
+  // where a branch meets a child: the top centre, or for a stacked spouse, the strip of their card left uncovered
+  const childX = id => lowerSet.has(id) ? P[id].x + CW - SOFF / 2 : P[id].x + CW / 2;
+  const stackedPair = (a, b) => Math.abs(a.y - b.y) >= CH;
+  // top of the row a child sits in (a stacked spouse's row starts one card higher)
+  const rowTopOf = id => P[id].y - (lowerSet.has(id) ? CH + SGAP : 0);
+  // the last stretch to a stacked spouse runs straight down the strip beside their partner
+  const intoStack = (id, fromX, fromY, w0, w1) => {
+    const x = childX(id), y0 = rowTopOf(id) - 6;
+    return branch(fromX, fromY, x, y0, w0, (w0 + w1) / 2) + branch(x, y0, x, P[id].y + 1, (w0 + w1) / 2, w1);
+  };
+  // where a couple's children branch from: between side-by-side partners, or under a stack
+  const coupleRoot = (a, b) => {
+    if (stackedPair(a, b)) { const lo = a.y > b.y ? a : b; return { ax: lo.x + CW / 2, sy: lo.y + CH }; }
+    return { ax: (Math.min(a.x, b.x) + CW + Math.max(a.x, b.x)) / 2, sy: (a.y + b.y) / 2 + CH / 2 + 6 };
+  };
   const by = idx(), tints = sibTints().byKey; let d = '', wed = '', rings = '', sib = '', knots = '';
   const done = new Set();
   for (const p of S.people) {
     const q = p.partner && by[p.partner];
     if (!q || !P[p.id] || !P[q.id]) continue;
     const k = [p.id, q.id].sort().join('|'); if (done.has(k)) continue; done.add(k);
+    if (stackedPair(P[p.id], P[q.id])) {
+      const [T0, B0] = P[p.id].y < P[q.id].y ? [P[p.id], P[q.id]] : [P[q.id], P[p.id]];
+      const xl = T0.x + (SOFF + CW) / 2, y0 = T0.y + CH + 1, y1s = B0.y - 1, my = (y0 + y1s) / 2;
+      wed += `M${xl - 2.5} ${y0}V${y1s}M${xl + 2.5} ${y0}V${y1s}`;
+      rings += `<circle cx="${xl}" cy="${my - 4}" r="5.6"/><circle cx="${xl}" cy="${my + 4}" r="5.6" fill="none"/>`;
+      continue;
+    }
     const [A, B] = P[p.id].x < P[q.id].x ? [P[p.id], P[q.id]] : [P[q.id], P[p.id]];
     const y1 = A.y + CH / 2, y2 = B.y + CH / 2;
     wed += `M${A.x + CW + 1} ${y1 - 2.5}L${B.x - 1} ${y2 - 2.5}M${A.x + CW + 1} ${y1 + 2.5}L${B.x - 1} ${y2 + 2.5}`;
@@ -682,43 +864,68 @@ function drawLines(P) {
   // zoomed far out, branches take the family color of the children they lead to, matching the nodes
   const farView = (apply.lvl || 0) >= 3, fam = farView ? famColors() : {};
   let hd = '', n = 0;
+  // straight style: bars over the same row that would overlap get separate heights ("lanes")
+  const lanes = new Map();
+  if (hard) {
+    const spans = [];
+    for (const { ps, kids } of groups.values()) {
+      const a = P[ps[0]], b = ps[1] && P[ps[1]];
+      const ax = b ? coupleRoot(a, b).ax : a.x + CW / 2;
+      const xs = kids.map(childX).concat(ax);
+      spans.push({ key: ps.slice().sort().join('|'), top: Math.min(...kids.map(rowTopOf)), lo: Math.min(...xs), hi: Math.max(...xs) });
+    }
+    const byTop = {};
+    spans.forEach(sp => (byTop[sp.top] ||= []).push(sp));
+    Object.values(byTop).forEach(list => {
+      list.sort((a, b) => (a.hi - a.lo) - (b.hi - b.lo));
+      const used = [];
+      list.forEach(sp => {
+        let l = 0;
+        while ((used[l] || []).some(o => sp.lo < o.hi + 14 && o.lo < sp.hi + 14)) l++;
+        (used[l] ||= []).push(sp); lanes.set(sp.key, l);
+      });
+    });
+  }
   for (const { ps, kids } of groups.values()) {
     const col = farView ? fam[surnameOf(by[kids[0]])] : tints[ps.slice().sort().join('|')];
     let shape = '', ax, sy;
-    const top = Math.min(...kids.map(id => P[id].y));
+    const top = Math.min(...kids.map(rowTopOf));
     if (hard) {
       // traditional: drop from the rings, a horizontal bar above the children, a short drop to each child
       let g = '';
       if (ps.length === 2 && by[ps[0]].partner === ps[1]) {
-        const a = P[ps[0]], b = P[ps[1]];
-        ax = (Math.min(a.x, b.x) + CW + Math.max(a.x, b.x)) / 2; sy = (a.y + b.y) / 2 + CH / 2 + 6;
+        ({ ax, sy } = coupleRoot(P[ps[0]], P[ps[1]]));
       } else if (ps.length === 2) {
         const a = P[ps[0]], b = P[ps[1]], jy = Math.max(a.y, b.y) + CH + 16;
         ax = (a.x + b.x) / 2 + CW / 2; sy = jy;
         g += `M${a.x + CW / 2} ${a.y + CH}V${jy}M${b.x + CW / 2} ${b.y + CH}V${jy}M${a.x + CW / 2} ${jy}H${b.x + CW / 2}`;
       } else { const a = P[ps[0]]; ax = a.x + CW / 2; sy = a.y + CH; }
-      const busY = Math.max(sy + 12, top - PADY + 8 + ((n++ % 3) - 1) * 6);
-      const xs = kids.map(id => P[id].x + CW / 2).concat(ax);
+      const busY = Math.max(sy + 10, top - 12 - (lanes.get(ps.slice().sort().join('|')) || 0) * 11);
+      const xs = kids.map(childX).concat(ax);
       g += `M${ax} ${sy}V${busY}M${Math.min(...xs)} ${busY}H${Math.max(...xs)}`;
-      for (const id of kids) g += `M${P[id].x + CW / 2} ${busY}V${P[id].y}`;
+      for (const id of kids) g += `M${childX(id)} ${busY}V${P[id].y}`;
       if (col) sib += `<path class="sibl" style="stroke:${col}" d="${g}"/>`; else hd += g;
       continue;
     }
     if (ps.length === 2 && by[ps[0]].partner === ps[1]) {
-      const a = P[ps[0]], b = P[ps[1]];
-      ax = (Math.min(a.x, b.x) + CW + Math.max(a.x, b.x)) / 2; sy = (a.y + b.y) / 2 + CH / 2 + 6;
+      ({ ax, sy } = coupleRoot(P[ps[0]], P[ps[1]]));
     } else if (ps.length === 2) {
       const a = P[ps[0]], b = P[ps[1]];
       ax = (a.x + b.x) / 2 + CW / 2; sy = Math.max(a.y, b.y) + CH + 22;
       shape += branch(a.x + CW / 2, a.y + CH, ax, sy, 1.3 * ls, 2.6 * ls) + branch(b.x + CW / 2, b.y + CH, ax, sy, 1.3 * ls, 2.6 * ls);
     } else { const a = P[ps[0]]; ax = a.x + CW / 2; sy = a.y + CH; }
     let fx = ax, fy = sy;
-    if (kids.length > 1) {
+    const skips = L && L.ri && L.filled ? (() => { const from = Math.max(...ps.map(id => L.ri[id])), to = Math.min(...kids.map(id => L.ri[id])); for (let i = from + 1; i < to; i++) if (L.filled[i]) return true; return false; })() : false;
+    if (skips) {
+      fy = top - ROW_GAP * .62;
+      shape += branch(ax, sy, ax, fy, 3.6 * ls, 3.2 * ls);
+      if (kids.length > 1) knots += `<circle cx="${fx}" cy="${fy}" r="${2.1 * ls}"${col ? ` style="fill:${col}"` : ''}/>`;
+    } else if (kids.length > 1) {
       fy = sy + Math.min(44, Math.max(12, (top - sy) * .3));
       shape += branch(ax, sy, ax, fy, 3.6 * ls, 3.2 * ls);
       knots += `<circle cx="${fx}" cy="${fy}" r="${2.1 * ls}"${col ? ` style="fill:${col}"` : ''}/>`;
     }
-    for (const id of kids) shape += branch(fx, fy, P[id].x + CW / 2, P[id].y + 1, (kids.length > 1 ? 2.8 : 3.4) * ls, 1.25 * ls);
+    for (const id of kids) shape += lowerSet.has(id) ? intoStack(id, fx, fy, (kids.length > 1 ? 2.8 : 3.4) * ls, 1.25 * ls) : branch(fx, fy, childX(id), P[id].y + 1, (kids.length > 1 ? 2.8 : 3.4) * ls, 1.25 * ls);
     if (col) sib += `<path class="brn" style="fill:${col}" d="${shape}"/>`; else d += shape;
   }
   linkPath.setAttribute('d', d);
@@ -732,19 +939,21 @@ function drawLines(P) {
 function drawBands() {
   gensG.innerHTML = '';
   const ruler = $('ruler');
-  if (!L || !S.people.length) { ruler.innerHTML = ''; return; }
+  if (!L || !S.people.length) { ruler.innerHTML = ''; $('yearLines').innerHTML = ''; return; }
   let h = '';
-  for (let i = 0; i < L.gens; i++) h += `<span data-row="${i}" data-year="${L.minDec + i * 10}">${L.minDec + i * 10}</span>`;
-  ruler.innerHTML = h; placeRuler();
+  let lines = '';
+  for (let i = 0; i < L.gens; i++) { h += `<span data-row="${i}" data-year="${L.minDec + i * 10}">${L.minDec + i * 10}</span>`; lines += `<i data-row="${i}" data-year="${L.minDec + i * 10}"></i>`; }
+  ruler.innerHTML = h; $('yearLines').innerHTML = lines; placeRuler();
 }
 // decade labels live outside the map at a fixed size; zoomed out, they thin to every 20, 50 or 100 years
 function placeRuler() {
   if (!L) return;
-  const gap = ROW * T.k, step = [1, 2, 5, 10].find(n => n * gap >= 26) || 10;
-  for (const sp of $('ruler').children) {
+  const tops = L.rowTop || [0], gap = (tops[tops.length - 1] / Math.max(1, tops.length - 1)) * T.k, step = [1, 2, 5, 10].find(n => n * gap >= 30) || 10;
+  // labels and their faint lines are screen-space elements, moved (not redrawn) as the map pans and zooms
+  for (const sp of [...$('ruler').children, ...$('yearLines').children]) {
     const show = (+sp.dataset.year / 10) % step === 0;
     if (sp.hidden === show) sp.hidden = !show;
-    if (show) sp.style.transform = `translateY(${(T.y + (+sp.dataset.row * ROW + ROW / 2) * T.k - 10).toFixed(1)}px)`;
+    if (show) sp.style.transform = `translateY(${(T.y + ((tops[+sp.dataset.row] || 0) + CH / 2) * T.k + (sp.tagName === 'I' ? 11 : -10)).toFixed(1)}px)`;
   }
 }
 // birth surname: the maiden name if one is set, otherwise the last word of the name
@@ -842,8 +1051,8 @@ function refreshZoom() {
   if (L) drawLines(cur);
 }
 function glide(next) {
-  world.classList.add('glide'); $('ruler').classList.add('glide'); T = next; apply();
-  clearTimeout(glide.t); glide.t = setTimeout(() => { world.classList.remove('glide'); $('ruler').classList.remove('glide'); }, 680);
+  world.classList.add('glide'); $('ruler').classList.add('glide'); view.classList.add('glide'); T = next; apply();
+  clearTimeout(glide.t); glide.t = setTimeout(() => { world.classList.remove('glide'); $('ruler').classList.remove('glide'); view.classList.remove('glide'); }, 680);
 }
 const clampK = k => Math.min(2.2, Math.max(.06, k));
 function visibleArea() {
@@ -989,7 +1198,7 @@ function showForm(ctx) {
   let p;
   if (ctx.id) p = by[ctx.id];
   else {
-    p = { first: '', middle: '', last: '', name: '', nee: '', born: '', died: '', place: '', note: '', parents: [], partner: null };
+    p = { first: '', middle: '', last: '', suffix: '', name: '', nee: '', born: '', died: '', place: '', note: '', parents: [], partner: null };
     if (ctx.rel === 'child') { p.parents = [of.id, of.partner].filter(Boolean); p.last = of.last || ''; }
     if (ctx.rel === 'sibling') { p.parents = of.parents.slice(); p.last = (of.nee || of.last) || ''; }
     if (ctx.rel === 'partner') p.partner = of.id;
@@ -1009,6 +1218,7 @@ function showForm(ctx) {
         <label>Middle name<input id="f-middle" maxlength="60" autocomplete="off" value="${esc(p.middle || '')}" placeholder="If known"></label>
       </div>
       <label>Last name<input id="f-last" maxlength="40" autocomplete="off" value="${esc(p.last || '')}" placeholder="Hale"></label>
+      <label>Suffix<input id="f-suffix" maxlength="20" autocomplete="off" value="${esc(p.suffix || '')}" placeholder="Jr., Sr., III"><small class="fieldnote">Shown after the last name, like Walter Hale Jr.</small></label>
       <p class="err" id="f-err" hidden>Give this person a first or last name, even a placeholder like "Grandpa".</p>
       <label>Maiden name<input id="f-nee" maxlength="60" autocomplete="off" value="${esc(p.nee)}" placeholder="If it changed"></label>
       <div class="two">
@@ -1035,13 +1245,15 @@ function setPartner(p, qid, by) {
 function submitForm() {
   if (!canEdit()) return;
   const v = id => $(id).value.trim();
-  const first = v('f-first'), middle = v('f-middle'), last = v('f-last'), name = joinName(first, middle, last);
+  let first = v('f-first'), middle = v('f-middle'), last = v('f-last'), suffix = v('f-suffix');
+  if (!last && suffix && !SUFFIX_RE.test(suffix)) { last = suffix; suffix = ''; }
+  const name = withSuffix(joinName(first, middle, last), suffix);
   if (!first && !last) { $('f-err').hidden = false; $('f-first').focus(); return; }
   const by = idx(), ctx = formCtx, isNew = !ctx.id;
   const p = isNew ? { id: newId(), parents: [], partner: null } : by[ctx.id];
   if (isNew) { S.people.push(p); by[p.id] = p; }
-  Object.assign(p, { first, middle, last, name, nee: v('f-nee'), born: v('f-born'), died: v('f-died'), place: v('f-place'), note: $('f-note').value.trim(), share: $('f-share').checked });
-  delete p.priv;
+  Object.assign(p, { first, middle, last, suffix, name, nee: v('f-nee'), born: v('f-born'), died: v('f-died'), place: v('f-place'), note: $('f-note').value.trim(), share: $('f-share').checked });
+  delete p.priv; delete p.title;
   p.parents = [...new Set([v('f-p1'), v('f-p2')].filter(Boolean))].filter(x => x !== p.id && by[x]);
   const pid = v('f-partner');
   setPartner(p, pid && by[pid] ? pid : null, by);
@@ -1094,20 +1306,21 @@ function showMenu() {
       <button type="button" role="radio" data-act="m-hard" aria-checked="${S.lineStyle === 'hard'}"><svg viewBox="0 0 40 24"><path d="M20 2V11M6 11H34M6 11V22M34 11V22"/></svg>Straight</button>
     </div>
     <p class="eyebrow" style="margin-top:20px">Middle names</p>
-    <div class="seg names" role="radiogroup" aria-label="Middle names">
+    <div class="seg names mid" role="radiogroup" aria-label="Middle names">
       <button type="button" role="radio" data-act="m-midshow" aria-checked="${!S.hideMiddle}"><span class="eg">Walter James Hale</span>Show</button>
       <button type="button" role="radio" data-act="m-midhide" aria-checked="${!!S.hideMiddle}"><span class="eg">Walter Hale</span>Hide</button>
+    </div>
+    <p class="eyebrow" style="margin-top:20px">Suffixes</p>
+    <div class="seg names sfx" role="radiogroup" aria-label="Suffixes">
+      <button type="button" role="radio" data-act="m-sfxshow" aria-checked="${!S.hideSuffix}"><span class="eg">Walter Hale, Jr.</span>Show</button>
+      <button type="button" role="radio" data-act="m-sfxhide" aria-checked="${!!S.hideSuffix}"><span class="eg">Walter Hale</span>Hide</button>
     </div>`;
   if (!canEdit()) {
     openSheet(`
       <p class="eyebrow">Family Atlas</p>
       <h2>About this tree</h2>
       <p class="small">A family tree ${owner} fills in as he learns more. Tap anyone to see what's known about them.</p>
-      <div class="menu">
-        <button type="button" class="act" data-act="m-contact">Contact ${owner}</button>
-        <button type="button" class="act" data-act="m-checks">Run layout checks</button>
-        ${treeIsLocked ? '<button type="button" class="act" data-act="m-lock">Lock this device</button>' : ''}
-      </div>${style}`);
+${style}`);
     return;
   }
   openSheet(`
@@ -1195,10 +1408,10 @@ async function submitPassword() {
 
 /* ---------- saving tree.json, contact ---------- */
 function publicCopy() {
-  return { app: 'family-atlas', v: 1, updated: S.updated || Date.now(), lineStyle: S.lineStyle, hideMiddle: !!S.hideMiddle,
+  return { app: 'family-atlas', v: 1, updated: S.updated || Date.now(), lineStyle: S.lineStyle, hideMiddle: !!S.hideMiddle, hideSuffix: !!S.hideSuffix,
     people: S.people.map(p => isShared(p)
-      ? { id: p.id, first: p.first, middle: p.middle, last: p.last, name: p.name, nee: p.nee, born: p.born, died: p.died, place: p.place, note: p.note, parents: p.parents, partner: p.partner, share: true }
-      : { id: p.id, first: p.first, middle: p.middle, last: p.last, name: p.name, nee: '', born: '', died: '', place: '', note: '', parents: p.parents, partner: p.partner, priv: true }) };
+      ? { id: p.id, first: p.first, middle: p.middle, last: p.last, suffix: p.suffix, name: p.name, nee: p.nee, born: p.born, died: p.died, place: p.place, note: p.note, parents: p.parents, partner: p.partner, share: true }
+      : { id: p.id, first: p.first, middle: p.middle, last: p.last, suffix: p.suffix, name: p.name, nee: '', born: '', died: '', place: '', note: '', parents: p.parents, partner: p.partner, priv: true }) };
 }
 let fileHandle = null;
 function markSaved(msg) { S.dirty = false; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} renderRibbon(); toast(msg); }
@@ -1296,7 +1509,15 @@ function menuAction(act) {
     if (canEdit()) save(); else { prefs.hideMiddle = S.hideMiddle; savePrefs(); }
     Object.values(els).forEach(c => { const p = idx()[c.dataset.id]; if (p) fillCard(c, p); });
     if (L) drawLines(cur);
-    body.querySelectorAll('.seg.names [role=radio]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.act === act)));
+    body.querySelectorAll('.seg.mid [role=radio]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.act === act)));
+    return;
+  }
+  if (act === 'm-sfxshow' || act === 'm-sfxhide') {
+    S.hideSuffix = act === 'm-sfxhide';
+    if (canEdit()) save(); else { prefs.hideSuffix = S.hideSuffix; savePrefs(); }
+    Object.values(els).forEach(c => { const p = idx()[c.dataset.id]; if (p) fillCard(c, p); });
+    if (L) drawLines(cur);
+    body.querySelectorAll('.seg.sfx [role=radio]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.act === act)));
     return;
   }
   if (act === 'm-curved' || act === 'm-hard') {
@@ -1351,21 +1572,123 @@ async function runChecks() {
   const savedS = S;
   try {
     S = template();
-    const { pos } = layout(), by = idx();
+    const { pos, lower } = layout(), by = idx();
+    // a stacked spouse sits just below their partner but still belongs to that decade row
+    const rowY = id => pos[id].y - (lower.has(id) ? CH + SGAP : 0);
     const sets = {};
     S.people.forEach(p => { if (p.parents.length) (sets[p.parents.slice().sort().join('|')] ||= []).push(p.id); });
     const lists = Object.values(sets).filter(l => l.length > 1);
-    const split = lists.filter(l => new Set(l.map(id => pos[id].y)).size > 1);
+    const split = lists.filter(l => new Set(l.map(rowY)).size > 1);
     check('Siblings share a row', !split.length, split.map(l => l.map(id => by[id].name).join(' / ')).join('; '));
     const apart = [];
     lists.forEach(l => {
-      const row = S.people.filter(p => pos[p.id].y === pos[l[0]].y).sort((a, b) => pos[a.id].x - pos[b.id].x).map(p => p.id);
-      const ix = l.map(id => row.indexOf(id)), lo = Math.min(...ix), hi = Math.max(...ix);
+      const row = S.people.filter(p => !lower.has(p.id) && pos[p.id].y === rowY(l[0])).sort((a, b) => pos[a.id].x - pos[b.id].x).map(p => p.id);
+      // a sibling who moved under a spouse from a stacking family is checked with that spouse instead
+      const ix = l.filter(id => !lower.has(id)).map(id => row.indexOf(id)); if (ix.length < 2) return;
+      const lo = Math.min(...ix), hi = Math.max(...ix);
       const ok = new Set([...l, ...l.map(id => by[id].partner).filter(Boolean)]);
       const strays = row.slice(lo, hi + 1).filter(id => !ok.has(id));
       if (strays.length) apart.push(l.map(id => by[id].name).join(' / ') + ' split by ' + strays.map(id => by[id].name).join(', '));
     });
     check('Siblings sit together, with only their partners between them', !apart.length, apart.join('; '));
+    {
+      // Made-up families only. Builds a small tree, lays it out, and checks where everyone landed.
+      const mk = (id, first, last, born, parents = [], partner = null) => ({ id, first, last, born, parents, partner });
+      const couple = (a, b, last, year) => [mk(a, 'Parent', last, year, [], b), mk(b, 'Parent', last, year, [], a)];
+      // lays out a tree and reports: couples not stacked, sibling sets broken up, and the top-row order
+      const judge = (people, sets, couples) => {
+        const saved = S; S = clean({ people });
+        try {
+          const lay = layout(), tp = lay.pos, bad = [];
+          couples.forEach(([a, b]) => { const [t, l] = tp[a].y < tp[b].y ? [a, b] : [b, a];
+            if (!(tp[l].y - tp[t].y === CH + SGAP && tp[l].x - tp[t].x === SOFF)) bad.push(`${a}+${b} not stacked`); });
+          sets.forEach(set => {
+            const up = set.filter(id => !lay.lower.has(id)); if (up.length < 2) return;
+            const y = tp[up[0]].y, row = Object.keys(tp).filter(id => !lay.lower.has(id) && tp[id].y === y).sort((p, q) => tp[p].x - tp[q].x);
+            const ix = up.map(id => row.indexOf(id)).sort((p, q) => p - q);
+            if (ix[ix.length - 1] - ix[0] !== ix.length - 1) bad.push(`${set.join('/')} split`);
+          });
+          const all = sets.flat().filter(id => !lay.lower.has(id)), y = Math.min(...all.map(id => tp[id].y));
+          return { bad, row: all.filter(id => tp[id].y === y).sort((p, q) => tp[p].x - tp[q].x) };
+        } finally { S = saved; }
+      };
+      // 1. two families joined by one marriage, entered in a muddled order
+      const t1 = [...couple('a1', 'a2', 'Ashby', '1950'), ...couple('b1', 'b2', 'Birch', '1951'),
+        mk('ada', 'Ada', 'Ashby', '1984', ['a1', 'a2']), mk('ben', 'Ben', 'Birch', '1982', ['b1', 'b2'], 'amy'),
+        mk('abe', 'Abe', 'Ashby', '1986', ['a1', 'a2']), mk('bo', 'Bo', 'Birch', '1985', ['b1', 'b2']),
+        mk('amy', 'Amy', 'Ashby', '1981', ['a1', 'a2'], 'ben'), mk('bea', 'Bea', 'Birch', '1988', ['b1', 'b2'])];
+      const j1 = judge(t1, [['ada', 'abe', 'amy'], ['ben', 'bo', 'bea']], [['amy', 'ben']]);
+      check('Every married couple stacks, with siblings kept side by side', !j1.bad.length, j1.bad.join('; ') || j1.row.join(', '));
+      const yr = id => +t1.find(p => p.id === id).born, inOrder = ids => ids.every((id, i) => !i || yr(ids[i - 1]) <= yr(id));
+      check('Siblings run oldest to youngest, left to right',
+        inOrder(j1.row.filter(id => ['ada', 'abe'].includes(id))) && inOrder(j1.row.filter(id => ['bo', 'bea'].includes(id))), j1.row.join(', '));
+      // 2. one family married into two others
+      const t2 = [...couple('c1', 'c2', 'Corwin', '1970'), ...couple('a1', 'a2', 'Ashby', '1970'), mk('b1', 'Parent', 'Birch', '1970'),
+        mk('cal', 'Cal', 'Corwin', '1990', ['c1', 'c2']), mk('cy', 'Cy', 'Corwin', '1992', ['c1', 'c2']),
+        mk('cam', 'Cam', 'Corwin', '1999', ['c1', 'c2'], 'ava'), mk('cee', 'Cee', 'Birch', '1995', ['c1', 'c2'], 'bud'),
+        mk('ava', 'Ava', 'Corwin', '2004', ['a1', 'a2'], 'cam'), mk('al', 'Al', 'Ashby', '1997', ['a1', 'a2']), mk('ari', 'Ari', 'Ashby', '2001', ['a1', 'a2']),
+        mk('bud', 'Bud', 'Birch', '1994', ['b1'], 'cee'), mk('bix', 'Bix', 'Birch', '1996', ['b1']), mk('bay', 'Bay', 'Birch', '1998', ['b1'])];
+      const sets2 = [['cal', 'cy', 'cam', 'cee'], ['ava', 'al', 'ari'], ['bud', 'bix', 'bay']], cps2 = [['cam', 'ava'], ['cee', 'bud']];
+      const j2 = judge(t2, sets2, cps2);
+      check('A family married into two others keeps every family together', !j2.bad.length, j2.bad.join('; ') || j2.row.join(', '));
+      // the same, with grandparents above only some of the families
+      const t2deep = [...t2, ...couple('gc1', 'gc2', 'Corwin', '1940'), ...couple('ga1', 'ga2', 'Ashby', '1940')].map(p => ({ ...p }));
+      t2deep.find(p => p.id === 'c1').parents = ['gc1', 'gc2']; t2deep.find(p => p.id === 'a1').parents = ['ga1', 'ga2'];
+      const j2d = judge(t2deep, sets2, cps2);
+      check('Families stay together when only some of them have grandparents in the tree', !j2d.bad.length, j2d.bad.join('; ') || j2d.row.join(', '));
+      // 3. siblings marrying into many families
+      const t3 = [...t2, mk('d1', 'Parent', 'Dale', '1970'), mk('e1', 'Parent', 'Eames', '1970'),
+        mk('dot', 'Dot', 'Corwin', '1991', ['d1'], 'cal'), mk('dax', 'Dax', 'Dale', '1993', ['d1']),
+        mk('eve', 'Eve', 'Ashby', '1998', ['e1'], 'al'), mk('eli', 'Eli', 'Eames', '1996', ['e1'])].map(p => ({ ...p }));
+      t3.find(p => p.id === 'cal').partner = 'dot'; t3.find(p => p.id === 'al').partner = 'eve';
+      const j3 = judge(t3, [...sets2, ['dot', 'dax'], ['eve', 'eli']], [...cps2, ['cal', 'dot'], ['al', 'eve']]);
+      check('Families stay together when siblings marry into many families', !j3.bad.length, j3.bad.join('; ') || j3.row.join(', '));
+    }
+    {
+      // A big family two rows above its children (lines cross a middle row), plus a single parent in that middle row
+      // whose children sit two rows lower still. Every passing line needs a clear channel, and rows need room for branches.
+      const mk = (id, first, last, born, parents = [], partner = null) => ({ id, first, last, born, parents, partner });
+      const people = [mk('d1', 'Hal', 'Dorne', '1940', [], 'd2'), mk('d2', 'Sue', 'Dorne', '1940', [], 'd1'),
+        mk('y1', 'Pat', 'Yew', '1970', [], 'y2'), mk('y2', 'Ro', 'Yew', '1970', [], 'y1'), mk('lo', 'Lon', 'Grove', '1970')];
+      ['Ann', 'Bea', 'Cal', 'Dee', 'Ed', 'Flo', 'Gus', 'Hy'].forEach((n, i) => people.push(mk('dk' + i, n, 'Dorne', String(1983 + i * 2), ['d1', 'd2'], i < 4 ? 'sp' + i : null)));
+      [0, 1, 2, 3].forEach(i => people.push(mk('sp' + i, 'Spouse' + i, 'Dorne', '1985', [], 'dk' + i)));
+      people.push(mk('gk1', 'Kit', 'Gale', '2000', ['dk0', 'sp0']), mk('gk2', 'Kai', 'Gale', '2002', ['dk0', 'sp0']));
+      people.push(mk('yk1', 'Jo', 'Yew', '1999', ['y1', 'y2']), mk('yk2', 'Di', 'Yew', '2001', ['y1', 'y2']));
+      people.push(mk('lk1', 'Ari', 'Grove', '1998', ['lo']), mk('lk2', 'Nix', 'Grove', '2000', ['lo']), mk('lk3', 'Zed', 'Grove', '2002', ['lo']));
+      // second tree: the shape from the real report (made-up names) - a large family whose married children stack,
+      // with a single parent above them whose children sit one row further down
+      const p2 = [mk('w1', 'Gil', 'Oakes', '1940', [], 'w2'), mk('w2', 'Vi', 'Oakes', '1942', [], 'w1'), mk('j1', 'Jon', 'Ashby', '1940', [], 'j2'), mk('j2', 'Kay', 'Ashby', '1941', [], 'j1'),
+        mk('e1', 'Bud', 'Dorne', '1940', [], 'e2'), mk('e2', 'Sue', 'Dorne', '1942', [], 'e1'), mk('rb', 'Rhea', 'Corwin', '1970', ['w1', 'w2'], 'ph'), mk('ph', 'Phil', 'Corwin', '1970', [], 'rb'), mk('lo2', 'Lorn', 'Birch', '1970')];
+      [['er', 'Eda', '1983', 'kj'], ['jm', 'Jem', '1985'], ['ka', 'Kara', '1987', 'sn'], ['em', 'Emi', '1991', 'bb'], ['cd', 'Cade', '1993', 'ej'], ['hl', 'Hana', '1993'], ['jl', 'Jake', '1997', 'bd'], ['km', 'Kate', '1999', 'dm'], ['ab', 'Abby', '2001', 'jh']]
+        .forEach(([id, n, b, pa]) => p2.push(mk(id, n, 'Dorne', b, ['e1', 'e2'], pa || null)));
+      [['kj', 'Kip', 'er', ['j1', 'j2']], ['sn', 'Sam', 'ka'], ['bb', 'Beau', 'em'], ['ej', 'Emmy', 'cd'], ['bd', 'Bri', 'jl'], ['dm', 'Dan', 'km'], ['jh', 'Jay', 'ab']]
+        .forEach(([id, n, pa, par]) => p2.push(mk(id, n, 'Spouse', '', par || [], pa)));
+      p2.push(mk('al', 'Al', 'Ashby', '', ['kj', 'er']), mk('ari', 'Ari', 'Ashby', '', ['kj', 'er']), mk('ava', 'Ava', 'Corwin', '2004', ['kj', 'er'], 'cam'),
+        mk('cam', 'Cam', 'Corwin', '1999', ['rb', 'ph'], 'ava'), mk('cal', 'Cal', 'Corwin', '', ['rb', 'ph']), mk('cy', 'Cy', 'Corwin', '', ['rb', 'ph']), mk('cee', 'Cee', 'Birch', '', ['rb', 'ph'], 'bud'),
+        mk('bud', 'Bud', 'Birch', '', ['lo2'], 'cee'), mk('bix', 'Bix', 'Birch', '', ['lo2']), mk('bay', 'Bay', 'Birch', '', ['lo2']));
+      // test tree 3: as tree 2, but the big family's married child marries into a family with deeper roots, and the
+      // single parent ends up beside the big family's line (the arrangement that made a line cross two cards)
+      const p3 = p2.map(p => ({ ...p })).concat([mk('ag1', 'Old', 'Ashby', '1920', [], 'ag2'), mk('ag2', 'Old', 'Ashby', '1921', [], 'ag1')]);
+      p3.find(p => p.id === 'j1').parents = ['ag1', 'ag2']; p3.find(p => p.id === 'j1').born = '1950'; p3.find(p => p.id === 'e1').born = '1950'; p3.find(p => p.id === 'e2').born = '1952';
+      for (const tree of [people, p2, p3]) {
+      const saved = S; S = clean({ people: tree });
+      try {
+        const lay = layout(), tp = lay.pos, byT = idx();
+        const root = ps => { const [a, b] = ps.map(id => tp[id]); if (!b) return a.x + CW / 2; if (Math.abs(a.y - b.y) >= CH) return (a.y > b.y ? a : b).x + CW / 2; return (Math.min(a.x, b.x) + CW + Math.max(a.x, b.x)) / 2; };
+        const fams = new Map();
+        S.people.forEach(c => { if (!c.parents.length) return; const k = c.parents.slice().sort().join('|'); if (!fams.has(k)) fams.set(k, { ps: c.parents, kids: [] }); fams.get(k).kids.push(c.id); });
+        const blocked = [], tight = [];
+        fams.forEach(({ ps, kids }) => {
+          const from = Math.max(...ps.map(id => lay.ri[id])), to = Math.min(...kids.map(id => lay.ri[id])), x = root(ps);
+          S.people.forEach(p => { const rr = lay.ri[p.id]; if (rr > from && rr < to && tp[p.id].x - CHANNEL + 2 < x && x < tp[p.id].x + CW + CHANNEL - 2) blocked.push(`${byT[ps[0]].first}'s line through ${p.first}`); });
+          const bottom = Math.max(...ps.map(id => tp[id].y + CH)), topK = Math.min(...kids.map(id => tp[id].y));
+          if (topK - bottom < ROW_GAP - 2) tight.push(`${byT[ps[0]].first}'s children`);
+        });
+        check(`Lines that pass through a row in between get a clear channel (test tree ${tree === people ? 1 : tree === p2 ? 2 : 3})`, !blocked.length, blocked.join('; '));
+        check(`Every row leaves room for its branches (test tree ${tree === people ? 1 : tree === p2 ? 2 : 3})`, !tight.length, tight.join('; '));
+      } finally { S = saved; }
+      }
+    }
     const overlaps = [];
     S.people.forEach(a => S.people.forEach(b => { if (a.id < b.id && pos[a.id].y === pos[b.id].y && Math.abs(pos[a.id].x - pos[b.id].x) < CW) overlaps.push(a.name + ' & ' + b.name); }));
     check('No two cards overlap', !overlaps.length, overlaps.join('; '));
@@ -1377,7 +1700,16 @@ async function runChecks() {
     const wrong = labels.filter(l => want[l.sn] && want[l.sn] !== l.id);
     check('Family names sit over their founders', !off.length && !wrong.length && labels.length === 6,
       [...off, ...wrong].map(l => `${l.sn} over ${by[l.id].name}`).join('; ') || `${labels.length} labels`);
-    const old = clean({ people: [{ id: 'a', name: 'Mary Ellen Kay Smith' }, { id: 'b', name: 'Cher' }] }).people;
+    const old = clean({ people: [{ id: 'a', name: 'Mary Ellen Kay Smith' }, { id: 'b', name: 'Cher' }, { id: 'c', name: 'Walter James Hale, Jr.' },
+      { id: 'd', title: 'Sr', first: 'Hollis', last: 'Fenn' }] }).people;
+    const w = old[2], g = old[3];
+    const shown = (p, mid, sfx) => { const a = S.hideMiddle, b = S.hideSuffix; S.hideMiddle = mid; S.hideSuffix = sfx; const o = shownName(p); S.hideMiddle = a; S.hideSuffix = b; return o; };
+    const k3 = { first: 'Ansel', middle: 'Reed', last: 'Moss', suffix: 'III' };
+    const got = [shown(w, false, false), shown(w, true, false), shown(g, false, false), shown(k3, false, false), shown(w, false, true), shown(k3, true, true)];
+    const wantNames = ['Walter James Hale, Jr.', 'Walter Hale, Jr.', 'Hollis Fenn, Sr.', 'Ansel Reed Moss, III', 'Walter James Hale', 'Ansel Moss'];
+    const typo = clean({ people: [{ id: 'q', first: 'Alma', last: '', suffix: 'Pike' }, { id: 'r', first: 'Ned', last: 'Pike', suffix: 'Esq' }] }).people;
+    check('A surname typed into Suffix becomes the last name, without a comma', shownName(typo[0]) === 'Alma Pike' && typo[0].last === 'Pike' && shownName(typo[1]) === 'Ned Pike, Esq', typo.map(shownName).join(' / '));
+    check('Suffixes are punctuated correctly and can be hidden', w.last === 'Hale' && w.suffix === 'Jr.' && surnameOf(w) === 'Hale' && got.join('|') === wantNames.join('|'), got.join(' / '));
     const hidden = (() => { const h = S.hideMiddle; S.hideMiddle = true; const out = shownName(old[0]); S.hideMiddle = h; return out; })();
     check('Names split into first, middle and last, and middle names can be hidden',
       old[0].first === 'Mary' && old[0].middle === 'Ellen Kay' && old[0].last === 'Smith' && old[1].first === 'Cher' && !old[1].last && hidden === 'Mary Smith',
@@ -1477,6 +1809,7 @@ function finishBoot(published, msg) {
   else S = template();
   if (!canEdit() && prefs.lineStyle) S.lineStyle = prefs.lineStyle;
   if (!canEdit() && typeof prefs.hideMiddle === 'boolean') S.hideMiddle = prefs.hideMiddle;
+  if (!canEdit() && typeof prefs.hideSuffix === 'boolean') S.hideSuffix = prefs.hideSuffix;
   loading = false; sel = null;
   for (const id in cur) delete cur[id];
   render(); applyRole();
